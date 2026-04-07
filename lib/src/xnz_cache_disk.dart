@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:xnz_cache_image/xnz_image_cache_logs.dart';
+import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
 
 class XNZDiskCache {
   static XNZDiskCache? _instance;
@@ -114,7 +114,7 @@ class XNZDiskCache {
 // import 'dart:typed_data';
 // import 'package:path_provider/path_provider.dart';
 // import 'package:sqlite3/sqlite3.dart';
-// import 'package:xnz_cache_image/xnz_image_cache_logs.dart';
+// import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
 //
 // class XNZDiskCache {
 //   static XNZDiskCache? _instance;

@@ -1,7 +1,7 @@
 import 'dart:typed_data';
-import 'package:xnz_cache_image/xnz_cache_disk.dart';
-import 'package:xnz_cache_image/xnz_cache_memory.dart';
-import 'package:xnz_cache_image/xnz_image_cache_logs.dart';
+import 'package:xnz_net_cache_image/src/xnz_cache_disk.dart';
+import 'package:xnz_net_cache_image/src/xnz_cache_memory.dart';
+import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
 
 class XNZCache {
   static XNZCache? _instance;
