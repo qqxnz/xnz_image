@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:xnz_net_cache_image/src/xnz_cache.dart';
+import 'package:xnz_net_cache_image/src/xnz_cache_manager.dart';
 import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
 
 class XNZCacheMemoryObserver with WidgetsBindingObserver {
@@ -22,7 +22,7 @@ class XNZCacheMemoryObserver with WidgetsBindingObserver {
       '⚠️ Memory pressure detected → clear memory cache',
     );
 
-    XNZCache().memoryCache.clearAll();
+    XNZCacheManager().memoryCache.clearAll();
   }
 
   void dispose() {

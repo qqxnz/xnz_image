@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
-import 'package:xnz_net_cache_image/src/xnz_cache.dart';
+import 'package:xnz_net_cache_image/src/xnz_cache_manager.dart';
 import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
 import 'package:xnz_net_cache_image/src/xnz_image_downloader.dart';
 import 'package:xnz_net_cache_image/src/xnz_memory_avif_image_provider.dart';
@@ -52,7 +52,7 @@ class XNZCacheImageProvider extends ImageProvider<XNZCacheImageProvider> {
     XNZCacheImageLogs.log('XNZCacheImageProvider', '_loadAsync');
     final Uint8List? data = await _loadImageData(key.imageUrl);
     if (data == null) throw Exception('Failed to load image data');
-    XNZCache().setCache(key.imageUrl, data);
+    XNZCacheManager().setCache(key.imageUrl, data);
     return await ui.instantiateImageCodec(data);
   }
 
@@ -60,7 +60,7 @@ class XNZCacheImageProvider extends ImageProvider<XNZCacheImageProvider> {
     XNZCacheImageLogs.log('XNZCacheImageProvider', '_loadAvifAsync');
     final Uint8List? data = await _loadImageData(key.imageUrl);
     if (data == null) throw Exception('Failed to load image data');
-    XNZCache().setCache(key.imageUrl, data);
+    XNZCacheManager().setCache(key.imageUrl, data);
     return loadMemoryAvifCodec(
       data,
       codecKey: hashCode,
@@ -69,7 +69,7 @@ class XNZCacheImageProvider extends ImageProvider<XNZCacheImageProvider> {
   }
 
   Future<Uint8List?> _loadImageData(String imageUrl) async {
-    Uint8List? data = await XNZCache().getCache(imageUrl);
+    Uint8List? data = await XNZCacheManager().getCache(imageUrl);
     if (data != null) {
       XNZCacheImageLogs.log('XNZCacheImageProvider', '_loadImageData-返回缓存对象');
       return Future.value(data);

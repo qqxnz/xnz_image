@@ -3,20 +3,20 @@ import 'package:xnz_net_cache_image/src/xnz_cache_disk.dart';
 import 'package:xnz_net_cache_image/src/xnz_cache_memory.dart';
 import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
 
-class XNZCache {
-  static XNZCache? _instance;
+class XNZCacheManager {
+  static XNZCacheManager? _instance;
 
-  /// 60MB 内存缓存
-  static const int _maxMemoryBytes = 60 * 1024 * 1024;
+  /// 300MB 内存缓存
+  static const int _maxMemoryBytes = 300 * 1024 * 1024;
 
   late final XNZMemoryCache<String> memoryCache;
 
-  XNZCache._() {
+  XNZCacheManager._() {
     memoryCache = XNZMemoryCache<String>(_maxMemoryBytes);
   }
 
-  factory XNZCache() {
-    _instance ??= XNZCache._();
+  factory XNZCacheManager() {
+    _instance ??= XNZCacheManager._();
     return _instance!;
   }
 

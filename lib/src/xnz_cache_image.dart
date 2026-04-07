@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_avif_platform_interface/flutter_avif_platform_interface.dart'
     as avif_platform;
-import 'package:xnz_net_cache_image/src/xnz_cache.dart';
+import 'package:xnz_net_cache_image/src/xnz_cache_manager.dart';
 import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
 import 'package:xnz_net_cache_image/src/xnz_image_downloader.dart';
 import 'package:xnz_net_cache_image/src/xnz_memory_avif_image_provider.dart';
@@ -28,7 +28,7 @@ class XNZCacheImage extends StatefulWidget {
     XNZImageDownloaderTask task = XNZImageDownloaderTask(
       url: imageUrl,
       onComplete: (bytes) {
-        XNZCache().setCache(imageUrl, bytes);
+        XNZCacheManager().setCache(imageUrl, bytes);
         completer.complete(bytes);
         XNZCacheImageLogs.log(
             'XNZCacheImageProvider', 'downloadImageData- $imageUrl 下载完成');
@@ -128,7 +128,7 @@ class StateXNZCacheImage extends State<XNZCacheImage> {
 
   void _loadImage() async {
     /// 1️⃣ 内存缓存（同步）
-    final memoryData = XNZCache().getMemoryCache(widget.url);
+    final memoryData = XNZCacheManager().getMemoryCache(widget.url);
     if (memoryData != null) {
       XNZCacheImageLogs.log('XNZCacheImage', '内存缓存命中 ${widget.url}');
       setState(() {
@@ -139,7 +139,7 @@ class StateXNZCacheImage extends State<XNZCacheImage> {
     }
 
     /// 2️⃣ 硬盘缓存（异步，但不提前 setState）
-    final diskData = await XNZCache().getDiskCache(widget.url);
+    final diskData = await XNZCacheManager().getDiskCache(widget.url);
     if (!mounted) return;
 
     if (diskData != null) {
@@ -166,7 +166,7 @@ class StateXNZCacheImage extends State<XNZCacheImage> {
       },
       onComplete: (bytes) {
         if (!mounted) return;
-        XNZCache().setCache(widget.url, bytes);
+        XNZCacheManager().setCache(widget.url, bytes);
         setState(() {
           _imageData = bytes;
           _status = XNZCacheImageDonwloadStatus.complete;

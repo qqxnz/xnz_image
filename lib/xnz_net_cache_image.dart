@@ -1,6 +1,6 @@
 library xnz_net_cache_image;
 
-export 'src/xnz_cache.dart';
+export 'src/xnz_cache_manager.dart';
 export 'src/xnz_cache_disk.dart';
 export 'src/xnz_cache_image.dart';
 export 'src/xnz_cache_image_provider.dart';
