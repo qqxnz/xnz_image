@@ -10,6 +10,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  dio: ^5.8.0
+  path_provider: ^2.1.5
+  crypto: ^3.0.7
+  flutter_avif_platform_interface: ^3.1.0
+  flutter_avif_android: ^3.1.0
+  flutter_avif_ios: ^3.1.0
+
 
 dev_dependencies:
   flutter_test:
