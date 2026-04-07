@@ -9,13 +9,61 @@ Flutter 组件模版工程，包含：
 ## 组件示例
 
 ```dart
-XnzNetCacheImage(
-  imageUrl: 'https://picsum.photos/800/480',
+XNZCacheImage(
+  url: 'https://picsum.photos/800/480',
   width: 300,
   height: 180,
-  borderRadius: BorderRadius.circular(12),
+  fit: BoxFit.cover,
 )
 ```
+
+增强用法（圆角 + 进度 + 失败态）：
+
+```dart
+XNZCacheImage(
+  url: 'https://picsum.photos/800/480',
+  width: 300,
+  height: 180,
+  fit: BoxFit.cover,
+  placeholder: const SizedBox(
+    width: 300,
+    height: 180,
+    child: Center(child: CircularProgressIndicator()),
+  ),
+  progressIndicatorBuilder: (progress) {
+    return SizedBox(
+      width: 300,
+      height: 180,
+      child: Center(
+        child: CircularProgressIndicator(value: progress),
+      ),
+    );
+  },
+  imageBuilder: (context, provider) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Image(
+        image: provider,
+        width: 300,
+        height: 180,
+        fit: BoxFit.cover,
+      ),
+    );
+  },
+  loadFailedBuilder: (url, error) {
+    return const SizedBox(
+      width: 300,
+      height: 180,
+      child: Center(child: Text('图片加载失败')),
+    );
+  },
+)
+```
+
+## 支持图片格式
+
+- `avif`、`avifs`：组件内置 AVIF 解码路径（含动图时长控制能力）。
+- 其他常见格式：`png`、`jpg`、`jpeg`、`gif`、`webp`、`bmp` 等，走 Flutter 原生 `ImageCodec` 解码（具体以目标平台解码能力为准）。
 
 ## 本地运行
 
@@ -30,4 +78,3 @@ fvm flutter run
 ```
 
 如果你不使用 FVM，也可以把 `fvm flutter` 改成 `flutter`。
-
