@@ -30,9 +30,6 @@ class DemoPage extends StatefulWidget {
 }
 
 class _DemoPageState extends State<DemoPage> {
-  static const String _demoUrl = 'https://picsum.photos/800/480';
-  static const String _errorUrl = 'https://invalid-host/image.png';
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,40 +42,11 @@ class _DemoPageState extends State<DemoPage> {
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
-          XNZCacheImage(
-            url: _demoUrl,
-            width: double.infinity,
-            height: 180,
-            fit: BoxFit.cover,
-            progressIndicatorBuilder: (progress) {
-              return Container(
-                width: double.infinity,
-                height: 180,
-                color: const Color(0xFFE8F3FF),
-                alignment: Alignment.center,
-                child: Text('Loading ${(progress * 100).toStringAsFixed(0)}%'),
-              );
-            },
-            imageBuilder: (context, imageProvider) {
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image(
-                  image: imageProvider,
-                  width: double.infinity,
-                  height: 180,
-                  fit: BoxFit.cover,
-                ),
-              );
-            },
-            loadFailedBuilder: (url, error) {
-              return Container(
-                width: double.infinity,
-                height: 180,
-                color: const Color(0xFFFFECE8),
-                alignment: Alignment.center,
-                child: Text('Load failed:\n$url'),
-              );
-            },
+          const XNZCacheImage(
+            url: 'https://ezgif.com/images/format-demo/butterfly.avif',
+            width: 200,
+            height: 200,
+            fit: BoxFit.contain,
           ),
           const SizedBox(height: 20),
           const Text(
@@ -86,14 +54,12 @@ class _DemoPageState extends State<DemoPage> {
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image(
-              image: XNZCacheImageProvider(_demoUrl),
-              width: double.infinity,
-              height: 180,
-              fit: BoxFit.cover,
-            ),
+          Image(
+            image: XNZCacheImageProvider(
+                'https://ezgif.com/images/format-demo/butterfly.avif'),
+            width: 200,
+            height: 200,
+            fit: BoxFit.contain,
           ),
           const SizedBox(height: 20),
           const Text(
@@ -102,9 +68,9 @@ class _DemoPageState extends State<DemoPage> {
           ),
           const SizedBox(height: 8),
           XNZCacheImage(
-            url: _errorUrl,
-            width: double.infinity,
-            height: 120,
+            url: 'https://sssa',
+            width: 200,
+            height: 200,
             loadFailedBuilder: (url, error) {
               return Container(
                 width: double.infinity,
