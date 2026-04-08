@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_avif_platform_interface/flutter_avif_platform_interface.dart'
     as avif_platform;
@@ -23,6 +24,10 @@ typedef ImageWidgetBuilder = Widget Function(
 class XNZCacheImage extends StatefulWidget {
   /// 下载图片并缓存
   static Future<Uint8List?> downloadImageData(String imageUrl) async {
+    if (kIsWeb) {
+      throw UnsupportedError('XNZCacheImage does not support the web platform.');
+    }
+
     Completer<Uint8List?> completer = Completer<Uint8List?>();
 
     XNZImageDownloaderTask task = XNZImageDownloaderTask(
@@ -95,6 +100,13 @@ class StateXNZCacheImage extends State<XNZCacheImage> {
   @override
   void initState() {
     super.initState();
+    if (kIsWeb) {
+      _status = XNZCacheImageDonwloadStatus.failed;
+      _error = UnsupportedError(
+        'XNZCacheImage does not support the web platform.',
+      );
+      return;
+    }
     _loadImage();
   }
 

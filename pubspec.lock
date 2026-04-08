@@ -126,14 +126,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.0"
-  flutter_avif_web:
-    dependency: "direct main"
-    description:
-      name: flutter_avif_web
-      sha256: db2ff395b08cbfe9116e48ac65c428ba21a9159972ea019f8d7be580ff6cf6e8
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.1.0"
   flutter_avif_windows:
     dependency: "direct main"
     description:
@@ -152,11 +144,6 @@ packages:
     version: "4.0.0"
   flutter_test:
     dependency: "direct dev"
-    description: flutter
-    source: sdk
-    version: "0.0.0"
-  flutter_web_plugins:
-    dependency: transitive
     description: flutter
     source: sdk
     version: "0.0.0"

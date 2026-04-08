@@ -65,6 +65,11 @@ XNZCacheImage(
 - `avif`、`avifs`：组件内置 AVIF 解码路径（含动图时长控制能力）。
 - 其他常见格式：`png`、`jpg`、`jpeg`、`gif`、`webp`、`bmp` 等，走 Flutter 原生 `ImageCodec` 解码（具体以目标平台解码能力为准）。
 
+## 平台支持
+
+- 当前组件不支持 Web 平台。
+- 在 Web 端使用 `XNZCacheImage` / `XNZMemoryAvifImage` 会返回不支持错误（`UnsupportedError`）。
+
 ## 本地运行
 
 ```bash

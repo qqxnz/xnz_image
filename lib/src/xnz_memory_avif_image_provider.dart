@@ -80,6 +80,11 @@ class XNZMemoryAvifImage extends ImageProvider<XNZMemoryAvifImage> {
 
   Future<AvifCodec> _loadAsync(XNZMemoryAvifImage key) async {
     assert(key == this);
+    if (kIsWeb) {
+      throw UnsupportedError(
+        'XNZMemoryAvifImage does not support the web platform.',
+      );
+    }
     return loadMemoryAvifCodec(
       bytes,
       codecKey: hashCode,
