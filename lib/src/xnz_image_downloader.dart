@@ -1,11 +1,76 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
+import 'package:xnz_net_cache_image/src/xnz_cache_manager.dart';
 import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
 
 typedef XNZProgressCallback = void Function(int count, int total);
 
 class XNZImageDownloader {
   static final XNZImageDownloader _singleton = XNZImageDownloader._internal();
+  static final Map<String, Future<Uint8List?>> _inflightDownloads = {};
+
+  /// 下载图片并缓存
+  static Future<Uint8List?> downloadImageDataAndCache(String imageUrl) async {
+    if (imageUrl.trim().isEmpty) {
+      XNZNetworkImageLogs.log(
+          'XNZImageDownloader', 'downloadImageDataAndCache empty image url');
+      return null;
+    }
+
+    final cacheManager = XNZCacheManager();
+    final cachedData = await cacheManager.getCache(imageUrl);
+    if (cachedData != null) {
+      XNZNetworkImageLogs.log(
+          'XNZImageDownloader', 'downloadImageDataAndCache cache hit $imageUrl');
+      return cachedData;
+    }
+
+    final inflight = _inflightDownloads[imageUrl];
+    if (inflight != null) {
+      XNZNetworkImageLogs.log('XNZImageDownloader',
+          'downloadImageDataAndCache reuse inflight task $imageUrl');
+      return inflight;
+    }
+
+    final completer = Completer<Uint8List?>();
+    final future = completer.future.whenComplete(() {
+      _inflightDownloads.remove(imageUrl);
+    });
+    _inflightDownloads[imageUrl] = future;
+
+    final task = XNZImageDownloaderTask(
+      url: imageUrl,
+      onComplete: (bytes) {
+        cacheManager.setCache(imageUrl, bytes);
+        if (!completer.isCompleted) {
+          completer.complete(bytes);
+        }
+        XNZNetworkImageLogs.log(
+            'XNZImageDownloader', 'downloadImageDataAndCache done $imageUrl');
+      },
+      onError: (error) {
+        XNZNetworkImageLogs.log('XNZImageDownloader',
+            'downloadImageDataAndCache failed $imageUrl, error: $error');
+        if (!completer.isCompleted) {
+          completer.complete(null);
+        }
+      },
+    );
+
+    try {
+      XNZImageDownloader().start(task);
+    } catch (e) {
+      XNZNetworkImageLogs.log('XNZImageDownloader',
+          'downloadImageDataAndCache start failed $imageUrl, error: $e');
+      if (!completer.isCompleted) {
+        completer.complete(null);
+      }
+    }
+
+    return future;
+  }
+
   final Dio dio = Dio();
   final List<XNZImageDownloaderTask> tasks = [];
 
