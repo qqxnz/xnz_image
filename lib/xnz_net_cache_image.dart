@@ -9,3 +9,5 @@ export 'src/xnz_cache_memory_observer.dart';
 export 'src/xnz_image_cache_logs.dart';
 export 'src/xnz_image_downloader.dart';
 export 'src/xnz_memory_avif_image_provider.dart';
+export 'src/xnz_memory_image_provider.dart';
+export 'src/xnz_memory_image.dart';

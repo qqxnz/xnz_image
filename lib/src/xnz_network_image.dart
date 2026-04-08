@@ -1,12 +1,9 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_avif_platform_interface/flutter_avif_platform_interface.dart'
-    as avif_platform;
 import 'package:xnz_net_cache_image/src/xnz_cache_manager.dart';
 import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
 import 'package:xnz_net_cache_image/src/xnz_image_downloader.dart';
-import 'package:xnz_net_cache_image/src/xnz_memory_avif_image_provider.dart';
+import 'package:xnz_net_cache_image/src/xnz_memory_image_provider.dart';
 
 enum XNZNetworkImageDonwloadStatus {
   none,
@@ -39,7 +36,7 @@ class XNZNetworkImage extends StatefulWidget {
   /// 覆盖 AVIF 动图总时长（毫秒），`-1` 表示使用图片原始时长。
   ///
   /// 仅在 AVIF 且使用 `XNZMemoryAvifImage` 解码路径时生效。
-  final int? overrideDurationMs;
+  final int? avifOverrideDurationMs;
 
   const XNZNetworkImage({
     super.key,
@@ -55,7 +52,7 @@ class XNZNetworkImage extends StatefulWidget {
     this.connectTimeout,
     this.sendTimeout,
     this.receiveTimeout,
-    this.overrideDurationMs = -1,
+    this.avifOverrideDurationMs = -1,
   });
 
   @override
@@ -189,15 +186,10 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
 
       case XNZNetworkImageDonwloadStatus.complete:
         final bytes = _imageData!;
-        final isAvif = isAvifBytes(bytes);
-        final provider = isAvif
-            ? (avif_platform.FlutterAvifPlatform.useNativeDecoder
-                ? MemoryImage(bytes) as ImageProvider
-                : XNZMemoryAvifImage(
-                    bytes,
-                    overrideDurationMs: widget.overrideDurationMs,
-                  ))
-            : MemoryImage(bytes);
+        final provider = XNZMemoryImageProvider(
+          bytes,
+          avifOverrideDurationMs: widget.avifOverrideDurationMs,
+        );
         if (widget.imageBuilder != null) {
           return widget.imageBuilder!(context, provider);
         }

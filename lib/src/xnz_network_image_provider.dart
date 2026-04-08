@@ -10,12 +10,12 @@ import 'package:xnz_net_cache_image/src/xnz_memory_avif_image_provider.dart';
 class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
   final String imageUrl;
   final double scale;
-  final int? overrideDurationMs;
+  final int? avifOverrideDurationMs;
 
   XNZNetworkImageProvider(
     this.imageUrl, {
     this.scale = 1.0,
-    this.overrideDurationMs = -1,
+    this.avifOverrideDurationMs = -1,
   });
 
   @override
@@ -35,7 +35,8 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
         scale: key.scale,
         debugLabel: key.imageUrl,
         informationCollector: () sync* {
-          yield ErrorDescription('XNZNetworkImageProvider Image provider: $this');
+          yield ErrorDescription(
+              'XNZNetworkImageProvider Image provider: $this');
         },
       );
     }
@@ -62,14 +63,15 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
     return loadMemoryAvifCodec(
       data,
       codecKey: hashCode,
-      overrideDurationMs: overrideDurationMs,
+      avifOverrideDurationMs: avifOverrideDurationMs,
     );
   }
 
   Future<Uint8List> _loadImageData(String imageUrl) async {
     Uint8List? data = await XNZCacheManager().getCache(imageUrl);
     if (data != null) {
-      XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadImageData-返回缓存对象');
+      XNZNetworkImageLogs.log(
+          'XNZNetworkImageProvider', '_loadImageData-返回缓存对象');
       return Future.value(data);
     }
     XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadImageData-开始下载');
@@ -79,11 +81,13 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
       url: imageUrl,
       onComplete: (bytes) {
         completer.complete(bytes);
-        XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadImageData-下载完成');
+        XNZNetworkImageLogs.log(
+            'XNZNetworkImageProvider', '_loadImageData-下载完成');
       },
       onError: (error) {
         downloadError = error;
-        XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadImageData-下载失败');
+        XNZNetworkImageLogs.log(
+            'XNZNetworkImageProvider', '_loadImageData-下载失败');
         completer.complete(null);
       },
     );

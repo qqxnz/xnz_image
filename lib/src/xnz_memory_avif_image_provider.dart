@@ -30,7 +30,7 @@ bool isAvifBytes(Uint8List bytes) {
 Future<AvifCodec> loadMemoryAvifCodec(
   Uint8List bytes, {
   required int codecKey,
-  int? overrideDurationMs = -1,
+  int? avifOverrideDurationMs = -1,
 }) async {
   final bytesUint8List = bytes.buffer.asUint8List(0);
   final fType = _getAvifFileType(bytesUint8List.sublist(0, 16));
@@ -43,7 +43,7 @@ Future<AvifCodec> loadMemoryAvifCodec(
       : MultiFrameAvifCodec(
           key: codecKey,
           avifBytes: bytesUint8List,
-          overrideDurationMs: overrideDurationMs,
+          avifOverrideDurationMs: avifOverrideDurationMs,
         );
   await codec.ready();
 
@@ -54,12 +54,12 @@ class XNZMemoryAvifImage extends ImageProvider<XNZMemoryAvifImage> {
   const XNZMemoryAvifImage(
     this.bytes, {
     this.scale = 1.0,
-    this.overrideDurationMs = -1,
+    this.avifOverrideDurationMs = -1,
   });
 
   final Uint8List bytes;
   final double scale;
-  final int? overrideDurationMs;
+  final int? avifOverrideDurationMs;
 
   @override
   Future<XNZMemoryAvifImage> obtainKey(ImageConfiguration configuration) {
@@ -88,7 +88,7 @@ class XNZMemoryAvifImage extends ImageProvider<XNZMemoryAvifImage> {
     return loadMemoryAvifCodec(
       bytes,
       codecKey: hashCode,
-      overrideDurationMs: overrideDurationMs,
+      avifOverrideDurationMs: avifOverrideDurationMs,
     );
   }
 
@@ -130,7 +130,7 @@ class MultiFrameAvifCodec implements AvifCodec {
   MultiFrameAvifCodec({
     required int key,
     required Uint8List avifBytes,
-    int? overrideDurationMs = -1,
+    int? avifOverrideDurationMs = -1,
   }) : _key = key.toString() {
     _ready = Completer<void>();
     try {
@@ -138,7 +138,7 @@ class MultiFrameAvifCodec implements AvifCodec {
       // 初始化原生 decoder，并拿到帧数和时长信息。
       avifFfi.initMemoryDecoder(key: _key, avifBytes: avifBytes).then((info) {
         _frameCount = info.imageCount;
-        _durationMs = overrideDurationMs ?? (info.duration * 1000).round();
+        _durationMs = avifOverrideDurationMs ?? (info.duration * 1000).round();
         _ready.complete();
       });
     } catch (_) {
