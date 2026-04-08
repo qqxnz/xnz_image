@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
 
@@ -32,9 +31,19 @@ class XNZDiskCache {
     );
   }
 
-  /// URL -> 文件名（md5）
+  /// URL -> 文件名（FNV-1a 64 位哈希，无第三方依赖）
   String _fileNameForUrl(String url) {
-    return md5.convert(utf8.encode(url)).toString();
+    const int fnvOffsetBasis = 0xcbf29ce484222325;
+    const int fnvPrime = 0x100000001b3;
+    const int mask64 = 0xffffffffffffffff;
+
+    int hash = fnvOffsetBasis;
+    for (final b in utf8.encode(url)) {
+      hash ^= b;
+      hash = (hash * fnvPrime) & mask64;
+    }
+
+    return hash.toRadixString(16).padLeft(16, '0');
   }
 
   File _fileForUrl(String url) {
@@ -106,10 +115,6 @@ class XNZDiskCache {
     }
   }
 }
-
-
-
-
 
 // import 'dart:typed_data';
 // import 'package:path_provider/path_provider.dart';
