@@ -6,12 +6,15 @@ import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
 import 'package:xnz_net_cache_image/src/xnz_image_downloader.dart';
 import 'package:xnz_net_cache_image/src/xnz_memory_image_provider.dart';
 
-enum XNZNetworkImageDonwloadStatus {
+enum XNZNetworkImageDownloadStatus {
   none,
   downloading,
   complete,
   failed,
 }
+
+@Deprecated('Use XNZNetworkImageDownloadStatus instead.')
+typedef XNZNetworkImageDonwloadStatus = XNZNetworkImageDownloadStatus;
 
 typedef ImageWidgetBuilder = Widget Function(
   BuildContext context,
@@ -64,7 +67,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   static const Duration _progressUpdateInterval = Duration(milliseconds: 100);
   static const double _progressDeltaThreshold = 0.01;
 
-  XNZNetworkImageDonwloadStatus _status = XNZNetworkImageDonwloadStatus.none;
+  XNZNetworkImageDownloadStatus _status = XNZNetworkImageDownloadStatus.none;
 
   Uint8List? _imageData;
   dynamic _error;
@@ -77,7 +80,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   void initState() {
     super.initState();
     if (kIsWeb) {
-      _status = XNZNetworkImageDonwloadStatus.failed;
+      _status = XNZNetworkImageDownloadStatus.failed;
       _error = UnsupportedError(
         'XNZNetworkImage does not support the web platform.',
       );
@@ -93,7 +96,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
       XNZNetworkImageLogs.log('XNZNetworkImage',
           'didUpdateWidget url变化 ${oldWidget.imageUrl} -> ${widget.imageUrl}');
       _cancelDownload();
-      _status = XNZNetworkImageDonwloadStatus.none;
+      _status = XNZNetworkImageDownloadStatus.none;
       _imageData = null;
       _error = null;
       _loadImage();
@@ -148,7 +151,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
       if (!_isActiveRequest(requestVersion, requestUrl)) return;
       setState(() {
         _imageData = memoryData;
-        _status = XNZNetworkImageDonwloadStatus.complete;
+        _status = XNZNetworkImageDownloadStatus.complete;
       });
       return;
     }
@@ -161,14 +164,14 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
       XNZNetworkImageLogs.log('XNZNetworkImage', '硬盘缓存命中 $requestUrl');
       setState(() {
         _imageData = diskData;
-        _status = XNZNetworkImageDonwloadStatus.complete;
+        _status = XNZNetworkImageDownloadStatus.complete;
       });
       return;
     }
 
     /// 3️⃣ 真正需要下载，才进入 downloading
     setState(() {
-      _status = XNZNetworkImageDonwloadStatus.downloading;
+      _status = XNZNetworkImageDownloadStatus.downloading;
       _error = null;
       _lastProgressUpdateAt = null;
       _lastProgressValue = -1;
@@ -188,7 +191,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
         unawaited(XNZCacheManager().setCache(requestUrl, bytes));
         setState(() {
           _imageData = bytes;
-          _status = XNZNetworkImageDonwloadStatus.complete;
+          _status = XNZNetworkImageDownloadStatus.complete;
           _task = null;
           _lastProgressUpdateAt = null;
           _lastProgressValue = -1;
@@ -197,7 +200,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
       onError: (error) {
         if (!_isActiveRequest(requestVersion, requestUrl)) return;
         setState(() {
-          _status = XNZNetworkImageDonwloadStatus.failed;
+          _status = XNZNetworkImageDownloadStatus.failed;
           _error = error;
           _task = null;
           _lastProgressUpdateAt = null;
@@ -215,8 +218,8 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   @override
   Widget build(BuildContext context) {
     switch (_status) {
-      case XNZNetworkImageDonwloadStatus.none:
-      case XNZNetworkImageDonwloadStatus.downloading:
+      case XNZNetworkImageDownloadStatus.none:
+      case XNZNetworkImageDownloadStatus.downloading:
         if (widget.progressIndicatorBuilder != null && _task != null) {
           final progress = _task!.total > 0 ? _task!.count / _task!.total : 0.0;
           return widget.progressIndicatorBuilder!(progress);
@@ -228,7 +231,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
               color: Colors.transparent,
             );
 
-      case XNZNetworkImageDonwloadStatus.complete:
+      case XNZNetworkImageDownloadStatus.complete:
         final bytes = _imageData!;
         final provider = XNZMemoryImageProvider(
           bytes,
@@ -245,7 +248,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
           fit: widget.fit,
         );
 
-      case XNZNetworkImageDonwloadStatus.failed:
+      case XNZNetworkImageDownloadStatus.failed:
         if (widget.loadFailedBuilder != null) {
           return widget.loadFailedBuilder!(widget.imageUrl, _error);
         }
