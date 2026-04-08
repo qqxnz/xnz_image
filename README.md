@@ -17,6 +17,32 @@ XNZNetworkImage(
 )
 ```
 
+内存字节流渲染（`XNZMemoryImage`）：
+
+```dart
+import 'dart:typed_data';
+
+XNZMemoryImage(
+  bytes: yourBytes, // Uint8List
+  width: 300,
+  height: 180,
+  fit: BoxFit.cover,
+)
+```
+
+内存字节流渲染（`Image + XNZMemoryImageProvider`）：
+
+```dart
+import 'dart:typed_data';
+
+Image(
+  image: XNZMemoryImageProvider(yourBytes), // Uint8List
+  width: 300,
+  height: 180,
+  fit: BoxFit.cover,
+)
+```
+
 增强用法（圆角 + 进度 + 失败态）：
 
 ```dart

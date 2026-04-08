@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:xnz_net_cache_image/xnz_net_cache_image.dart';
 
@@ -30,6 +33,11 @@ class DemoPage extends StatefulWidget {
 }
 
 class _DemoPageState extends State<DemoPage> {
+  // 一个 1x1 PNG 像素的示例 bytes，可替换为你自己的 Uint8List 图片数据。
+  final Uint8List _memoryPngBytes = base64Decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=',
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,6 +67,30 @@ class _DemoPageState extends State<DemoPage> {
                 'https://ezgif.com/images/format-demo/butterfly.avif'),
             width: 200,
             height: 200,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'XNZMemoryImage (from Uint8List bytes)',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          XNZMemoryImage(
+            bytes: _memoryPngBytes,
+            width: 120,
+            height: 120,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Image + XNZMemoryImageProvider',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Image(
+            image: XNZMemoryImageProvider(_memoryPngBytes),
+            width: 120,
+            height: 120,
             fit: BoxFit.contain,
           ),
           const SizedBox(height: 20),
