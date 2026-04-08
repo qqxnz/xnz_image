@@ -21,8 +21,8 @@ class XNZImageDownloader {
     final cacheManager = XNZCacheManager();
     final cachedData = await cacheManager.getCache(imageUrl);
     if (cachedData != null) {
-      XNZNetworkImageLogs.log(
-          'XNZImageDownloader', 'downloadImageDataAndCache cache hit $imageUrl');
+      XNZNetworkImageLogs.log('XNZImageDownloader',
+          'downloadImageDataAndCache cache hit $imageUrl');
       return cachedData;
     }
 
@@ -42,7 +42,7 @@ class XNZImageDownloader {
     final task = XNZImageDownloaderTask(
       url: imageUrl,
       onComplete: (bytes) {
-        cacheManager.setCache(imageUrl, bytes);
+        unawaited(cacheManager.setCache(imageUrl, bytes));
         if (!completer.isCompleted) {
           completer.complete(bytes);
         }
@@ -115,8 +115,8 @@ class XNZImageDownloader {
       onReceiveProgress: (int count, int total) {
         newShared.count = count;
         newShared.total = total;
-        for (final subscriber in List<XNZImageDownloaderTask>.from(
-            newShared.subscribers)) {
+        for (final subscriber
+            in List<XNZImageDownloaderTask>.from(newShared.subscribers)) {
           subscriber.count = count;
           subscriber.total = total;
           subscriber.onReceiveProgress?.call(count, total);

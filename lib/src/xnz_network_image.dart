@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:xnz_net_cache_image/src/xnz_cache_manager.dart';
@@ -60,12 +61,17 @@ class XNZNetworkImage extends StatefulWidget {
 }
 
 class StateXNZNetworkImage extends State<XNZNetworkImage> {
+  static const Duration _progressUpdateInterval = Duration(milliseconds: 100);
+  static const double _progressDeltaThreshold = 0.01;
+
   XNZNetworkImageDonwloadStatus _status = XNZNetworkImageDonwloadStatus.none;
 
   Uint8List? _imageData;
   dynamic _error;
   XNZImageDownloaderTask? _task;
   int _requestVersion = 0;
+  DateTime? _lastProgressUpdateAt;
+  double _lastProgressValue = -1;
 
   @override
   void initState() {
@@ -114,6 +120,23 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
         requestUrl == widget.imageUrl;
   }
 
+  bool _shouldRebuildForProgress(int count, int total) {
+    final progress = total > 0 ? count / total : 0.0;
+    final now = DateTime.now();
+    final intervalPassed = _lastProgressUpdateAt == null ||
+        now.difference(_lastProgressUpdateAt!) >= _progressUpdateInterval;
+    final deltaPassed = _lastProgressValue < 0 ||
+        (progress - _lastProgressValue).abs() >= _progressDeltaThreshold;
+    final isFinalProgress = total > 0 && count >= total;
+
+    if (intervalPassed || deltaPassed || isFinalProgress) {
+      _lastProgressUpdateAt = now;
+      _lastProgressValue = progress;
+      return true;
+    }
+    return false;
+  }
+
   void _loadImage() async {
     final requestVersion = ++_requestVersion;
     final requestUrl = widget.imageUrl;
@@ -147,23 +170,28 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     setState(() {
       _status = XNZNetworkImageDonwloadStatus.downloading;
       _error = null;
+      _lastProgressUpdateAt = null;
+      _lastProgressValue = -1;
     });
 
     _task = XNZImageDownloaderTask(
       url: requestUrl,
       onReceiveProgress: (count, total) {
         if (_isActiveRequest(requestVersion, requestUrl) &&
-            widget.progressIndicatorBuilder != null) {
+            widget.progressIndicatorBuilder != null &&
+            _shouldRebuildForProgress(count, total)) {
           setState(() {}); // 刷新进度
         }
       },
       onComplete: (bytes) {
         if (!_isActiveRequest(requestVersion, requestUrl)) return;
-        XNZCacheManager().setCache(requestUrl, bytes);
+        unawaited(XNZCacheManager().setCache(requestUrl, bytes));
         setState(() {
           _imageData = bytes;
           _status = XNZNetworkImageDonwloadStatus.complete;
           _task = null;
+          _lastProgressUpdateAt = null;
+          _lastProgressValue = -1;
         });
       },
       onError: (error) {
@@ -172,6 +200,8 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
           _status = XNZNetworkImageDonwloadStatus.failed;
           _error = error;
           _task = null;
+          _lastProgressUpdateAt = null;
+          _lastProgressValue = -1;
         });
       },
       connectTimeout: widget.connectTimeout,

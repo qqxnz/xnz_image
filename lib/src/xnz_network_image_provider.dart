@@ -52,14 +52,14 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
   Future<ui.Codec> _loadAsync(XNZNetworkImageProvider key) async {
     XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadAsync');
     final Uint8List data = await _loadImageData(key.imageUrl);
-    XNZCacheManager().setCache(key.imageUrl, data);
+    unawaited(XNZCacheManager().setCache(key.imageUrl, data));
     return await ui.instantiateImageCodec(data);
   }
 
   Future<AvifCodec> _loadAvifAsync(XNZNetworkImageProvider key) async {
     XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadAvifAsync');
     final Uint8List data = await _loadImageData(key.imageUrl);
-    XNZCacheManager().setCache(key.imageUrl, data);
+    unawaited(XNZCacheManager().setCache(key.imageUrl, data));
     return loadMemoryAvifCodec(
       data,
       codecKey: hashCode,

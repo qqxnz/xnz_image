@@ -60,7 +60,7 @@ class XNZCacheManager {
   }
 
   // 设置缓存（内存 + 磁盘）
-  void setCache(String url, Uint8List data) async {
+  Future<void> setCache(String url, Uint8List data) async {
     final encodedUrl = Uri.encodeComponent(url);
     memoryCache.put(encodedUrl, data);
 
@@ -69,7 +69,7 @@ class XNZCacheManager {
   }
 
   // 移除缓存
-  void removeCache(String url) async {
+  Future<void> removeCache(String url) async {
     final encodedUrl = Uri.encodeComponent(url);
     memoryCache.remove(encodedUrl);
 
@@ -78,7 +78,7 @@ class XNZCacheManager {
   }
 
   // 清空所有缓存
-  void clearAll() async {
+  Future<void> clearAll() async {
     memoryCache.clearAll();
 
     final diskCache = await XNZDiskCache.getInstance();
