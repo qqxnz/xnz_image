@@ -50,16 +50,14 @@ class XNZCacheImageProvider extends ImageProvider<XNZCacheImageProvider> {
 
   Future<ui.Codec> _loadAsync(XNZCacheImageProvider key) async {
     XNZCacheImageLogs.log('XNZCacheImageProvider', '_loadAsync');
-    final Uint8List? data = await _loadImageData(key.imageUrl);
-    if (data == null) throw Exception('Failed to load image data');
+    final Uint8List data = await _loadImageData(key.imageUrl);
     XNZCacheManager().setCache(key.imageUrl, data);
     return await ui.instantiateImageCodec(data);
   }
 
   Future<AvifCodec> _loadAvifAsync(XNZCacheImageProvider key) async {
     XNZCacheImageLogs.log('XNZCacheImageProvider', '_loadAvifAsync');
-    final Uint8List? data = await _loadImageData(key.imageUrl);
-    if (data == null) throw Exception('Failed to load image data');
+    final Uint8List data = await _loadImageData(key.imageUrl);
     XNZCacheManager().setCache(key.imageUrl, data);
     return loadMemoryAvifCodec(
       data,
@@ -68,7 +66,7 @@ class XNZCacheImageProvider extends ImageProvider<XNZCacheImageProvider> {
     );
   }
 
-  Future<Uint8List?> _loadImageData(String imageUrl) async {
+  Future<Uint8List> _loadImageData(String imageUrl) async {
     Uint8List? data = await XNZCacheManager().getCache(imageUrl);
     if (data != null) {
       XNZCacheImageLogs.log('XNZCacheImageProvider', '_loadImageData-返回缓存对象');
@@ -76,6 +74,7 @@ class XNZCacheImageProvider extends ImageProvider<XNZCacheImageProvider> {
     }
     XNZCacheImageLogs.log('XNZCacheImageProvider', '_loadImageData-开始下载');
     Completer<Uint8List?> completer = Completer<Uint8List?>();
+    Object? downloadError;
     XNZImageDownloaderTask task = XNZImageDownloaderTask(
       url: imageUrl,
       onComplete: (bytes) {
@@ -83,12 +82,19 @@ class XNZCacheImageProvider extends ImageProvider<XNZCacheImageProvider> {
         XNZCacheImageLogs.log('XNZCacheImageProvider', '_loadImageData-下载完成');
       },
       onError: (error) {
+        downloadError = error;
         XNZCacheImageLogs.log('XNZCacheImageProvider', '_loadImageData-下载失败');
         completer.complete(null);
       },
     );
     XNZImageDownloader().start(task);
-    return completer.future;
+    data = await completer.future;
+    if (data == null) {
+      throw Exception(
+        'Failed to load image data: $imageUrl, error: ${downloadError ?? "unknown"}',
+      );
+    }
+    return data;
   }
 
   bool _isLikelyAvifUrl(String url) {

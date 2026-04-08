@@ -22,20 +22,28 @@ class XNZImageDownloader {
       task.url,
       options: Options(
         responseType: ResponseType.bytes,
-        followRedirects: false,
-        // connectTimeout: task.connectTimeout,
+        followRedirects: true,
+        maxRedirects: 5,
+        connectTimeout: task.connectTimeout,
         sendTimeout: task.sendTimeout,
         receiveTimeout: task.receiveTimeout,
+        validateStatus: (status) =>
+            status != null && status >= 200 && status < 300,
       ),
-      onReceiveProgress: (int count, int total){
+      onReceiveProgress: (int count, int total) {
         task.count = count;
         task.total = total;
-        task.onReceiveProgress?.call(count,total);
+        task.onReceiveProgress?.call(count, total);
       },
       cancelToken: task.cancelToken,
     ).then((Response<List<int>> response) {
-      Uint8List bytes = Uint8List.fromList(response.data!);
-      XNZCacheImageLogs.log('XNZImageDownloader', '下载完成 ${task.url}  length:${bytes.length}');
+      final data = response.data;
+      if (data == null || data.isEmpty) {
+        throw StateError('Image download returned empty bytes: ${task.url}');
+      }
+      Uint8List bytes = Uint8List.fromList(data);
+      XNZCacheImageLogs.log(
+          'XNZImageDownloader', '下载完成 ${task.url}  length:${bytes.length}');
       task.onComplete?.call(bytes);
       tasks.remove(task);
     }).catchError((e) {
