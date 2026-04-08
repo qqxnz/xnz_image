@@ -1,16 +1,23 @@
-# example
+# xnz_net_cache_image example
 
-A new Flutter project.
+该目录是 `xnz_net_cache_image` 的演示工程，用于快速验证以下能力：
 
-## Getting Started
+- `XNZNetworkImage` 网络图片加载与缓存
+- `XNZMemoryImage` 内存字节流渲染
+- `XNZFileImage` 文件渲染
+- `Image + *Provider` 组合接入方式
+- `loadFailedBuilder` 失败回调示例
 
-This project is a starting point for a Flutter application.
+## 运行
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+# 在仓库根目录执行
+fvm flutter pub get
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+# 进入 example
+cd example
+fvm flutter pub get
+fvm flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+如果你没有使用 FVM，可将命令中的 `fvm flutter` 替换为 `flutter`。

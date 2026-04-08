@@ -10,7 +10,7 @@ Flutter 组件模版工程，包含：
 
 ```dart
 XNZNetworkImage(
-  url: 'https://picsum.photos/800/480',
+  imageUrl: 'https://picsum.photos/800/480',
   width: 300,
   height: 180,
   fit: BoxFit.cover,
@@ -73,7 +73,7 @@ Image(
 
 ```dart
 XNZNetworkImage(
-  url: 'https://picsum.photos/800/480',
+  imageUrl: 'https://picsum.photos/800/480',
   width: 300,
   height: 180,
   fit: BoxFit.cover,
