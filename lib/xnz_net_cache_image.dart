@@ -11,3 +11,5 @@ export 'src/xnz_image_downloader.dart';
 export 'src/xnz_memory_avif_image_provider.dart';
 export 'src/xnz_memory_image_provider.dart';
 export 'src/xnz_memory_image.dart';
+export 'src/xnz_file_image_provider.dart';
+export 'src/xnz_file_image.dart';

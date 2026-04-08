@@ -43,6 +43,32 @@ Image(
 )
 ```
 
+文件渲染（`XNZFileImage`）：
+
+```dart
+import 'dart:io';
+
+XNZFileImage(
+  file: File('/path/to/local/image.avif'),
+  width: 300,
+  height: 180,
+  fit: BoxFit.cover,
+)
+```
+
+文件渲染（`Image + XNZFileImageProvider`）：
+
+```dart
+import 'dart:io';
+
+Image(
+  image: XNZFileImageProvider(File('/path/to/local/image.avif')),
+  width: 300,
+  height: 180,
+  fit: BoxFit.cover,
+)
+```
+
 增强用法（圆角 + 进度 + 失败态）：
 
 ```dart

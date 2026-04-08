@@ -1,7 +1,8 @@
 import 'dart:convert';
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:xnz_net_cache_image/xnz_net_cache_image.dart';
 
 void main() {
@@ -37,6 +38,28 @@ class _DemoPageState extends State<DemoPage> {
   final Uint8List _memoryPngBytes = base64Decode(
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=',
   );
+  File? _demoAvifFile;
+
+  @override
+  void initState() {
+    super.initState();
+    _prepareDemoFile();
+  }
+
+  Future<void> _prepareDemoFile() async {
+    try {
+      final byteData = await rootBundle.load('assets/butterfly.avif');
+      final bytes = byteData.buffer.asUint8List();
+      final file = File('${Directory.systemTemp.path}/butterfly.avif');
+      await file.writeAsBytes(bytes, flush: true);
+      if (!mounted) return;
+      setState(() {
+        _demoAvifFile = file;
+      });
+    } catch (_) {
+      // Demo 场景下读取失败时保持为空，由页面展示 fallback 文案。
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +116,36 @@ class _DemoPageState extends State<DemoPage> {
             height: 120,
             fit: BoxFit.contain,
           ),
+          const SizedBox(height: 20),
+          const Text(
+            'XNZFileImage (from File)',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          if (_demoAvifFile != null)
+            XNZFileImage(
+              file: _demoAvifFile!,
+              width: 200,
+              height: 200,
+              fit: BoxFit.contain,
+            )
+          else
+            const Text('Loading demo file...'),
+          const SizedBox(height: 20),
+          const Text(
+            'Image + XNZFileImageProvider',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          if (_demoAvifFile != null)
+            Image(
+              image: XNZFileImageProvider(_demoAvifFile!),
+              width: 200,
+              height: 200,
+              fit: BoxFit.contain,
+            )
+          else
+            const Text('Loading demo file...'),
           const SizedBox(height: 20),
           const Text(
             'XNZNetworkImage (error callback demo)',
