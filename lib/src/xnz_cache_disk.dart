@@ -7,6 +7,8 @@ import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
 class XNZDiskCache {
   static XNZDiskCache? _instance;
   static Directory? _cacheDir;
+  static const int _maxDiskBytes = 500 * 1024 * 1024;
+  static const Duration _maxFileAge = Duration(days: 30);
 
   static Future<XNZDiskCache> getInstance() async {
     _instance ??= XNZDiskCache();
@@ -87,6 +89,7 @@ class XNZDiskCache {
     try {
       await file.writeAsBytes(data, flush: true);
       await file.setLastModified(DateTime.now());
+      await _enforceLimits();
     } catch (e) {
       XNZNetworkImageLogs.log(
         'XNZDiskCache',
@@ -114,6 +117,83 @@ class XNZDiskCache {
       await _cacheDir!.create();
     }
   }
+
+  Future<void> _enforceLimits() async {
+    await _init();
+    final now = DateTime.now();
+    final entries = <_DiskCacheEntry>[];
+
+    await for (final entity in _cacheDir!.list(followLinks: false)) {
+      if (entity is! File) continue;
+      try {
+        final stat = await entity.stat();
+        entries.add(
+          _DiskCacheEntry(
+            file: entity,
+            size: stat.size,
+            modified: stat.modified,
+          ),
+        );
+      } catch (e) {
+        XNZNetworkImageLogs.log(
+          'XNZDiskCache',
+          'stat error file=${entity.path} err=$e',
+        );
+      }
+    }
+
+    // 1) 先按过期时间清理
+    for (final entry in entries) {
+      if (now.difference(entry.modified) > _maxFileAge) {
+        try {
+          await entry.file.delete();
+        } catch (e) {
+          XNZNetworkImageLogs.log(
+            'XNZDiskCache',
+            'expire delete error file=${entry.file.path} err=$e',
+          );
+        }
+      }
+    }
+
+    // 2) 再按 LRU（基于最近修改时间）控制总容量
+    final aliveEntries = <_DiskCacheEntry>[];
+    int totalBytes = 0;
+    for (final entry in entries) {
+      if (await entry.file.exists()) {
+        aliveEntries.add(entry);
+        totalBytes += entry.size;
+      }
+    }
+
+    if (totalBytes <= _maxDiskBytes) return;
+
+    aliveEntries.sort((a, b) => a.modified.compareTo(b.modified));
+    for (final entry in aliveEntries) {
+      if (totalBytes <= _maxDiskBytes) break;
+      try {
+        await entry.file.delete();
+        totalBytes -= entry.size;
+      } catch (e) {
+        XNZNetworkImageLogs.log(
+          'XNZDiskCache',
+          'lru delete error file=${entry.file.path} err=$e',
+        );
+      }
+    }
+  }
+}
+
+class _DiskCacheEntry {
+  final File file;
+  final int size;
+  final DateTime modified;
+
+  _DiskCacheEntry({
+    required this.file,
+    required this.size,
+    required this.modified,
+  });
 }
 
 // import 'dart:typed_data';

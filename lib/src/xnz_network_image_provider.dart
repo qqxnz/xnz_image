@@ -111,8 +111,10 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
       identical(this, other) ||
       other is XNZNetworkImageProvider &&
           runtimeType == other.runtimeType &&
-          imageUrl == other.imageUrl;
+          imageUrl == other.imageUrl &&
+          scale == other.scale &&
+          avifOverrideDurationMs == other.avifOverrideDurationMs;
 
   @override
-  int get hashCode => imageUrl.hashCode;
+  int get hashCode => Object.hash(imageUrl, scale, avifOverrideDurationMs);
 }

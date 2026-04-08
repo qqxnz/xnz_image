@@ -65,6 +65,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   Uint8List? _imageData;
   dynamic _error;
   XNZImageDownloaderTask? _task;
+  int _requestVersion = 0;
 
   @override
   void initState() {
@@ -107,11 +108,21 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     }
   }
 
+  bool _isActiveRequest(int requestVersion, String requestUrl) {
+    return mounted &&
+        requestVersion == _requestVersion &&
+        requestUrl == widget.imageUrl;
+  }
+
   void _loadImage() async {
+    final requestVersion = ++_requestVersion;
+    final requestUrl = widget.imageUrl;
+
     /// 1️⃣ 内存缓存（同步）
-    final memoryData = XNZCacheManager().getMemoryCache(widget.imageUrl);
+    final memoryData = XNZCacheManager().getMemoryCache(requestUrl);
     if (memoryData != null) {
-      XNZNetworkImageLogs.log('XNZNetworkImage', '内存缓存命中 ${widget.imageUrl}');
+      XNZNetworkImageLogs.log('XNZNetworkImage', '内存缓存命中 $requestUrl');
+      if (!_isActiveRequest(requestVersion, requestUrl)) return;
       setState(() {
         _imageData = memoryData;
         _status = XNZNetworkImageDonwloadStatus.complete;
@@ -120,11 +131,11 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     }
 
     /// 2️⃣ 硬盘缓存（异步，但不提前 setState）
-    final diskData = await XNZCacheManager().getDiskCache(widget.imageUrl);
-    if (!mounted) return;
+    final diskData = await XNZCacheManager().getDiskCache(requestUrl);
+    if (!_isActiveRequest(requestVersion, requestUrl)) return;
 
     if (diskData != null) {
-      XNZNetworkImageLogs.log('XNZNetworkImage', '硬盘缓存命中 ${widget.imageUrl}');
+      XNZNetworkImageLogs.log('XNZNetworkImage', '硬盘缓存命中 $requestUrl');
       setState(() {
         _imageData = diskData;
         _status = XNZNetworkImageDonwloadStatus.complete;
@@ -139,25 +150,28 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     });
 
     _task = XNZImageDownloaderTask(
-      url: widget.imageUrl,
+      url: requestUrl,
       onReceiveProgress: (count, total) {
-        if (mounted && widget.progressIndicatorBuilder != null) {
+        if (_isActiveRequest(requestVersion, requestUrl) &&
+            widget.progressIndicatorBuilder != null) {
           setState(() {}); // 刷新进度
         }
       },
       onComplete: (bytes) {
-        if (!mounted) return;
-        XNZCacheManager().setCache(widget.imageUrl, bytes);
+        if (!_isActiveRequest(requestVersion, requestUrl)) return;
+        XNZCacheManager().setCache(requestUrl, bytes);
         setState(() {
           _imageData = bytes;
           _status = XNZNetworkImageDonwloadStatus.complete;
+          _task = null;
         });
       },
       onError: (error) {
-        if (!mounted) return;
+        if (!_isActiveRequest(requestVersion, requestUrl)) return;
         setState(() {
           _status = XNZNetworkImageDonwloadStatus.failed;
           _error = error;
+          _task = null;
         });
       },
       connectTimeout: widget.connectTimeout,

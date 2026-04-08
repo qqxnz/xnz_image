@@ -73,6 +73,7 @@ class XNZImageDownloader {
 
   final Dio dio = Dio();
   final List<XNZImageDownloaderTask> tasks = [];
+  final Map<String, _SharedDownload> _sharedDownloads = {};
 
   factory XNZImageDownloader() {
     return _singleton;
@@ -82,6 +83,22 @@ class XNZImageDownloader {
 
   void start(XNZImageDownloaderTask task) {
     tasks.add(task);
+    final shared = _sharedDownloads[task.url];
+    if (shared != null) {
+      shared.subscribers.add(task);
+      if (shared.total > 0) {
+        task.count = shared.count;
+        task.total = shared.total;
+        task.onReceiveProgress?.call(shared.count, shared.total);
+      }
+      XNZNetworkImageLogs.log('XNZImageDownloader', '复用下载任务 ${task.url}');
+      return;
+    }
+
+    final newShared = _SharedDownload();
+    newShared.subscribers.add(task);
+    _sharedDownloads[task.url] = newShared;
+
     XNZNetworkImageLogs.log('XNZImageDownloader', '开始下载 ${task.url}');
     dio.get<List<int>>(
       task.url,
@@ -96,11 +113,16 @@ class XNZImageDownloader {
             status != null && status >= 200 && status < 300,
       ),
       onReceiveProgress: (int count, int total) {
-        task.count = count;
-        task.total = total;
-        task.onReceiveProgress?.call(count, total);
+        newShared.count = count;
+        newShared.total = total;
+        for (final subscriber in List<XNZImageDownloaderTask>.from(
+            newShared.subscribers)) {
+          subscriber.count = count;
+          subscriber.total = total;
+          subscriber.onReceiveProgress?.call(count, total);
+        }
       },
-      cancelToken: task.cancelToken,
+      cancelToken: newShared.cancelToken,
     ).then((Response<List<int>> response) {
       final data = response.data;
       if (data == null || data.isEmpty) {
@@ -109,24 +131,48 @@ class XNZImageDownloader {
       Uint8List bytes = Uint8List.fromList(data);
       XNZNetworkImageLogs.log(
           'XNZImageDownloader', '下载完成 ${task.url}  length:${bytes.length}');
-      task.onComplete?.call(bytes);
-      tasks.remove(task);
+
+      final subscribers =
+          List<XNZImageDownloaderTask>.from(newShared.subscribers);
+      for (final subscriber in subscribers) {
+        subscriber.onComplete?.call(bytes);
+        tasks.remove(subscriber);
+      }
+      _sharedDownloads.remove(task.url);
     }).catchError((e) {
       XNZNetworkImageLogs.log('XNZImageDownloader', '下载失败 ${task.url} e:$e');
-      task.onError?.call(e);
-      tasks.remove(task);
+
+      final subscribers =
+          List<XNZImageDownloaderTask>.from(newShared.subscribers);
+      for (final subscriber in subscribers) {
+        subscriber.onError?.call(e);
+        tasks.remove(subscriber);
+      }
+      _sharedDownloads.remove(task.url);
     });
   }
 
   void cancel(XNZImageDownloaderTask task) {
     task.cancel();
     tasks.remove(task);
+    final shared = _sharedDownloads[task.url];
+    if (shared == null) return;
+
+    shared.subscribers.remove(task);
+    if (shared.subscribers.isEmpty) {
+      shared.cancelToken.cancel('Canceled by user!');
+      _sharedDownloads.remove(task.url);
+    }
   }
 
   void cancelAll() {
     for (var task in tasks) {
       task.cancel();
     }
+    for (final shared in _sharedDownloads.values) {
+      shared.cancelToken.cancel('Canceled by user!');
+    }
+    _sharedDownloads.clear();
     tasks.clear();
   }
 }
@@ -162,4 +208,11 @@ class XNZImageDownloaderTask {
   void cancel() {
     cancelToken?.cancel('Canceled by user!');
   }
+}
+
+class _SharedDownload {
+  final CancelToken cancelToken = CancelToken();
+  final List<XNZImageDownloaderTask> subscribers = [];
+  int count = 0;
+  int total = 0;
 }
