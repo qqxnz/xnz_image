@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_avif_platform_interface/flutter_avif_platform_interface.dart'
@@ -9,7 +8,7 @@ import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
 import 'package:xnz_net_cache_image/src/xnz_image_downloader.dart';
 import 'package:xnz_net_cache_image/src/xnz_memory_avif_image_provider.dart';
 
-enum XNZCacheImageDonwloadStatus {
+enum XNZNetworkImageDonwloadStatus {
   none,
   downloading,
   complete,
@@ -21,35 +20,8 @@ typedef ImageWidgetBuilder = Widget Function(
   ImageProvider imageProvider,
 );
 
-class XNZCacheImage extends StatefulWidget {
-  /// 下载图片并缓存
-  static Future<Uint8List?> downloadImageData(String imageUrl) async {
-    if (kIsWeb) {
-      throw UnsupportedError('XNZCacheImage does not support the web platform.');
-    }
-
-    Completer<Uint8List?> completer = Completer<Uint8List?>();
-
-    XNZImageDownloaderTask task = XNZImageDownloaderTask(
-      url: imageUrl,
-      onComplete: (bytes) {
-        XNZCacheManager().setCache(imageUrl, bytes);
-        completer.complete(bytes);
-        XNZCacheImageLogs.log(
-            'XNZCacheImageProvider', 'downloadImageData- $imageUrl 下载完成');
-      },
-      onError: (error) {
-        XNZCacheImageLogs.log(
-            'XNZCacheImageProvider', 'downloadImageData-  $imageUrl 下载失败');
-        completer.complete(null);
-      },
-    );
-
-    XNZImageDownloader().start(task);
-    return completer.future;
-  }
-
-  final String url;
+class XNZNetworkImage extends StatefulWidget {
+  final String imageUrl;
   final double? width;
   final double? height;
   final Color? color;
@@ -69,9 +41,9 @@ class XNZCacheImage extends StatefulWidget {
   /// 仅在 AVIF 且使用 `XNZMemoryAvifImage` 解码路径时生效。
   final int? overrideDurationMs;
 
-  const XNZCacheImage({
+  const XNZNetworkImage({
     super.key,
-    required this.url,
+    required this.imageUrl,
     this.width,
     this.height,
     this.color,
@@ -87,11 +59,11 @@ class XNZCacheImage extends StatefulWidget {
   });
 
   @override
-  State<StatefulWidget> createState() => StateXNZCacheImage();
+  State<StatefulWidget> createState() => StateXNZNetworkImage();
 }
 
-class StateXNZCacheImage extends State<XNZCacheImage> {
-  XNZCacheImageDonwloadStatus _status = XNZCacheImageDonwloadStatus.none;
+class StateXNZNetworkImage extends State<XNZNetworkImage> {
+  XNZNetworkImageDonwloadStatus _status = XNZNetworkImageDonwloadStatus.none;
 
   Uint8List? _imageData;
   dynamic _error;
@@ -101,9 +73,9 @@ class StateXNZCacheImage extends State<XNZCacheImage> {
   void initState() {
     super.initState();
     if (kIsWeb) {
-      _status = XNZCacheImageDonwloadStatus.failed;
+      _status = XNZNetworkImageDonwloadStatus.failed;
       _error = UnsupportedError(
-        'XNZCacheImage does not support the web platform.',
+        'XNZNetworkImage does not support the web platform.',
       );
       return;
     }
@@ -111,13 +83,13 @@ class StateXNZCacheImage extends State<XNZCacheImage> {
   }
 
   @override
-  void didUpdateWidget(covariant XNZCacheImage oldWidget) {
+  void didUpdateWidget(covariant XNZNetworkImage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.url != widget.url) {
-      XNZCacheImageLogs.log('XNZCacheImage',
-          'didUpdateWidget url变化 ${oldWidget.url} -> ${widget.url}');
+    if (oldWidget.imageUrl != widget.imageUrl) {
+      XNZNetworkImageLogs.log('XNZNetworkImage',
+          'didUpdateWidget url变化 ${oldWidget.imageUrl} -> ${widget.imageUrl}');
       _cancelDownload();
-      _status = XNZCacheImageDonwloadStatus.none;
+      _status = XNZNetworkImageDonwloadStatus.none;
       _imageData = null;
       _error = null;
       _loadImage();
@@ -126,7 +98,7 @@ class StateXNZCacheImage extends State<XNZCacheImage> {
 
   @override
   void dispose() {
-    XNZCacheImageLogs.log('XNZCacheImage', '-dispose ${widget.url}');
+    XNZNetworkImageLogs.log('XNZNetworkImage', '-dispose ${widget.imageUrl}');
     _cancelDownload();
     super.dispose();
   }
@@ -140,37 +112,37 @@ class StateXNZCacheImage extends State<XNZCacheImage> {
 
   void _loadImage() async {
     /// 1️⃣ 内存缓存（同步）
-    final memoryData = XNZCacheManager().getMemoryCache(widget.url);
+    final memoryData = XNZCacheManager().getMemoryCache(widget.imageUrl);
     if (memoryData != null) {
-      XNZCacheImageLogs.log('XNZCacheImage', '内存缓存命中 ${widget.url}');
+      XNZNetworkImageLogs.log('XNZNetworkImage', '内存缓存命中 ${widget.imageUrl}');
       setState(() {
         _imageData = memoryData;
-        _status = XNZCacheImageDonwloadStatus.complete;
+        _status = XNZNetworkImageDonwloadStatus.complete;
       });
       return;
     }
 
     /// 2️⃣ 硬盘缓存（异步，但不提前 setState）
-    final diskData = await XNZCacheManager().getDiskCache(widget.url);
+    final diskData = await XNZCacheManager().getDiskCache(widget.imageUrl);
     if (!mounted) return;
 
     if (diskData != null) {
-      XNZCacheImageLogs.log('XNZCacheImage', '硬盘缓存命中 ${widget.url}');
+      XNZNetworkImageLogs.log('XNZNetworkImage', '硬盘缓存命中 ${widget.imageUrl}');
       setState(() {
         _imageData = diskData;
-        _status = XNZCacheImageDonwloadStatus.complete;
+        _status = XNZNetworkImageDonwloadStatus.complete;
       });
       return;
     }
 
     /// 3️⃣ 真正需要下载，才进入 downloading
     setState(() {
-      _status = XNZCacheImageDonwloadStatus.downloading;
+      _status = XNZNetworkImageDonwloadStatus.downloading;
       _error = null;
     });
 
     _task = XNZImageDownloaderTask(
-      url: widget.url,
+      url: widget.imageUrl,
       onReceiveProgress: (count, total) {
         if (mounted && widget.progressIndicatorBuilder != null) {
           setState(() {}); // 刷新进度
@@ -178,16 +150,16 @@ class StateXNZCacheImage extends State<XNZCacheImage> {
       },
       onComplete: (bytes) {
         if (!mounted) return;
-        XNZCacheManager().setCache(widget.url, bytes);
+        XNZCacheManager().setCache(widget.imageUrl, bytes);
         setState(() {
           _imageData = bytes;
-          _status = XNZCacheImageDonwloadStatus.complete;
+          _status = XNZNetworkImageDonwloadStatus.complete;
         });
       },
       onError: (error) {
         if (!mounted) return;
         setState(() {
-          _status = XNZCacheImageDonwloadStatus.failed;
+          _status = XNZNetworkImageDonwloadStatus.failed;
           _error = error;
         });
       },
@@ -202,8 +174,8 @@ class StateXNZCacheImage extends State<XNZCacheImage> {
   @override
   Widget build(BuildContext context) {
     switch (_status) {
-      case XNZCacheImageDonwloadStatus.none:
-      case XNZCacheImageDonwloadStatus.downloading:
+      case XNZNetworkImageDonwloadStatus.none:
+      case XNZNetworkImageDonwloadStatus.downloading:
         if (widget.progressIndicatorBuilder != null && _task != null) {
           final progress = _task!.total > 0 ? _task!.count / _task!.total : 0.0;
           return widget.progressIndicatorBuilder!(progress);
@@ -215,7 +187,7 @@ class StateXNZCacheImage extends State<XNZCacheImage> {
               color: Colors.transparent,
             );
 
-      case XNZCacheImageDonwloadStatus.complete:
+      case XNZNetworkImageDonwloadStatus.complete:
         final bytes = _imageData!;
         final isAvif = isAvifBytes(bytes);
         final provider = isAvif
@@ -237,9 +209,9 @@ class StateXNZCacheImage extends State<XNZCacheImage> {
           fit: widget.fit,
         );
 
-      case XNZCacheImageDonwloadStatus.failed:
+      case XNZNetworkImageDonwloadStatus.failed:
         if (widget.loadFailedBuilder != null) {
-          return widget.loadFailedBuilder!(widget.url, _error);
+          return widget.loadFailedBuilder!(widget.imageUrl, _error);
         }
         return widget.placeholder ??
             Container(

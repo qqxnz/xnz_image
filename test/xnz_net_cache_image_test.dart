@@ -7,7 +7,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: XNZCacheImage(url:  'https://picsum.photos/400/240',
+          body: XNZNetworkImage(imageUrl:  'https://picsum.photos/400/240',
             width: 200,
             height: 120,
           ),
@@ -15,7 +15,7 @@ void main() {
       ),
     );
 
-    expect(find.byType(XNZCacheImage), findsOneWidget);
-    expect(find.byType(XNZCacheImage), findsOneWidget);
+    expect(find.byType(XNZNetworkImage), findsOneWidget);
+    expect(find.byType(XNZNetworkImage), findsOneWidget);
   });
 }

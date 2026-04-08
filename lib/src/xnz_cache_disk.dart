@@ -25,8 +25,8 @@ class XNZDiskCache {
       _cacheDir!.createSync(recursive: true);
     }
 
-    XNZCacheImageLogs.log(
-      'XNZCacheImage',
+    XNZNetworkImageLogs.log(
+      'XNZNetworkImage',
       'XNZDiskCache init path=${_cacheDir!.path}',
     );
   }
@@ -71,7 +71,7 @@ class XNZDiskCache {
       await file.setLastModified(DateTime.now());
       return data;
     } catch (e) {
-      XNZCacheImageLogs.log(
+      XNZNetworkImageLogs.log(
         'XNZDiskCache',
         'get error url=$url err=$e',
       );
@@ -88,7 +88,7 @@ class XNZDiskCache {
       await file.writeAsBytes(data, flush: true);
       await file.setLastModified(DateTime.now());
     } catch (e) {
-      XNZCacheImageLogs.log(
+      XNZNetworkImageLogs.log(
         'XNZDiskCache',
         'set error url=$url err=$e',
       );
@@ -135,7 +135,7 @@ class XNZDiskCache {
 //
 //   // 初始化
 //   Future<void> init() async {
-//     XNZCacheImageLogs.log('XNZCacheImage', 'XNZDiskCache init');
+//     XNZNetworkImageLogs.log('XNZNetworkImage', 'XNZDiskCache init');
 //     final String path = (await getApplicationDocumentsDirectory()).path;
 //     String dbPath = '$path/xnz_image_cache.db';
 //     if(_db != null){

@@ -7,27 +7,27 @@ import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
 import 'package:xnz_net_cache_image/src/xnz_image_downloader.dart';
 import 'package:xnz_net_cache_image/src/xnz_memory_avif_image_provider.dart';
 
-class XNZCacheImageProvider extends ImageProvider<XNZCacheImageProvider> {
+class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
   final String imageUrl;
   final double scale;
   final int? overrideDurationMs;
 
-  XNZCacheImageProvider(
+  XNZNetworkImageProvider(
     this.imageUrl, {
     this.scale = 1.0,
     this.overrideDurationMs = -1,
   });
 
   @override
-  Future<XNZCacheImageProvider> obtainKey(ImageConfiguration configuration) {
-    XNZCacheImageLogs.log('XNZCacheImageProvider', 'obtainKey');
-    return SynchronousFuture<XNZCacheImageProvider>(this);
+  Future<XNZNetworkImageProvider> obtainKey(ImageConfiguration configuration) {
+    XNZNetworkImageLogs.log('XNZNetworkImageProvider', 'obtainKey');
+    return SynchronousFuture<XNZNetworkImageProvider>(this);
   }
 
   @override
   ImageStreamCompleter loadImage(
-      XNZCacheImageProvider key, ImageDecoderCallback decode) {
-    XNZCacheImageLogs.log('XNZCacheImageProvider', 'loadImage');
+      XNZNetworkImageProvider key, ImageDecoderCallback decode) {
+    XNZNetworkImageLogs.log('XNZNetworkImageProvider', 'loadImage');
     if (_isLikelyAvifUrl(key.imageUrl)) {
       return AvifImageStreamCompleter(
         key: key,
@@ -35,7 +35,7 @@ class XNZCacheImageProvider extends ImageProvider<XNZCacheImageProvider> {
         scale: key.scale,
         debugLabel: key.imageUrl,
         informationCollector: () sync* {
-          yield ErrorDescription('XNZCacheImageProvider Image provider: $this');
+          yield ErrorDescription('XNZNetworkImageProvider Image provider: $this');
         },
       );
     }
@@ -43,20 +43,20 @@ class XNZCacheImageProvider extends ImageProvider<XNZCacheImageProvider> {
       codec: _loadAsync(key),
       scale: key.scale,
       informationCollector: () sync* {
-        yield ErrorDescription('XNZCacheImageProvider Image provider: $this');
+        yield ErrorDescription('XNZNetworkImageProvider Image provider: $this');
       },
     );
   }
 
-  Future<ui.Codec> _loadAsync(XNZCacheImageProvider key) async {
-    XNZCacheImageLogs.log('XNZCacheImageProvider', '_loadAsync');
+  Future<ui.Codec> _loadAsync(XNZNetworkImageProvider key) async {
+    XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadAsync');
     final Uint8List data = await _loadImageData(key.imageUrl);
     XNZCacheManager().setCache(key.imageUrl, data);
     return await ui.instantiateImageCodec(data);
   }
 
-  Future<AvifCodec> _loadAvifAsync(XNZCacheImageProvider key) async {
-    XNZCacheImageLogs.log('XNZCacheImageProvider', '_loadAvifAsync');
+  Future<AvifCodec> _loadAvifAsync(XNZNetworkImageProvider key) async {
+    XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadAvifAsync');
     final Uint8List data = await _loadImageData(key.imageUrl);
     XNZCacheManager().setCache(key.imageUrl, data);
     return loadMemoryAvifCodec(
@@ -69,21 +69,21 @@ class XNZCacheImageProvider extends ImageProvider<XNZCacheImageProvider> {
   Future<Uint8List> _loadImageData(String imageUrl) async {
     Uint8List? data = await XNZCacheManager().getCache(imageUrl);
     if (data != null) {
-      XNZCacheImageLogs.log('XNZCacheImageProvider', '_loadImageData-返回缓存对象');
+      XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadImageData-返回缓存对象');
       return Future.value(data);
     }
-    XNZCacheImageLogs.log('XNZCacheImageProvider', '_loadImageData-开始下载');
+    XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadImageData-开始下载');
     Completer<Uint8List?> completer = Completer<Uint8List?>();
     Object? downloadError;
     XNZImageDownloaderTask task = XNZImageDownloaderTask(
       url: imageUrl,
       onComplete: (bytes) {
         completer.complete(bytes);
-        XNZCacheImageLogs.log('XNZCacheImageProvider', '_loadImageData-下载完成');
+        XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadImageData-下载完成');
       },
       onError: (error) {
         downloadError = error;
-        XNZCacheImageLogs.log('XNZCacheImageProvider', '_loadImageData-下载失败');
+        XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadImageData-下载失败');
         completer.complete(null);
       },
     );
@@ -105,7 +105,7 @@ class XNZCacheImageProvider extends ImageProvider<XNZCacheImageProvider> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is XNZCacheImageProvider &&
+      other is XNZNetworkImageProvider &&
           runtimeType == other.runtimeType &&
           imageUrl == other.imageUrl;
 

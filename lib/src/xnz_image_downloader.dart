@@ -17,7 +17,7 @@ class XNZImageDownloader {
 
   void start(XNZImageDownloaderTask task) {
     tasks.add(task);
-    XNZCacheImageLogs.log('XNZImageDownloader', '开始下载 ${task.url}');
+    XNZNetworkImageLogs.log('XNZImageDownloader', '开始下载 ${task.url}');
     dio.get<List<int>>(
       task.url,
       options: Options(
@@ -42,12 +42,12 @@ class XNZImageDownloader {
         throw StateError('Image download returned empty bytes: ${task.url}');
       }
       Uint8List bytes = Uint8List.fromList(data);
-      XNZCacheImageLogs.log(
+      XNZNetworkImageLogs.log(
           'XNZImageDownloader', '下载完成 ${task.url}  length:${bytes.length}');
       task.onComplete?.call(bytes);
       tasks.remove(task);
     }).catchError((e) {
-      XNZCacheImageLogs.log('XNZImageDownloader', '下载失败 ${task.url} e:$e');
+      XNZNetworkImageLogs.log('XNZImageDownloader', '下载失败 ${task.url} e:$e');
       task.onError?.call(e);
       tasks.remove(task);
     });

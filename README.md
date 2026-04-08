@@ -9,7 +9,7 @@ Flutter 组件模版工程，包含：
 ## 组件示例
 
 ```dart
-XNZCacheImage(
+XNZNetworkImage(
   url: 'https://picsum.photos/800/480',
   width: 300,
   height: 180,
@@ -20,7 +20,7 @@ XNZCacheImage(
 增强用法（圆角 + 进度 + 失败态）：
 
 ```dart
-XNZCacheImage(
+XNZNetworkImage(
   url: 'https://picsum.photos/800/480',
   width: 300,
   height: 180,
@@ -68,7 +68,7 @@ XNZCacheImage(
 ## 平台支持
 
 - 当前组件不支持 Web 平台。
-- 在 Web 端使用 `XNZCacheImage` / `XNZMemoryAvifImage` 会返回不支持错误（`UnsupportedError`）。
+- 在 Web 端使用 `XNZNetworkImage` / `XNZMemoryAvifImage` 会返回不支持错误（`UnsupportedError`）。
 
 ## 本地运行
 

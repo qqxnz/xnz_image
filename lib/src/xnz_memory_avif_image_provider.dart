@@ -10,7 +10,7 @@ import 'package:flutter_avif_platform_interface/flutter_avif_platform_interface.
 /// 轻量 AVIF 内存图像提供器实现。
 ///
 /// 该文件参考 `flutter_avif` 的核心解码/帧调度逻辑，仅保留
-/// `xnz_cache_image` 需要的内存字节解码能力，避免直接依赖 `flutter_avif` 组件层。
+/// `xnz_network_image` 需要的内存字节解码能力，避免直接依赖 `flutter_avif` 组件层。
 T? _ambiguate<T>(T? value) => value;
 
 enum AvifFileType { avif, avis, unknown }

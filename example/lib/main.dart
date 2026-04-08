@@ -38,24 +38,24 @@ class _DemoPageState extends State<DemoPage> {
         padding: const EdgeInsets.all(16),
         children: [
           const Text(
-            'XNZCacheImage (with callbacks)',
+            'XNZNetworkImage (with callbacks)',
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
-          const XNZCacheImage(
-            url: 'https://ezgif.com/images/format-demo/butterfly.avif',
+          const XNZNetworkImage(
+            imageUrl: 'https://ezgif.com/images/format-demo/butterfly.avif',
             width: 200,
             height: 200,
             fit: BoxFit.contain,
           ),
           const SizedBox(height: 20),
           const Text(
-            'Image + XNZCacheImageProvider',
+            'Image + XNZNetworkImageProvider',
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Image(
-            image: XNZCacheImageProvider(
+            image: XNZNetworkImageProvider(
                 'https://ezgif.com/images/format-demo/butterfly.avif'),
             width: 200,
             height: 200,
@@ -63,12 +63,12 @@ class _DemoPageState extends State<DemoPage> {
           ),
           const SizedBox(height: 20),
           const Text(
-            'XNZCacheImage (error callback demo)',
+            'XNZNetworkImage (error callback demo)',
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
-          XNZCacheImage(
-            url: 'https://sssa',
+          XNZNetworkImage(
+            imageUrl: 'https://sssa',
             width: 200,
             height: 200,
             loadFailedBuilder: (url, error) {
