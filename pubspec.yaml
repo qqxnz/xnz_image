@@ -16,6 +16,10 @@ dependencies:
   flutter_avif_platform_interface: ^3.1.0
   flutter_avif_android: ^3.1.0
   flutter_avif_ios: ^3.1.0
+  flutter_avif_macos: ^3.1.0
+  flutter_avif_linux: ^3.1.0
+  flutter_avif_windows: ^3.1.0
+  flutter_avif_web: ^3.1.0
 
 
 dev_dependencies:
@@ -24,4 +28,3 @@ dev_dependencies:
   flutter_lints: ^4.0.0
 
 flutter:
-

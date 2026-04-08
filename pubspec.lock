@@ -110,11 +110,43 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.0"
+  flutter_avif_linux:
+    dependency: "direct main"
+    description:
+      name: flutter_avif_linux
+      sha256: dd6179edca12c720761b3acc678d7f15208eb8647adbac5a6a90f52d4ba56e2d
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.0"
+  flutter_avif_macos:
+    dependency: "direct main"
+    description:
+      name: flutter_avif_macos
+      sha256: "8e39f365dfc5713d4527f07a92399184857ea30eced85f82171bfd0a45e2c73b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.0"
   flutter_avif_platform_interface:
     dependency: "direct main"
     description:
       name: flutter_avif_platform_interface
       sha256: f5c110bdb7de2d4ab4902bfe2ec331fe24bc19b6d54f00ac4fa165effc0edcda
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.0"
+  flutter_avif_web:
+    dependency: "direct main"
+    description:
+      name: flutter_avif_web
+      sha256: db2ff395b08cbfe9116e48ac65c428ba21a9159972ea019f8d7be580ff6cf6e8
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.0"
+  flutter_avif_windows:
+    dependency: "direct main"
+    description:
+      name: flutter_avif_windows
+      sha256: e0c7722df305a6621f4ecdd83098025c705bcf0e8ce9519e03c6f515abcf351d
       url: "https://pub.dev"
     source: hosted
     version: "3.1.0"
@@ -128,6 +160,11 @@ packages:
     version: "4.0.0"
   flutter_test:
     dependency: "direct dev"
+    description: flutter
+    source: sdk
+    version: "0.0.0"
+  flutter_web_plugins:
+    dependency: transitive
     description: flutter
     source: sdk
     version: "0.0.0"
