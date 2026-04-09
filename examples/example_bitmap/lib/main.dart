@@ -7,6 +7,7 @@ const _invalidDemoImageUrl = 'https://sssa';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   XNZImageLogs.showLogs = true;
+  XNZImageMemoryObserver().init();
   runApp(const DemoApp());
 }
 

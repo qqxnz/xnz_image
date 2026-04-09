@@ -409,10 +409,9 @@ packages:
   xnz_image_core:
     dependency: transitive
     description:
-      name: xnz_image_core
-      sha256: "36ed84fa5df9bc57bf08ee14887e7dc9415e101414a7864685c599842a74c241"
-      url: "https://pub.dev"
-    source: hosted
+      path: "../../packages/xnz_image_core"
+      relative: true
+    source: path
     version: "0.1.4"
 sdks:
   dart: ">=3.5.0 <4.0.0"

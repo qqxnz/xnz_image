@@ -8,6 +8,7 @@ const _demoSvgUrl = 'https://api.iconify.design/circle-flags/zh.svg';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   XNZImageLogs.showLogs = true;
+  XNZImageMemoryObserver().init();
   XNZImage.support(XNZImageSvg());
   runApp(const DemoApp());
 }

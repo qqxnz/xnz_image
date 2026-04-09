@@ -45,9 +45,29 @@ import 'package:xnz_image_avif/xnz_image_avif.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  XNZImageLogs.showLogs = true;
+  XNZImageMemoryObserver().init();
 
   XNZImage.support(XNZImageSvg());
   XNZImage.support(XNZImageAvif());
+
+  runApp(const MyApp());
+}
+```
+
+## 内存压力监听
+
+`XNZImageMemoryObserver` 用于监听系统内存压力事件，在触发时自动清空图片内存缓存，避免 OOM 风险。
+
+```dart
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 可选：开启调试日志，便于观察触发时机
+  XNZImageLogs.showLogs = true;
+
+  // 建议在应用启动阶段初始化一次
+  XNZImageMemoryObserver().init();
 
   runApp(const MyApp());
 }
