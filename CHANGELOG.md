@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- Added new features.
+
 ## 0.1.2
 
 - Updated `homepage` and `repository` to `https://github.com/qqxnz/xnz_image.git`.
