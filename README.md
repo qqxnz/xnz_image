@@ -122,30 +122,47 @@ Image(
 
 ## 统一渲染回调（推荐）
 
-新版本提供 `renderBuilder`，用于统一处理位图与自定义渲染（如 SVG）：
+新版本提供 `renderBuilder`，用于统一处理位图与自定义渲染（如 SVG）。
+签名为：
+
+- `Widget? Function(BuildContext, Widget child)`
+
+当 `renderBuilder` 返回 `null` 时，会回退到默认渲染（如 `Image`、`SvgPicture` 等）：
 
 ```dart
 XNZNetworkImage(
   imageUrl: url,
-  renderBuilder: (context, resolved) {
-    if (resolved.kind == XNZResolvedKind.customWidget) {
-      return resolved.widget!;
-    }
-
+  renderBuilder: (context, child) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: Image(
-        image: resolved.provider!,
-        fit: BoxFit.cover,
-      ),
+      child: child,
     );
   },
+)
+```
+
+直接返回 `child`：
+
+```dart
+XNZNetworkImage(
+  imageUrl: url,
+  renderBuilder: (context, child) => child,
+)
+```
+
+返回 `null` 使用默认渲染：
+
+```dart
+XNZNetworkImage(
+  imageUrl: url,
+  renderBuilder: (context, child) => null,
 )
 ```
 
 ## 兼容说明
 
 - 统一使用 `renderBuilder` 处理位图与自定义渲染。
+- 推荐用 `(context, child)` 包裹默认渲染。
 
 ## XNZCacheManager 示例
 

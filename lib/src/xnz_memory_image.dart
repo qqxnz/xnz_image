@@ -62,7 +62,7 @@ class XNZMemoryImage extends StatelessWidget {
     );
   }
 
-  Widget _defaultRender(BuildContext context, XNZResolvedImage resolved) {
+  Widget _defaultRender(XNZResolvedImage resolved) {
     if (resolved.kind == XNZResolvedKind.customWidget) {
       return resolved.widget ?? const SizedBox.shrink();
     }
@@ -81,9 +81,11 @@ class XNZMemoryImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resolved = _resolveImage();
-    if (renderBuilder != null) {
-      return renderBuilder!(context, resolved);
-    }
-    return _defaultRender(context, resolved);
+    final child = _defaultRender(resolved);
+    return xnzApplyRenderBuilder(
+      context: context,
+      child: child,
+      renderBuilder: renderBuilder,
+    );
   }
 }

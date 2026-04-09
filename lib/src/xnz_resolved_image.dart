@@ -18,7 +18,15 @@ class XNZResolvedImage {
   final Object? meta;
 }
 
-typedef XNZRenderBuilder = Widget Function(
+typedef XNZRenderBuilder = Widget? Function(
   BuildContext context,
-  XNZResolvedImage resolved,
+  Widget child,
 );
+
+Widget xnzApplyRenderBuilder({
+  required BuildContext context,
+  required Widget child,
+  required XNZRenderBuilder? renderBuilder,
+}) {
+  return renderBuilder?.call(context, child) ?? child;
+}

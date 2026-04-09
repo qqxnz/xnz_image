@@ -278,10 +278,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     );
   }
 
-  Widget _buildResolved(BuildContext context, XNZResolvedImage resolved) {
-    if (widget.renderBuilder != null) {
-      return widget.renderBuilder!(context, resolved);
-    }
+  Widget _defaultRender(XNZResolvedImage resolved) {
     if (resolved.kind == XNZResolvedKind.customWidget) {
       return resolved.widget ?? const SizedBox.shrink();
     }
@@ -294,6 +291,15 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
       height: widget.height,
       color: widget.color,
       fit: widget.fit,
+    );
+  }
+
+  Widget _buildResolved(BuildContext context, XNZResolvedImage resolved) {
+    final child = _defaultRender(resolved);
+    return xnzApplyRenderBuilder(
+      context: context,
+      child: child,
+      renderBuilder: widget.renderBuilder,
     );
   }
 
