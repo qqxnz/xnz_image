@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- Updated `homepage` and `repository` to `https://github.com/qqxnz/xnz_image.git`.
+
 ## 0.1.1
 
 - Added real GitHub metadata in `pubspec.yaml` (`homepage` and `repository`).
