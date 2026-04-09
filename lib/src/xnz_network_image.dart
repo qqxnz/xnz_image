@@ -1,5 +1,3 @@
-// ignore_for_file: deprecated_member_use_from_same_package
-
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -19,16 +17,6 @@ enum XNZNetworkImageDownloadStatus {
 @Deprecated('Use XNZNetworkImageDownloadStatus instead.')
 typedef XNZNetworkImageDonwloadStatus = XNZNetworkImageDownloadStatus;
 
-typedef ImageWidgetBuilder = Widget Function(
-  BuildContext context,
-  ImageProvider imageProvider,
-);
-
-typedef SvgWidgetBuilder = Widget Function(
-  BuildContext context,
-  Widget svgWidget,
-);
-
 class XNZNetworkImage extends StatefulWidget {
   final String imageUrl;
   final double? width;
@@ -36,10 +24,6 @@ class XNZNetworkImage extends StatefulWidget {
   final Color? color;
   final BoxFit? fit;
   final Widget? placeholder;
-  @Deprecated('Use renderBuilder instead.')
-  final ImageWidgetBuilder? imageBuilder;
-  @Deprecated('Use renderBuilder instead.')
-  final SvgWidgetBuilder? svgBuilder;
   final XNZRenderBuilder? renderBuilder;
   final Widget Function(double progress)? progressIndicatorBuilder;
   final Widget Function(String url, dynamic error)? loadFailedBuilder;
@@ -58,8 +42,6 @@ class XNZNetworkImage extends StatefulWidget {
     this.color,
     this.fit,
     this.placeholder,
-    this.imageBuilder,
-    this.svgBuilder,
     this.renderBuilder,
     this.progressIndicatorBuilder,
     this.loadFailedBuilder,
@@ -266,17 +248,10 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
       return widget.renderBuilder!(context, resolved);
     }
     if (resolved.kind == XNZResolvedKind.customWidget) {
-      final customWidget = resolved.widget ?? const SizedBox.shrink();
-      if (widget.svgBuilder != null) {
-        return widget.svgBuilder!(context, customWidget);
-      }
-      return customWidget;
+      return resolved.widget ?? const SizedBox.shrink();
     }
 
     final provider = resolved.provider!;
-    if (widget.imageBuilder != null) {
-      return widget.imageBuilder!(context, provider);
-    }
 
     return Image(
       image: provider,

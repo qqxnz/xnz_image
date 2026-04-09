@@ -1,12 +1,9 @@
-// ignore_for_file: deprecated_member_use_from_same_package
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:xnz_image_core/xnz_image_core.dart';
 
 import 'package:xnz_image/src/xnz_file_image_provider.dart';
-import 'package:xnz_image/src/xnz_network_image.dart';
 import 'package:xnz_image/src/xnz_resolved_image.dart';
 
 class XNZFileImage extends StatelessWidget {
@@ -17,8 +14,6 @@ class XNZFileImage extends StatelessWidget {
     this.height,
     this.color,
     this.fit,
-    this.imageBuilder,
-    this.svgBuilder,
     this.renderBuilder,
     this.avifOverrideDurationMs = -1,
   });
@@ -28,10 +23,6 @@ class XNZFileImage extends StatelessWidget {
   final double? height;
   final Color? color;
   final BoxFit? fit;
-  @Deprecated('Use renderBuilder instead.')
-  final ImageWidgetBuilder? imageBuilder;
-  @Deprecated('Use renderBuilder instead.')
-  final SvgWidgetBuilder? svgBuilder;
   final XNZRenderBuilder? renderBuilder;
   final int? avifOverrideDurationMs;
 
@@ -73,17 +64,10 @@ class XNZFileImage extends StatelessWidget {
 
   Widget _defaultRender(BuildContext context, XNZResolvedImage resolved) {
     if (resolved.kind == XNZResolvedKind.customWidget) {
-      final customWidget = resolved.widget ?? const SizedBox.shrink();
-      if (svgBuilder != null) {
-        return svgBuilder!(context, customWidget);
-      }
-      return customWidget;
+      return resolved.widget ?? const SizedBox.shrink();
     }
 
     final provider = resolved.provider!;
-    if (imageBuilder != null) {
-      return imageBuilder!(context, provider);
-    }
 
     return Image(
       image: provider,

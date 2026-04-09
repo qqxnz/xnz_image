@@ -145,8 +145,7 @@ XNZNetworkImage(
 
 ## 兼容说明
 
-- 旧参数 `imageBuilder` / `svgBuilder` 仍可使用，但已标记为 `@Deprecated`。
-- 新代码建议统一迁移到 `renderBuilder`。
+- 统一使用 `renderBuilder` 处理位图与自定义渲染。
 
 ## XNZCacheManager 示例
 
