@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1
+
+- Added real GitHub metadata in `pubspec.yaml` (`homepage` and `repository`).
+- Declared supported platforms (`android`, `ios`, `linux`, `macos`, `windows`) for pub.dev display.
+
 ## 0.1.0
 
 - Initial release of `xnz_image`.
