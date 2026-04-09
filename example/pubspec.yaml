@@ -11,6 +11,10 @@ dependencies:
     sdk: flutter
   xnz_image:
     path: ../
+  xnz_image_svg:
+    path: ../packages/xnz_image_svg
+  xnz_image_avif:
+    path: ../packages/xnz_image_avif
 
 dev_dependencies:
   flutter_test:

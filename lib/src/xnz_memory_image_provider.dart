@@ -1,11 +1,10 @@
-import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_avif_platform_interface/flutter_avif_platform_interface.dart'
-    as avif_platform;
-import 'package:xnz_image/src/xnz_memory_avif_image_provider.dart';
+import 'package:xnz_image_core/xnz_image_core.dart';
+
+import 'package:xnz_image/src/xnz_proxy_image_stream_completer.dart';
 
 class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
   const XNZMemoryImageProvider(
@@ -28,12 +27,18 @@ class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
     XNZMemoryImageProvider key,
     ImageDecoderCallback decode,
   ) {
-    if (isAvifBytes(key.bytes) &&
-        !avif_platform.FlutterAvifPlatform.useNativeDecoder) {
-      return AvifImageStreamCompleter(
-        key: key,
-        codec: _loadAvifAsync(key),
-        scale: key.scale,
+    final request = XNZImageRequest(
+      sourceType: XNZImageSourceType.memory,
+      bytes: key.bytes,
+      options: <String, Object?>{
+        'scale': key.scale,
+        'avifOverrideDurationMs': key.avifOverrideDurationMs,
+      },
+    );
+    final resolved = XNZImageRegistry.instance.resolve(request);
+    if (resolved?.provider != null) {
+      return XNZProxyImageStreamCompleter(
+        provider: resolved!.provider!,
         debugLabel: 'XNZMemoryImageProvider(${describeIdentity(key.bytes)})',
         informationCollector: () sync* {
           yield ErrorDescription(
@@ -41,6 +46,7 @@ class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
         },
       );
     }
+
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key),
       scale: key.scale,
@@ -53,20 +59,6 @@ class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
   Future<ui.Codec> _loadAsync(XNZMemoryImageProvider key) async {
     assert(key == this);
     return ui.instantiateImageCodec(key.bytes);
-  }
-
-  Future<AvifCodec> _loadAvifAsync(XNZMemoryImageProvider key) async {
-    assert(key == this);
-    if (kIsWeb) {
-      throw UnsupportedError(
-        'XNZMemoryImageProvider does not support the web platform.',
-      );
-    }
-    return loadMemoryAvifCodec(
-      key.bytes,
-      codecKey: hashCode,
-      avifOverrideDurationMs: avifOverrideDurationMs,
-    );
   }
 
   @override

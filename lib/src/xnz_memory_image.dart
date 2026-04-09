@@ -1,11 +1,13 @@
+// ignore_for_file: deprecated_member_use_from_same_package
+
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:xnz_image_core/xnz_image_core.dart';
 
-import 'package:xnz_image/src/xnz_network_image.dart';
 import 'package:xnz_image/src/xnz_memory_image_provider.dart';
-import 'package:xnz_image/src/xnz_svg.dart';
+import 'package:xnz_image/src/xnz_network_image.dart';
+import 'package:xnz_image/src/xnz_resolved_image.dart';
 
 class XNZMemoryImage extends StatelessWidget {
   const XNZMemoryImage({
@@ -17,6 +19,7 @@ class XNZMemoryImage extends StatelessWidget {
     this.fit,
     this.imageBuilder,
     this.svgBuilder,
+    this.renderBuilder,
     this.avifOverrideDurationMs = -1,
   });
 
@@ -25,31 +28,59 @@ class XNZMemoryImage extends StatelessWidget {
   final double? height;
   final Color? color;
   final BoxFit? fit;
+  @Deprecated('Use renderBuilder instead.')
   final ImageWidgetBuilder? imageBuilder;
+  @Deprecated('Use renderBuilder instead.')
   final SvgWidgetBuilder? svgBuilder;
+  final XNZRenderBuilder? renderBuilder;
   final int? avifOverrideDurationMs;
 
-  @override
-  Widget build(BuildContext context) {
-    if (isSvgBytes(bytes)) {
-      final svgWidget = SvgPicture.memory(
-        bytes,
-        width: width,
-        height: height,
-        fit: fit ?? BoxFit.contain,
-        colorFilter: svgColorFilterFromColor(color),
+  XNZResolvedImage _resolveImage() {
+    final request = XNZImageRequest(
+      sourceType: XNZImageSourceType.memory,
+      bytes: bytes,
+      options: <String, Object?>{
+        'width': width,
+        'height': height,
+        'fit': fit,
+        'color': color,
+        'scale': 1.0,
+        'avifOverrideDurationMs': avifOverrideDurationMs,
+      },
+    );
+    final result = XNZImageRegistry.instance.resolve(request);
+    if (result != null) {
+      return XNZResolvedImage(
+        kind: result.kind == XNZImageBuildKind.widget
+            ? XNZResolvedKind.customWidget
+            : XNZResolvedKind.bitmapProvider,
+        provider: result.provider,
+        widget: result.widget,
+        format: result.format,
+        meta: result.meta,
       );
-      if (svgBuilder != null) {
-        return svgBuilder!(context, svgWidget);
-      }
-      return svgWidget;
     }
 
-    final provider = XNZMemoryImageProvider(
-      bytes,
-      avifOverrideDurationMs: avifOverrideDurationMs,
+    return XNZResolvedImage(
+      kind: XNZResolvedKind.bitmapProvider,
+      provider: XNZMemoryImageProvider(
+        bytes,
+        avifOverrideDurationMs: avifOverrideDurationMs,
+      ),
+      format: 'bitmap',
     );
+  }
 
+  Widget _defaultRender(BuildContext context, XNZResolvedImage resolved) {
+    if (resolved.kind == XNZResolvedKind.customWidget) {
+      final customWidget = resolved.widget ?? const SizedBox.shrink();
+      if (svgBuilder != null) {
+        return svgBuilder!(context, customWidget);
+      }
+      return customWidget;
+    }
+
+    final provider = resolved.provider!;
     if (imageBuilder != null) {
       return imageBuilder!(context, provider);
     }
@@ -61,5 +92,14 @@ class XNZMemoryImage extends StatelessWidget {
       color: color,
       fit: fit,
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final resolved = _resolveImage();
+    if (renderBuilder != null) {
+      return renderBuilder!(context, resolved);
+    }
+    return _defaultRender(context, resolved);
   }
 }

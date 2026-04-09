@@ -1,12 +1,13 @@
+// ignore_for_file: deprecated_member_use_from_same_package
+
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:xnz_image/src/xnz_cache_manager.dart';
-import 'package:xnz_image/src/xnz_image_cache_logs.dart';
-import 'package:xnz_image/src/xnz_image_downloader.dart';
+import 'package:xnz_image_core/xnz_image_core.dart';
+
 import 'package:xnz_image/src/xnz_memory_image_provider.dart';
-import 'package:xnz_image/src/xnz_svg.dart';
+import 'package:xnz_image/src/xnz_resolved_image.dart';
 
 enum XNZNetworkImageDownloadStatus {
   none,
@@ -35,19 +36,18 @@ class XNZNetworkImage extends StatefulWidget {
   final Color? color;
   final BoxFit? fit;
   final Widget? placeholder;
+  @Deprecated('Use renderBuilder instead.')
   final ImageWidgetBuilder? imageBuilder;
+  @Deprecated('Use renderBuilder instead.')
   final SvgWidgetBuilder? svgBuilder;
+  final XNZRenderBuilder? renderBuilder;
   final Widget Function(double progress)? progressIndicatorBuilder;
   final Widget Function(String url, dynamic error)? loadFailedBuilder;
 
-  /// 各类超时时间（毫秒）
   final Duration? connectTimeout;
   final Duration? sendTimeout;
   final Duration? receiveTimeout;
 
-  /// 覆盖 AVIF 动图总时长（毫秒），`-1` 表示使用图片原始时长。
-  ///
-  /// 仅在 AVIF 且使用 `XNZMemoryAvifImage` 解码路径时生效。
   final int? avifOverrideDurationMs;
 
   const XNZNetworkImage({
@@ -60,6 +60,7 @@ class XNZNetworkImage extends StatefulWidget {
     this.placeholder,
     this.imageBuilder,
     this.svgBuilder,
+    this.renderBuilder,
     this.progressIndicatorBuilder,
     this.loadFailedBuilder,
     this.connectTimeout,
@@ -102,8 +103,10 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   void didUpdateWidget(covariant XNZNetworkImage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.imageUrl != widget.imageUrl) {
-      XNZNetworkImageLogs.log('XNZNetworkImage',
-          'didUpdateWidget url变化 ${oldWidget.imageUrl} -> ${widget.imageUrl}');
+      XNZNetworkImageLogs.log(
+        'XNZNetworkImage',
+        'didUpdateWidget url变化 ${oldWidget.imageUrl} -> ${widget.imageUrl}',
+      );
       _cancelDownload();
       _status = XNZNetworkImageDownloadStatus.none;
       _imageData = null;
@@ -153,7 +156,6 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     final requestVersion = ++_requestVersion;
     final requestUrl = widget.imageUrl;
 
-    /// 1️⃣ 内存缓存（同步）
     final memoryData = XNZCacheManager().getMemoryCache(requestUrl);
     if (memoryData != null) {
       XNZNetworkImageLogs.log('XNZNetworkImage', '内存缓存命中 $requestUrl');
@@ -165,7 +167,6 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
       return;
     }
 
-    /// 2️⃣ 硬盘缓存（异步，但不提前 setState）
     final diskData = await XNZCacheManager().getDiskCache(requestUrl);
     if (!_isActiveRequest(requestVersion, requestUrl)) return;
 
@@ -178,7 +179,6 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
       return;
     }
 
-    /// 3️⃣ 真正需要下载，才进入 downloading
     setState(() {
       _status = XNZNetworkImageDownloadStatus.downloading;
       _error = null;
@@ -192,7 +192,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
         if (_isActiveRequest(requestVersion, requestUrl) &&
             widget.progressIndicatorBuilder != null &&
             _shouldRebuildForProgress(count, total)) {
-          setState(() {}); // 刷新进度
+          setState(() {});
         }
       },
       onComplete: (bytes) {
@@ -224,6 +224,69 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     XNZImageDownloader().start(_task!);
   }
 
+  XNZResolvedImage _resolveImage(Uint8List bytes) {
+    final request = XNZImageRequest(
+      sourceType: XNZImageSourceType.network,
+      uri: Uri.tryParse(widget.imageUrl),
+      bytes: bytes,
+      options: <String, Object?>{
+        'width': widget.width,
+        'height': widget.height,
+        'fit': widget.fit,
+        'color': widget.color,
+        'scale': 1.0,
+        'avifOverrideDurationMs': widget.avifOverrideDurationMs,
+      },
+    );
+    final result = XNZImageRegistry.instance.resolve(request);
+    if (result != null) {
+      return XNZResolvedImage(
+        kind: result.kind == XNZImageBuildKind.widget
+            ? XNZResolvedKind.customWidget
+            : XNZResolvedKind.bitmapProvider,
+        provider: result.provider,
+        widget: result.widget,
+        format: result.format,
+        meta: result.meta,
+      );
+    }
+
+    return XNZResolvedImage(
+      kind: XNZResolvedKind.bitmapProvider,
+      provider: XNZMemoryImageProvider(
+        bytes,
+        avifOverrideDurationMs: widget.avifOverrideDurationMs,
+      ),
+      format: 'bitmap',
+    );
+  }
+
+  Widget _buildResolved(BuildContext context, XNZResolvedImage resolved) {
+    if (widget.renderBuilder != null) {
+      return widget.renderBuilder!(context, resolved);
+    }
+    if (resolved.kind == XNZResolvedKind.customWidget) {
+      final customWidget = resolved.widget ?? const SizedBox.shrink();
+      if (widget.svgBuilder != null) {
+        return widget.svgBuilder!(context, customWidget);
+      }
+      return customWidget;
+    }
+
+    final provider = resolved.provider!;
+    if (widget.imageBuilder != null) {
+      return widget.imageBuilder!(context, provider);
+    }
+
+    return Image(
+      image: provider,
+      width: widget.width,
+      height: widget.height,
+      color: widget.color,
+      fit: widget.fit,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     switch (_status) {
@@ -239,38 +302,8 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
               height: widget.height,
               color: Colors.transparent,
             );
-
       case XNZNetworkImageDownloadStatus.complete:
-        final bytes = _imageData!;
-        if (isLikelySvgUrl(widget.imageUrl) || isSvgBytes(bytes)) {
-          final svgWidget = SvgPicture.memory(
-            bytes,
-            width: widget.width,
-            height: widget.height,
-            fit: widget.fit ?? BoxFit.contain,
-            colorFilter: svgColorFilterFromColor(widget.color),
-          );
-          if (widget.svgBuilder != null) {
-            return widget.svgBuilder!(context, svgWidget);
-          }
-          return svgWidget;
-        }
-
-        final provider = XNZMemoryImageProvider(
-          bytes,
-          avifOverrideDurationMs: widget.avifOverrideDurationMs,
-        );
-        if (widget.imageBuilder != null) {
-          return widget.imageBuilder!(context, provider);
-        }
-        return Image(
-          image: provider,
-          width: widget.width,
-          height: widget.height,
-          color: widget.color,
-          fit: widget.fit,
-        );
-
+        return _buildResolved(context, _resolveImage(_imageData!));
       case XNZNetworkImageDownloadStatus.failed:
         if (widget.loadFailedBuilder != null) {
           return widget.loadFailedBuilder!(widget.imageUrl, _error);

@@ -1,12 +1,11 @@
-import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_avif_platform_interface/flutter_avif_platform_interface.dart'
-    as avif_platform;
-import 'package:xnz_image/src/xnz_memory_avif_image_provider.dart';
+import 'package:xnz_image_core/xnz_image_core.dart';
+
+import 'package:xnz_image/src/xnz_proxy_image_stream_completer.dart';
 
 class XNZFileImageProvider extends ImageProvider<XNZFileImageProvider> {
   const XNZFileImageProvider(
@@ -29,12 +28,18 @@ class XNZFileImageProvider extends ImageProvider<XNZFileImageProvider> {
     XNZFileImageProvider key,
     ImageDecoderCallback decode,
   ) {
-    if (_isLikelyAvifPath(key.file.path) &&
-        !avif_platform.FlutterAvifPlatform.useNativeDecoder) {
-      return AvifImageStreamCompleter(
-        key: key,
-        codec: _loadAvifAsync(key),
-        scale: key.scale,
+    final request = XNZImageRequest(
+      sourceType: XNZImageSourceType.file,
+      uri: key.file.uri,
+      options: <String, Object?>{
+        'scale': key.scale,
+        'avifOverrideDurationMs': key.avifOverrideDurationMs,
+      },
+    );
+    final resolved = XNZImageRegistry.instance.resolve(request);
+    if (resolved?.provider != null) {
+      return XNZProxyImageStreamCompleter(
+        provider: resolved!.provider!,
         debugLabel: 'XNZFileImageProvider(${key.file.path})',
         informationCollector: () sync* {
           yield ErrorDescription('XNZFileImageProvider Image provider: $this');
@@ -55,27 +60,6 @@ class XNZFileImageProvider extends ImageProvider<XNZFileImageProvider> {
     assert(key == this);
     final bytes = await key.file.readAsBytes();
     return ui.instantiateImageCodec(bytes);
-  }
-
-  Future<AvifCodec> _loadAvifAsync(XNZFileImageProvider key) async {
-    assert(key == this);
-    if (kIsWeb) {
-      throw UnsupportedError(
-        'XNZFileImageProvider does not support the web platform.',
-      );
-    }
-
-    final bytes = await key.file.readAsBytes();
-    return loadMemoryAvifCodec(
-      bytes,
-      codecKey: hashCode,
-      avifOverrideDurationMs: avifOverrideDurationMs,
-    );
-  }
-
-  bool _isLikelyAvifPath(String path) {
-    final lowercasePath = path.toLowerCase();
-    return lowercasePath.endsWith('.avif') || lowercasePath.endsWith('.avifs');
   }
 
   @override

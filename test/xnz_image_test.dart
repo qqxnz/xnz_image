@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -133,25 +132,25 @@ void main() {
   });
 
   test('XNZAssetImageProvider equality includes package and scale', () {
-    final a = XNZAssetImageProvider(
+    const a = XNZAssetImageProvider(
       'images/demo.avif',
       package: 'example_pkg',
       scale: 1.0,
       avifOverrideDurationMs: -1,
     );
-    final b = XNZAssetImageProvider(
+    const b = XNZAssetImageProvider(
       'images/demo.avif',
       package: 'another_pkg',
       scale: 1.0,
       avifOverrideDurationMs: -1,
     );
-    final c = XNZAssetImageProvider(
+    const c = XNZAssetImageProvider(
       'images/demo.avif',
       package: 'example_pkg',
       scale: 2.0,
       avifOverrideDurationMs: -1,
     );
-    final d = XNZAssetImageProvider(
+    const d = XNZAssetImageProvider(
       'images/demo.avif',
       package: 'example_pkg',
       scale: 1.0,

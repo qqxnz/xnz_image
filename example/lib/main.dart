@@ -3,12 +3,17 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:xnz_image/xnz_image.dart';
+import 'package:xnz_image_avif/xnz_image_avif.dart';
+import 'package:xnz_image_svg/xnz_image_svg.dart';
 
 const _demoImageUrl = 'https://ezgif.com/images/format-demo/butterfly.avif';
 const _invalidDemoImageUrl = 'https://sssa';
 const _demoSvgUrl = 'https://api.iconify.design/circle-flags/zh.svg';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  XNZImage.support(XNZImageSvg());
+  XNZImage.support(XNZImageAvif());
   runApp(const DemoApp());
 }
 

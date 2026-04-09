@@ -1,22 +1,22 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:ui' as ui;
+
 import 'package:flutter/foundation.dart';
-import 'package:xnz_image/src/xnz_cache_manager.dart';
-import 'package:xnz_image/src/xnz_image_cache_logs.dart';
-import 'package:xnz_image/src/xnz_image_downloader.dart';
-import 'package:xnz_image/src/xnz_memory_avif_image_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:xnz_image_core/xnz_image_core.dart';
+
+import 'package:xnz_image/src/xnz_proxy_image_stream_completer.dart';
 
 class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
-  final String imageUrl;
-  final double scale;
-  final int? avifOverrideDurationMs;
-
   XNZNetworkImageProvider(
     this.imageUrl, {
     this.scale = 1.0,
     this.avifOverrideDurationMs = -1,
   });
+
+  final String imageUrl;
+  final double scale;
+  final int? avifOverrideDurationMs;
 
   @override
   Future<XNZNetworkImageProvider> obtainKey(ImageConfiguration configuration) {
@@ -26,20 +26,30 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
 
   @override
   ImageStreamCompleter loadImage(
-      XNZNetworkImageProvider key, ImageDecoderCallback decode) {
-    XNZNetworkImageLogs.log('XNZNetworkImageProvider', 'loadImage');
-    if (_isLikelyAvifUrl(key.imageUrl)) {
-      return AvifImageStreamCompleter(
-        key: key,
-        codec: _loadAvifAsync(key),
-        scale: key.scale,
+    XNZNetworkImageProvider key,
+    ImageDecoderCallback decode,
+  ) {
+    final request = XNZImageRequest(
+      sourceType: XNZImageSourceType.network,
+      uri: Uri.tryParse(key.imageUrl),
+      options: <String, Object?>{
+        'scale': key.scale,
+        'avifOverrideDurationMs': key.avifOverrideDurationMs,
+      },
+    );
+    final resolved = XNZImageRegistry.instance.resolve(request);
+    if (resolved?.provider != null) {
+      return XNZProxyImageStreamCompleter(
+        provider: resolved!.provider!,
         debugLabel: key.imageUrl,
         informationCollector: () sync* {
           yield ErrorDescription(
-              'XNZNetworkImageProvider Image provider: $this');
+            'XNZNetworkImageProvider Image provider: $this',
+          );
         },
       );
     }
+
     return MultiFrameImageStreamCompleter(
       codec: _loadAsync(key),
       scale: key.scale,
@@ -53,31 +63,22 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
     XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadAsync');
     final Uint8List data = await _loadImageData(key.imageUrl);
     unawaited(XNZCacheManager().setCache(key.imageUrl, data));
-    return await ui.instantiateImageCodec(data);
-  }
-
-  Future<AvifCodec> _loadAvifAsync(XNZNetworkImageProvider key) async {
-    XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadAvifAsync');
-    final Uint8List data = await _loadImageData(key.imageUrl);
-    unawaited(XNZCacheManager().setCache(key.imageUrl, data));
-    return loadMemoryAvifCodec(
-      data,
-      codecKey: hashCode,
-      avifOverrideDurationMs: avifOverrideDurationMs,
-    );
+    return ui.instantiateImageCodec(data);
   }
 
   Future<Uint8List> _loadImageData(String imageUrl) async {
     Uint8List? data = await XNZCacheManager().getCache(imageUrl);
     if (data != null) {
       XNZNetworkImageLogs.log(
-          'XNZNetworkImageProvider', '_loadImageData-返回缓存对象');
-      return Future.value(data);
+        'XNZNetworkImageProvider',
+        '_loadImageData-返回缓存对象',
+      );
+      return data;
     }
     XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadImageData-开始下载');
-    Completer<Uint8List?> completer = Completer<Uint8List?>();
+    final completer = Completer<Uint8List?>();
     Object? downloadError;
-    XNZImageDownloaderTask task = XNZImageDownloaderTask(
+    final task = XNZImageDownloaderTask(
       url: imageUrl,
       onComplete: (bytes) {
         completer.complete(bytes);
@@ -99,11 +100,6 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
       );
     }
     return data;
-  }
-
-  bool _isLikelyAvifUrl(String url) {
-    final path = Uri.tryParse(url)?.path.toLowerCase() ?? url.toLowerCase();
-    return path.endsWith('.avif') || path.endsWith('.avifs');
   }
 
   @override
