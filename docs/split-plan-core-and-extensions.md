@@ -253,7 +253,7 @@ void main() {
   - 优先级匹配
   - `unsupport`/`clear` 行为
 
-#### 2) `test/xnz_net_cache_image_test.dart`（修改）
+#### 2) `test/xnz_image_test.dart`（修改）
 
 - 用例：
   - 未注册扩展时行为
