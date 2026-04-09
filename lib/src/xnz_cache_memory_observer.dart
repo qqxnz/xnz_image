@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
-import 'package:xnz_net_cache_image/src/xnz_cache_manager.dart';
-import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
+import 'package:xnz_image/src/xnz_cache_manager.dart';
+import 'package:xnz_image/src/xnz_image_cache_logs.dart';
 
 class XNZCacheMemoryObserver with WidgetsBindingObserver {
   static final XNZCacheMemoryObserver _instance =

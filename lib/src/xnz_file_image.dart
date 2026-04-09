@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:xnz_net_cache_image/src/xnz_file_image_provider.dart';
-import 'package:xnz_net_cache_image/src/xnz_network_image.dart';
+import 'package:xnz_image/src/xnz_file_image_provider.dart';
+import 'package:xnz_image/src/xnz_network_image.dart';
 
 class XNZFileImage extends StatelessWidget {
   const XNZFileImage({

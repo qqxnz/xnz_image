@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:xnz_net_cache_image/xnz_net_cache_image.dart';
+import 'package:xnz_image/xnz_image.dart';
 
 const _demoImageUrl = 'https://ezgif.com/images/format-demo/butterfly.avif';
 const _invalidDemoImageUrl = 'https://sssa';

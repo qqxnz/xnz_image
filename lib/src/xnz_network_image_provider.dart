@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
-import 'package:xnz_net_cache_image/src/xnz_cache_manager.dart';
-import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
-import 'package:xnz_net_cache_image/src/xnz_image_downloader.dart';
-import 'package:xnz_net_cache_image/src/xnz_memory_avif_image_provider.dart';
+import 'package:xnz_image/src/xnz_cache_manager.dart';
+import 'package:xnz_image/src/xnz_image_cache_logs.dart';
+import 'package:xnz_image/src/xnz_image_downloader.dart';
+import 'package:xnz_image/src/xnz_memory_avif_image_provider.dart';
 
 class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
   final String imageUrl;

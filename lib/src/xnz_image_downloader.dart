@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
-import 'package:xnz_net_cache_image/src/xnz_cache_manager.dart';
-import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
+import 'package:xnz_image/src/xnz_cache_manager.dart';
+import 'package:xnz_image/src/xnz_image_cache_logs.dart';
 
 typedef XNZProgressCallback = void Function(int count, int total);
 

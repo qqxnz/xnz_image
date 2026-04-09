@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:xnz_net_cache_image/src/xnz_cache_manager.dart';
-import 'package:xnz_net_cache_image/src/xnz_image_cache_logs.dart';
-import 'package:xnz_net_cache_image/src/xnz_image_downloader.dart';
-import 'package:xnz_net_cache_image/src/xnz_memory_image_provider.dart';
+import 'package:xnz_image/src/xnz_cache_manager.dart';
+import 'package:xnz_image/src/xnz_image_cache_logs.dart';
+import 'package:xnz_image/src/xnz_image_downloader.dart';
+import 'package:xnz_image/src/xnz_memory_image_provider.dart';
 
 enum XNZNetworkImageDownloadStatus {
   none,

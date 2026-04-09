@@ -1,10 +1,21 @@
-# xnz_net_cache_image
+# XNZImage
 
 Flutter 组件模版工程，包含：
 
 - 组件库代码（`lib/`）
 - 组件测试（`test/`）
 - 可直接运行的 Demo（`example/`）
+
+
+## 支持图片格式
+
+- `avif`、`avifs`：组件内置 AVIF 解码路径（含动图时长控制能力）。
+- 其他常见格式：`png`、`jpg`、`jpeg`、`gif`、`webp`、`bmp` 等，走 Flutter 原生 `ImageCodec` 解码（具体以目标平台解码能力为准）。
+
+## 平台支持
+
+- 当前组件不支持 Web 平台。
+- 在 Web 端使用 `XNZNetworkImage` / `XNZMemoryAvifImage` 会返回不支持错误（`UnsupportedError`）。
 
 ## 组件示例
 
@@ -111,16 +122,6 @@ XNZNetworkImage(
   },
 )
 ```
-
-## 支持图片格式
-
-- `avif`、`avifs`：组件内置 AVIF 解码路径（含动图时长控制能力）。
-- 其他常见格式：`png`、`jpg`、`jpeg`、`gif`、`webp`、`bmp` 等，走 Flutter 原生 `ImageCodec` 解码（具体以目标平台解码能力为准）。
-
-## 平台支持
-
-- 当前组件不支持 Web 平台。
-- 在 Web 端使用 `XNZNetworkImage` / `XNZMemoryAvifImage` 会返回不支持错误（`UnsupportedError`）。
 
 ## 本地运行
 

@@ -1,5 +1,5 @@
-name: xnz_net_cache_image_example
-description: Demo app for xnz_net_cache_image
+name: xnz_image_example
+description: Demo app for xnz_image
 publish_to: none
 
 environment:
@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  xnz_net_cache_image:
+  xnz_image:
     path: ../
 
 dev_dependencies:

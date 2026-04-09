@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_avif_platform_interface/flutter_avif_platform_interface.dart'
     as avif_platform;
-import 'package:xnz_net_cache_image/src/xnz_memory_avif_image_provider.dart';
+import 'package:xnz_image/src/xnz_memory_avif_image_provider.dart';
 
 class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
   const XNZMemoryImageProvider(

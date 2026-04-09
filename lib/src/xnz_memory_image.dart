@@ -2,8 +2,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-import 'package:xnz_net_cache_image/src/xnz_network_image.dart';
-import 'package:xnz_net_cache_image/src/xnz_memory_image_provider.dart';
+import 'package:xnz_image/src/xnz_network_image.dart';
+import 'package:xnz_image/src/xnz_memory_image_provider.dart';
 
 class XNZMemoryImage extends StatelessWidget {
   const XNZMemoryImage({

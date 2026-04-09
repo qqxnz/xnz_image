@@ -1,6 +1,6 @@
-# xnz_net_cache_image example
+# xnz_image example
 
-该目录是 `xnz_net_cache_image` 的演示工程，用于快速验证以下能力：
+该目录是 `xnz_image` 的演示工程，用于快速验证以下能力：
 
 - `XNZNetworkImage` 网络图片加载与缓存
 - `XNZMemoryImage` 内存字节流渲染

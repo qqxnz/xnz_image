@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:xnz_net_cache_image_example/main.dart';
+import 'package:xnz_image_example/main.dart';
 
 void main() {
   testWidgets('Demo app renders key sections', (WidgetTester tester) async {
