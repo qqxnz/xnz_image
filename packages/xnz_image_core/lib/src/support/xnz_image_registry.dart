@@ -1,4 +1,5 @@
 import 'xnz_image_support.dart';
+import '../xnz_image_cache_logs.dart';
 
 class XNZImageRegistry {
   XNZImageRegistry._();
@@ -10,6 +11,7 @@ class XNZImageRegistry {
   bool _supportsDirty = true;
 
   void support(XNZImageSupport support) {
+    XNZImageLogs.log('XNZImageRegistry', 'support ${support.id}');
     _supports[support.id] = support;
     _supportsDirty = true;
   }
@@ -19,11 +21,14 @@ class XNZImageRegistry {
     if (removed) {
       _supportsDirty = true;
     }
+    XNZImageLogs.log('XNZImageRegistry', 'unsupport $id removed:$removed');
     return removed;
   }
 
   void clear() {
     if (_supports.isNotEmpty) {
+      XNZImageLogs.log(
+          'XNZImageRegistry', 'clear ${_supports.length} supports');
       _supports.clear();
       _supportsDirty = true;
     }
@@ -46,9 +51,15 @@ class XNZImageRegistry {
       }
       final result = support.resolve(request);
       if (result != null) {
+        XNZImageLogs.log(
+          'XNZImageRegistry',
+          'resolve ${request.sourceType.name} -> ${support.id}',
+        );
         return result;
       }
     }
+    XNZImageLogs.log(
+        'XNZImageRegistry', 'resolve ${request.sourceType.name} -> miss');
     return null;
   }
 }

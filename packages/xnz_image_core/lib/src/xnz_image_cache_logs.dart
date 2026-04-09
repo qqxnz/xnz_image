@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-class XNZNetworkImageLogs {
+class XNZImageLogs {
   /// 外部日志拦截器，返回 `true` 表示已消费并拦截默认输出。
   static bool Function(String tag, String log)? _interceptor;
 
@@ -15,7 +15,7 @@ class XNZNetworkImageLogs {
   static void log(String tag, String log) {
     final hasIntercepted = _interceptor?.call(tag, log) ?? false;
     if (!hasIntercepted && showLogs) {
-      debugPrint('XNZNetworkImageLogs-$tag: $log');
+      debugPrint('XNZImageLogs-$tag: $log');
     }
   }
 }

@@ -27,7 +27,7 @@ class XNZDiskCache {
       _cacheDir!.createSync(recursive: true);
     }
 
-    XNZNetworkImageLogs.log(
+    XNZImageLogs.log(
       'XNZNetworkImage',
       'XNZDiskCache init path=${_cacheDir!.path}',
     );
@@ -73,7 +73,7 @@ class XNZDiskCache {
       await file.setLastModified(DateTime.now());
       return data;
     } catch (e) {
-      XNZNetworkImageLogs.log(
+      XNZImageLogs.log(
         'XNZDiskCache',
         'get error url=$url err=$e',
       );
@@ -91,7 +91,7 @@ class XNZDiskCache {
       await file.setLastModified(DateTime.now());
       await _enforceLimits();
     } catch (e) {
-      XNZNetworkImageLogs.log(
+      XNZImageLogs.log(
         'XNZDiskCache',
         'set error url=$url err=$e',
       );
@@ -129,7 +129,7 @@ class XNZDiskCache {
         final stat = await entity.stat();
         totalBytes += stat.size;
       } catch (e) {
-        XNZNetworkImageLogs.log(
+        XNZImageLogs.log(
           'XNZDiskCache',
           'getCurrentBytes stat error file=${entity.path} err=$e',
         );
@@ -156,7 +156,7 @@ class XNZDiskCache {
           ),
         );
       } catch (e) {
-        XNZNetworkImageLogs.log(
+        XNZImageLogs.log(
           'XNZDiskCache',
           'stat error file=${entity.path} err=$e',
         );
@@ -169,7 +169,7 @@ class XNZDiskCache {
         try {
           await entry.file.delete();
         } catch (e) {
-          XNZNetworkImageLogs.log(
+          XNZImageLogs.log(
             'XNZDiskCache',
             'expire delete error file=${entry.file.path} err=$e',
           );
@@ -196,7 +196,7 @@ class XNZDiskCache {
         await entry.file.delete();
         totalBytes -= entry.size;
       } catch (e) {
-        XNZNetworkImageLogs.log(
+        XNZImageLogs.log(
           'XNZDiskCache',
           'lru delete error file=${entry.file.path} err=$e',
         );
@@ -236,7 +236,7 @@ class _DiskCacheEntry {
 //
 //   // 初始化
 //   Future<void> init() async {
-//     XNZNetworkImageLogs.log('XNZNetworkImage', 'XNZDiskCache init');
+//     XNZImageLogs.log('XNZNetworkImage', 'XNZDiskCache init');
 //     final String path = (await getApplicationDocumentsDirectory()).path;
 //     String dbPath = '$path/xnz_image_cache.db';
 //     if(_db != null){

@@ -10,6 +10,7 @@ const _demoAvifUrl = 'https://ezgif.com/images/format-demo/butterfly.avif';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  XNZImageLogs.showLogs = true;
   XNZImage.support(XNZImageAvif());
   runApp(const DemoApp());
 }

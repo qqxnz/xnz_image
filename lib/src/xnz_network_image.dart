@@ -96,7 +96,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   void didUpdateWidget(covariant XNZNetworkImage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (_shouldReload(oldWidget)) {
-      XNZNetworkImageLogs.log(
+      XNZImageLogs.log(
         'XNZNetworkImage',
         'didUpdateWidget 触发重载 ${oldWidget.imageUrl} -> ${widget.imageUrl}',
       );
@@ -119,7 +119,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
 
   @override
   void dispose() {
-    XNZNetworkImageLogs.log('XNZNetworkImage', '-dispose ${widget.imageUrl}');
+    XNZImageLogs.log('XNZNetworkImage', '-dispose ${widget.imageUrl}');
     _cancelDownload();
     super.dispose();
   }
@@ -171,7 +171,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
 
     final memoryData = XNZCacheManager().getMemoryCache(requestUrl);
     if (memoryData != null) {
-      XNZNetworkImageLogs.log('XNZNetworkImage', '内存缓存命中 $requestUrl');
+      XNZImageLogs.log('XNZNetworkImage', '内存缓存命中 $requestUrl');
       if (!_isActiveRequest(requestVersion, requestUrl)) return;
       setState(() {
         _imageData = memoryData;
@@ -185,7 +185,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     if (!_isActiveRequest(requestVersion, requestUrl)) return;
 
     if (diskData != null) {
-      XNZNetworkImageLogs.log('XNZNetworkImage', '硬盘缓存命中 $requestUrl');
+      XNZImageLogs.log('XNZNetworkImage', '硬盘缓存命中 $requestUrl');
       setState(() {
         _imageData = diskData;
         _status = XNZNetworkImageDownloadStatus.complete;

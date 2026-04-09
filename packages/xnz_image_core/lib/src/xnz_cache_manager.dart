@@ -25,14 +25,14 @@ class XNZCacheManager {
     final encodedUrl = Uri.encodeComponent(url);
 
     if (memoryCache.has(encodedUrl)) {
-      XNZNetworkImageLogs.log('XNZNetworkImage', 'hasCache $url 内存存在');
+      XNZImageLogs.log('XNZNetworkImage', 'hasCache $url 内存存在');
       return true;
     }
 
     final diskCache = await XNZDiskCache.getInstance();
     final hasDisk = await diskCache.has(encodedUrl);
     if (hasDisk) {
-      XNZNetworkImageLogs.log('XNZNetworkImage', 'hasCache $url 磁盘存在');
+      XNZImageLogs.log('XNZNetworkImage', 'hasCache $url 磁盘存在');
     }
     return hasDisk;
   }
@@ -44,7 +44,7 @@ class XNZCacheManager {
     // 1️⃣ 内存
     final memoryData = memoryCache.get(encodedUrl);
     if (memoryData != null) {
-      XNZNetworkImageLogs.log('XNZNetworkImage', 'getCache $url 内存命中');
+      XNZImageLogs.log('XNZNetworkImage', 'getCache $url 内存命中');
       return memoryData;
     }
 
@@ -52,7 +52,7 @@ class XNZCacheManager {
     final diskCache = await XNZDiskCache.getInstance();
     final diskData = await diskCache.get(encodedUrl);
     if (diskData != null) {
-      XNZNetworkImageLogs.log('XNZNetworkImage', 'getCache $url 磁盘命中');
+      XNZImageLogs.log('XNZNetworkImage', 'getCache $url 磁盘命中');
       memoryCache.put(encodedUrl, diskData);
     }
 
@@ -90,7 +90,7 @@ class XNZCacheManager {
     final encodedUrl = Uri.encodeComponent(url);
     final data = memoryCache.get(encodedUrl);
     if (data != null) {
-      XNZNetworkImageLogs.log('XNZNetworkImage', 'getMemoryCache $url 命中');
+      XNZImageLogs.log('XNZNetworkImage', 'getMemoryCache $url 命中');
     }
     return data;
   }

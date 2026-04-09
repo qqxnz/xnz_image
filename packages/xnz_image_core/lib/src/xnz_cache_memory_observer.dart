@@ -12,12 +12,12 @@ class XNZCacheMemoryObserver with WidgetsBindingObserver {
 
   void init() {
     WidgetsBinding.instance.addObserver(this);
-    XNZNetworkImageLogs.log('XNZNetworkImage', 'MemoryObserver init');
+    XNZImageLogs.log('XNZNetworkImage', 'MemoryObserver init');
   }
 
   @override
   void didHaveMemoryPressure() {
-    XNZNetworkImageLogs.log(
+    XNZImageLogs.log(
       'XNZNetworkImage',
       '⚠️ Memory pressure detected → clear memory cache',
     );

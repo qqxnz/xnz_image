@@ -23,7 +23,7 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
 
   @override
   Future<XNZNetworkImageProvider> obtainKey(ImageConfiguration configuration) {
-    XNZNetworkImageLogs.log('XNZNetworkImageProvider', 'obtainKey');
+    XNZImageLogs.log('XNZNetworkImageProvider', 'obtainKey');
     _lastImageConfigurations[this] = configuration;
     return SynchronousFuture<XNZNetworkImageProvider>(this);
   }
@@ -69,7 +69,7 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
     XNZNetworkImageProvider key,
     ImageDecoderCallback decode,
   ) async {
-    XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadAsync');
+    XNZImageLogs.log('XNZNetworkImageProvider', '_loadAsync');
     final Uint8List data = await _loadImageData(key.imageUrl);
     unawaited(XNZCacheManager().setCache(key.imageUrl, data));
     final ui.ImmutableBuffer buffer = await ui.ImmutableBuffer.fromUint8List(
@@ -81,26 +81,24 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
   Future<Uint8List> _loadImageData(String imageUrl) async {
     Uint8List? data = await XNZCacheManager().getCache(imageUrl);
     if (data != null) {
-      XNZNetworkImageLogs.log(
+      XNZImageLogs.log(
         'XNZNetworkImageProvider',
         '_loadImageData-返回缓存对象',
       );
       return data;
     }
-    XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadImageData-开始下载');
+    XNZImageLogs.log('XNZNetworkImageProvider', '_loadImageData-开始下载');
     final completer = Completer<Uint8List?>();
     Object? downloadError;
     final task = XNZImageDownloaderTask(
       url: imageUrl,
       onComplete: (bytes) {
         completer.complete(bytes);
-        XNZNetworkImageLogs.log(
-            'XNZNetworkImageProvider', '_loadImageData-下载完成');
+        XNZImageLogs.log('XNZNetworkImageProvider', '_loadImageData-下载完成');
       },
       onError: (error) {
         downloadError = error;
-        XNZNetworkImageLogs.log(
-            'XNZNetworkImageProvider', '_loadImageData-下载失败');
+        XNZImageLogs.log('XNZNetworkImageProvider', '_loadImageData-下载失败');
         completer.complete(null);
       },
     );
