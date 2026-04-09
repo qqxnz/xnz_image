@@ -4,6 +4,11 @@
 
 - Added SVG support for widget components: `XNZNetworkImage`, `XNZMemoryImage`, `XNZFileImage`, and `XNZAssetImage`.
 
+## 0.1.4
+
+- Unified version across `xnz_image`, `xnz_image_core`, `xnz_image_svg`, and `xnz_image_avif`.
+- Switched internal package dependencies to hosted versions for pub.dev publishing.
+
 ## 0.1.3
 
 - Added new features.
