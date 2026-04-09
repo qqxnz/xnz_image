@@ -48,7 +48,7 @@ class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
     }
 
     return MultiFrameImageStreamCompleter(
-      codec: _loadAsync(key),
+      codec: _loadAsync(key, decode),
       scale: key.scale,
       informationCollector: () sync* {
         yield ErrorDescription('XNZMemoryImageProvider Image provider: $this');
@@ -56,9 +56,15 @@ class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
     );
   }
 
-  Future<ui.Codec> _loadAsync(XNZMemoryImageProvider key) async {
+  Future<ui.Codec> _loadAsync(
+    XNZMemoryImageProvider key,
+    ImageDecoderCallback decode,
+  ) async {
     assert(key == this);
-    return ui.instantiateImageCodec(key.bytes);
+    final ui.ImmutableBuffer buffer = await ui.ImmutableBuffer.fromUint8List(
+      key.bytes,
+    );
+    return decode(buffer);
   }
 
   @override

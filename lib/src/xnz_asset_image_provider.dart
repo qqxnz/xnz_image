@@ -62,7 +62,7 @@ class XNZAssetImageProvider extends ImageProvider<XNZAssetImageProvider> {
     }
 
     return MultiFrameImageStreamCompleter(
-      codec: _loadAsync(key),
+      codec: _loadAsync(key, decode),
       scale: key.scale,
       informationCollector: () sync* {
         yield ErrorDescription('XNZAssetImageProvider Image provider: $this');
@@ -70,10 +70,16 @@ class XNZAssetImageProvider extends ImageProvider<XNZAssetImageProvider> {
     );
   }
 
-  Future<ui.Codec> _loadAsync(XNZAssetImageProvider key) async {
+  Future<ui.Codec> _loadAsync(
+    XNZAssetImageProvider key,
+    ImageDecoderCallback decode,
+  ) async {
     assert(key == this);
     final data = await _loadAssetData(key);
-    return ui.instantiateImageCodec(data);
+    final ui.ImmutableBuffer buffer = await ui.ImmutableBuffer.fromUint8List(
+      data,
+    );
+    return decode(buffer);
   }
 
   Future<Uint8List> _loadAssetData(XNZAssetImageProvider key) async {

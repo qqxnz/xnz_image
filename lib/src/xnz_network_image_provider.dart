@@ -51,7 +51,7 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
     }
 
     return MultiFrameImageStreamCompleter(
-      codec: _loadAsync(key),
+      codec: _loadAsync(key, decode),
       scale: key.scale,
       informationCollector: () sync* {
         yield ErrorDescription('XNZNetworkImageProvider Image provider: $this');
@@ -59,11 +59,17 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
     );
   }
 
-  Future<ui.Codec> _loadAsync(XNZNetworkImageProvider key) async {
+  Future<ui.Codec> _loadAsync(
+    XNZNetworkImageProvider key,
+    ImageDecoderCallback decode,
+  ) async {
     XNZNetworkImageLogs.log('XNZNetworkImageProvider', '_loadAsync');
     final Uint8List data = await _loadImageData(key.imageUrl);
     unawaited(XNZCacheManager().setCache(key.imageUrl, data));
-    return ui.instantiateImageCodec(data);
+    final ui.ImmutableBuffer buffer = await ui.ImmutableBuffer.fromUint8List(
+      data,
+    );
+    return decode(buffer);
   }
 
   Future<Uint8List> _loadImageData(String imageUrl) async {
