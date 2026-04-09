@@ -6,6 +6,7 @@ import 'package:xnz_image/xnz_image.dart';
 
 const _demoImageUrl = 'https://ezgif.com/images/format-demo/butterfly.avif';
 const _invalidDemoImageUrl = 'https://sssa';
+const _demoSvgUrl = 'https://api.iconify.design/circle-flags/zh.svg';
 
 void main() {
   runApp(const DemoApp());
@@ -261,6 +262,26 @@ class _DemoPageState extends State<DemoPage> {
             description: '在原生 Image 组件中组合使用 NetworkImageProvider。',
             child: Image(
               image: XNZNetworkImageProvider(_demoImageUrl),
+              width: 200,
+              height: 200,
+              fit: BoxFit.contain,
+            ),
+          ),
+          _section(
+            title: 'XNZNetworkImage (SVG)',
+            description: '通过 URL 加载 SVG 并渲染（Iconify 国旗示例）。',
+            child: const XNZNetworkImage(
+              imageUrl: _demoSvgUrl,
+              width: 200,
+              height: 200,
+              fit: BoxFit.contain,
+            ),
+          ),
+          _section(
+            title: 'XNZAssetImage (SVG)',
+            description: '加载本地 assets/fire.svg 并渲染。',
+            child: const XNZAssetImage(
+              assetName: 'assets/fire.svg',
               width: 200,
               height: 200,
               fit: BoxFit.contain,

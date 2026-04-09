@@ -1,9 +1,11 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:xnz_image/src/xnz_network_image.dart';
 import 'package:xnz_image/src/xnz_memory_image_provider.dart';
+import 'package:xnz_image/src/xnz_svg.dart';
 
 class XNZMemoryImage extends StatelessWidget {
   const XNZMemoryImage({
@@ -14,6 +16,7 @@ class XNZMemoryImage extends StatelessWidget {
     this.color,
     this.fit,
     this.imageBuilder,
+    this.svgBuilder,
     this.avifOverrideDurationMs = -1,
   });
 
@@ -23,10 +26,25 @@ class XNZMemoryImage extends StatelessWidget {
   final Color? color;
   final BoxFit? fit;
   final ImageWidgetBuilder? imageBuilder;
+  final SvgWidgetBuilder? svgBuilder;
   final int? avifOverrideDurationMs;
 
   @override
   Widget build(BuildContext context) {
+    if (isSvgBytes(bytes)) {
+      final svgWidget = SvgPicture.memory(
+        bytes,
+        width: width,
+        height: height,
+        fit: fit ?? BoxFit.contain,
+        colorFilter: svgColorFilterFromColor(color),
+      );
+      if (svgBuilder != null) {
+        return svgBuilder!(context, svgWidget);
+      }
+      return svgWidget;
+    }
+
     final provider = XNZMemoryImageProvider(
       bytes,
       avifOverrideDurationMs: avifOverrideDurationMs,

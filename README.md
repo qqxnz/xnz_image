@@ -1,6 +1,6 @@
 # XNZImage
 
-一个面向 Flutter 的图片加载组件，提供网络、内存、文件、Asset 四种图片渲染能力，并内置 AVIF 解码与缓存管理。
+一个面向 Flutter 的图片加载组件，提供网络、内存、文件、Asset 四种图片渲染能力，并内置 AVIF 解码与缓存管理，同时支持 SVG 渲染。
 
 Flutter 组件模版工程，包含：
 
@@ -12,6 +12,7 @@ Flutter 组件模版工程，包含：
 ## 支持图片格式
 
 - `avif`、`avifs`：组件内置 AVIF 解码路径（含动图时长控制能力）。
+- `svg`、`svgz`：组件层自动识别并走 `flutter_svg` 渲染路径（`XNZNetworkImage` / `XNZMemoryImage` / `XNZFileImage` / `XNZAssetImage`）。
 - 其他常见格式：`png`、`jpg`、`jpeg`、`gif`、`webp`、`bmp` 等，走 Flutter 原生 `ImageCodec` 解码（具体以目标平台解码能力为准）。
 
 ## 平台支持
@@ -28,6 +29,8 @@ Flutter 组件模版工程，包含：
 - `XNZAssetImage` / `XNZAssetImageProvider`：基于 Asset 渲染，支持 `bundle` / `package` 参数，可直接接入 Flutter `Image`。
 - `XNZMemoryAvifImage`：轻量 AVIF 内存解码路径，支持多帧 AVIF（`avifs`）播放与时长覆盖（`avifOverrideDurationMs`）。
 - `XNZCacheManager`：统一缓存管理入口，支持缓存读写、删除、清空，以及内存/磁盘占用统计。
+
+> 说明：`ImageProvider` 系列（如 `XNZNetworkImageProvider`）仍按位图/AVIF链路工作；SVG 支持当前在组件 Widget 层提供。
 
 ## 组件示例
 

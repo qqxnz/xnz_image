@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added SVG support for widget components: `XNZNetworkImage`, `XNZMemoryImage`, `XNZFileImage`, and `XNZAssetImage`.
+- Added `svgBuilder` callback for customizing SVG widget composition.
+
 ## 0.1.3
 
 - Added new features.

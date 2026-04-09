@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:xnz_image/src/xnz_cache_manager.dart';
 import 'package:xnz_image/src/xnz_image_cache_logs.dart';
 import 'package:xnz_image/src/xnz_image_downloader.dart';
 import 'package:xnz_image/src/xnz_memory_image_provider.dart';
+import 'package:xnz_image/src/xnz_svg.dart';
 
 enum XNZNetworkImageDownloadStatus {
   none,
@@ -21,6 +23,11 @@ typedef ImageWidgetBuilder = Widget Function(
   ImageProvider imageProvider,
 );
 
+typedef SvgWidgetBuilder = Widget Function(
+  BuildContext context,
+  Widget svgWidget,
+);
+
 class XNZNetworkImage extends StatefulWidget {
   final String imageUrl;
   final double? width;
@@ -29,6 +36,7 @@ class XNZNetworkImage extends StatefulWidget {
   final BoxFit? fit;
   final Widget? placeholder;
   final ImageWidgetBuilder? imageBuilder;
+  final SvgWidgetBuilder? svgBuilder;
   final Widget Function(double progress)? progressIndicatorBuilder;
   final Widget Function(String url, dynamic error)? loadFailedBuilder;
 
@@ -51,6 +59,7 @@ class XNZNetworkImage extends StatefulWidget {
     this.fit,
     this.placeholder,
     this.imageBuilder,
+    this.svgBuilder,
     this.progressIndicatorBuilder,
     this.loadFailedBuilder,
     this.connectTimeout,
@@ -233,6 +242,20 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
 
       case XNZNetworkImageDownloadStatus.complete:
         final bytes = _imageData!;
+        if (isLikelySvgUrl(widget.imageUrl) || isSvgBytes(bytes)) {
+          final svgWidget = SvgPicture.memory(
+            bytes,
+            width: widget.width,
+            height: widget.height,
+            fit: widget.fit ?? BoxFit.contain,
+            colorFilter: svgColorFilterFromColor(widget.color),
+          );
+          if (widget.svgBuilder != null) {
+            return widget.svgBuilder!(context, svgWidget);
+          }
+          return svgWidget;
+        }
+
         final provider = XNZMemoryImageProvider(
           bytes,
           avifOverrideDurationMs: widget.avifOverrideDurationMs,

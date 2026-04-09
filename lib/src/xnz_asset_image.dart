@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:xnz_image/src/xnz_asset_image_provider.dart';
 import 'package:xnz_image/src/xnz_network_image.dart';
+import 'package:xnz_image/src/xnz_svg.dart';
 
 class XNZAssetImage extends StatelessWidget {
   const XNZAssetImage({
@@ -14,6 +15,7 @@ class XNZAssetImage extends StatelessWidget {
     this.color,
     this.fit,
     this.imageBuilder,
+    this.svgBuilder,
     this.avifOverrideDurationMs = -1,
   });
 
@@ -25,10 +27,27 @@ class XNZAssetImage extends StatelessWidget {
   final Color? color;
   final BoxFit? fit;
   final ImageWidgetBuilder? imageBuilder;
+  final SvgWidgetBuilder? svgBuilder;
   final int? avifOverrideDurationMs;
 
   @override
   Widget build(BuildContext context) {
+    if (isLikelySvgPath(assetName)) {
+      final svgWidget = SvgPicture.asset(
+        assetName,
+        bundle: bundle,
+        package: package,
+        width: width,
+        height: height,
+        fit: fit ?? BoxFit.contain,
+        colorFilter: svgColorFilterFromColor(color),
+      );
+      if (svgBuilder != null) {
+        return svgBuilder!(context, svgWidget);
+      }
+      return svgWidget;
+    }
+
     final provider = XNZAssetImageProvider(
       assetName,
       bundle: bundle,
