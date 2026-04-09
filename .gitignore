@@ -15,3 +15,9 @@ linux/flutter/ephemeral/
 windows/flutter/ephemeral/
 *.iml
 
+# macOS metadata
+.DS_Store
+
+# Example-generated lock files
+examples/**/pubspec.lock
+examples/**/ios/Podfile.lock
