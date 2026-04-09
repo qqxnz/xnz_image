@@ -1,6 +1,6 @@
 # XNZImage
 
-一个面向 Flutter 的图片加载组件，提供网络、内存、文件三种图片渲染能力，并内置 AVIF 解码与缓存管理。
+一个面向 Flutter 的图片加载组件，提供网络、内存、文件、Asset 四种图片渲染能力，并内置 AVIF 解码与缓存管理。
 
 Flutter 组件模版工程，包含：
 
@@ -25,6 +25,7 @@ Flutter 组件模版工程，包含：
 - `XNZNetworkImageProvider`：可直接配合 Flutter `Image` 使用的网络 `ImageProvider`，保留缓存与下载能力，便于融入已有渲染链路。
 - `XNZMemoryImage` / `XNZMemoryImageProvider`：基于字节流渲染，自动识别 AVIF；适合加密解密后、预下载后或本地内存数据的展示。
 - `XNZFileImage` / `XNZFileImageProvider`：基于本地文件渲染，支持与 `Image` 组件组合使用，方便处理相册、下载目录等场景。
+- `XNZAssetImage` / `XNZAssetImageProvider`：基于 Asset 渲染，支持 `bundle` / `package` 参数，可直接接入 Flutter `Image`。
 - `XNZMemoryAvifImage`：轻量 AVIF 内存解码路径，支持多帧 AVIF（`avifs`）播放与时长覆盖（`avifOverrideDurationMs`）。
 - `XNZCacheManager`：统一缓存管理入口，支持缓存读写、删除、清空，以及内存/磁盘占用统计。
 
@@ -85,6 +86,28 @@ import 'dart:io';
 
 Image(
   image: XNZFileImageProvider(File('/path/to/local/image.avif')),
+  width: 300,
+  height: 180,
+  fit: BoxFit.cover,
+)
+```
+
+Asset 渲染（`XNZAssetImage`）：
+
+```dart
+XNZAssetImage(
+  assetName: 'assets/images/banner.avif',
+  width: 300,
+  height: 180,
+  fit: BoxFit.cover,
+)
+```
+
+Asset 渲染（`Image + XNZAssetImageProvider`）：
+
+```dart
+Image(
+  image: XNZAssetImageProvider('assets/images/banner.avif'),
   width: 300,
   height: 180,
   fit: BoxFit.cover,

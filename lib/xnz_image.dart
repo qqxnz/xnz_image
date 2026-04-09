@@ -13,3 +13,5 @@ export 'src/xnz_memory_image_provider.dart';
 export 'src/xnz_memory_image.dart';
 export 'src/xnz_file_image_provider.dart';
 export 'src/xnz_file_image.dart';
+export 'src/xnz_asset_image_provider.dart';
+export 'src/xnz_asset_image.dart';

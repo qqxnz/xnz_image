@@ -2,8 +2,20 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xnz_image/xnz_image.dart';
+
+class _TestAssetBundle extends CachingAssetBundle {
+  _TestAssetBundle(this._bytes);
+
+  final Uint8List _bytes;
+
+  @override
+  Future<ByteData> load(String key) async {
+    return ByteData.view(_bytes.buffer);
+  }
+}
 
 void main() {
   testWidgets('XnzNetCacheImage renders', (tester) async {
@@ -40,6 +52,32 @@ void main() {
     );
 
     expect(find.byType(XNZMemoryImage), findsOneWidget);
+    expect(find.byType(Image), findsOneWidget);
+  });
+
+  testWidgets('XNZAssetImage renders from bundle', (tester) async {
+    final Uint8List pngBytes = base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=',
+    );
+    final bundle = _TestAssetBundle(pngBytes);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DefaultAssetBundle(
+          bundle: bundle,
+          child: Scaffold(
+            body: XNZAssetImage(
+              assetName: 'assets/fake.png',
+              bundle: bundle,
+              width: 20,
+              height: 20,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(XNZAssetImage), findsOneWidget);
     expect(find.byType(Image), findsOneWidget);
   });
 
@@ -92,5 +130,37 @@ void main() {
     expect(cache.get('b'), isNull);
     expect(cache.get('a'), isNotNull);
     expect(cache.get('c'), isNotNull);
+  });
+
+  test('XNZAssetImageProvider equality includes package and scale', () {
+    final a = XNZAssetImageProvider(
+      'images/demo.avif',
+      package: 'example_pkg',
+      scale: 1.0,
+      avifOverrideDurationMs: -1,
+    );
+    final b = XNZAssetImageProvider(
+      'images/demo.avif',
+      package: 'another_pkg',
+      scale: 1.0,
+      avifOverrideDurationMs: -1,
+    );
+    final c = XNZAssetImageProvider(
+      'images/demo.avif',
+      package: 'example_pkg',
+      scale: 2.0,
+      avifOverrideDurationMs: -1,
+    );
+    final d = XNZAssetImageProvider(
+      'images/demo.avif',
+      package: 'example_pkg',
+      scale: 1.0,
+      avifOverrideDurationMs: -1,
+    );
+
+    expect(a == b, isFalse);
+    expect(a == c, isFalse);
+    expect(a == d, isTrue);
+    expect(a.hashCode, equals(d.hashCode));
   });
 }
