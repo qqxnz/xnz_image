@@ -7,6 +7,9 @@ import 'package:xnz_image_core/xnz_image_core.dart';
 import 'package:xnz_image/src/xnz_proxy_image_stream_completer.dart';
 
 class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
+  static final Expando<ImageConfiguration> _lastImageConfigurations =
+      Expando<ImageConfiguration>('xnz_memory_image_configuration');
+
   const XNZMemoryImageProvider(
     this.bytes, {
     this.scale = 1.0,
@@ -19,6 +22,7 @@ class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
 
   @override
   Future<XNZMemoryImageProvider> obtainKey(ImageConfiguration configuration) {
+    _lastImageConfigurations[this] = configuration;
     return SynchronousFuture<XNZMemoryImageProvider>(this);
   }
 
@@ -39,6 +43,8 @@ class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
     if (resolved?.provider != null) {
       return XNZProxyImageStreamCompleter(
         provider: resolved!.provider!,
+        configuration:
+            _lastImageConfigurations[key] ?? ImageConfiguration.empty,
         debugLabel: 'XNZMemoryImageProvider(${describeIdentity(key.bytes)})',
         informationCollector: () sync* {
           yield ErrorDescription(

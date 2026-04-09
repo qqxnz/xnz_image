@@ -8,6 +8,9 @@ import 'package:xnz_image_core/xnz_image_core.dart';
 import 'package:xnz_image/src/xnz_proxy_image_stream_completer.dart';
 
 class XNZAssetImageProvider extends ImageProvider<XNZAssetImageProvider> {
+  static final Expando<ImageConfiguration> _lastImageConfigurations =
+      Expando<ImageConfiguration>('xnz_asset_image_configuration');
+
   const XNZAssetImageProvider(
     this.assetName, {
     this.bundle,
@@ -31,6 +34,7 @@ class XNZAssetImageProvider extends ImageProvider<XNZAssetImageProvider> {
 
   @override
   Future<XNZAssetImageProvider> obtainKey(ImageConfiguration configuration) {
+    _lastImageConfigurations[this] = configuration;
     return SynchronousFuture<XNZAssetImageProvider>(this);
   }
 
@@ -54,6 +58,8 @@ class XNZAssetImageProvider extends ImageProvider<XNZAssetImageProvider> {
     if (resolved?.provider != null) {
       return XNZProxyImageStreamCompleter(
         provider: resolved!.provider!,
+        configuration:
+            _lastImageConfigurations[key] ?? ImageConfiguration.empty,
         debugLabel: key._resolvedAssetName,
         informationCollector: () sync* {
           yield ErrorDescription('XNZAssetImageProvider Image provider: $this');

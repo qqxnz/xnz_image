@@ -4,11 +4,12 @@ import 'package:flutter/painting.dart';
 class XNZProxyImageStreamCompleter extends ImageStreamCompleter {
   XNZProxyImageStreamCompleter({
     required ImageProvider provider,
+    required ImageConfiguration configuration,
     String? debugLabel,
     InformationCollector? informationCollector,
   }) : _informationCollector = informationCollector {
     this.debugLabel = debugLabel;
-    _stream = provider.resolve(const ImageConfiguration());
+    _stream = provider.resolve(configuration);
     _listener = ImageStreamListener(
       (imageInfo, _) {
         setImage(imageInfo);

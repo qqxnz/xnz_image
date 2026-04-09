@@ -8,6 +8,9 @@ import 'package:xnz_image_core/xnz_image_core.dart';
 import 'package:xnz_image/src/xnz_proxy_image_stream_completer.dart';
 
 class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
+  static final Expando<ImageConfiguration> _lastImageConfigurations =
+      Expando<ImageConfiguration>('xnz_network_image_configuration');
+
   XNZNetworkImageProvider(
     this.imageUrl, {
     this.scale = 1.0,
@@ -21,6 +24,7 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
   @override
   Future<XNZNetworkImageProvider> obtainKey(ImageConfiguration configuration) {
     XNZNetworkImageLogs.log('XNZNetworkImageProvider', 'obtainKey');
+    _lastImageConfigurations[this] = configuration;
     return SynchronousFuture<XNZNetworkImageProvider>(this);
   }
 
@@ -41,6 +45,8 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
     if (resolved?.provider != null) {
       return XNZProxyImageStreamCompleter(
         provider: resolved!.provider!,
+        configuration:
+            _lastImageConfigurations[key] ?? ImageConfiguration.empty,
         debugLabel: key.imageUrl,
         informationCollector: () sync* {
           yield ErrorDescription(
