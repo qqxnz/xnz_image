@@ -105,4 +105,15 @@ class XNZCacheManager {
     }
     return data;
   }
+
+  // 当前内存缓存占用（字节）
+  int getMemoryCacheBytes() {
+    return memoryCache.currentBytes;
+  }
+
+  // 当前磁盘缓存占用（字节）
+  Future<int> getDiskCacheBytes() async {
+    final diskCache = await XNZDiskCache.getInstance();
+    return diskCache.getCurrentBytes();
+  }
 }

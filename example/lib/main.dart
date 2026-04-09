@@ -39,11 +39,60 @@ class _DemoPageState extends State<DemoPage> {
   Uint8List? _memoryAvifBytes;
   File? _demoAvifFile;
   bool _isPreparingFile = true;
+  bool _isLoadingCacheUsage = false;
+  String _memoryUsageText = '--';
+  String _diskUsageText = '--';
 
   @override
   void initState() {
     super.initState();
     _prepareDemoFile();
+    _refreshCacheUsage();
+  }
+
+  Future<void> _refreshCacheUsage() async {
+    setState(() {
+      _isLoadingCacheUsage = true;
+    });
+
+    final cacheManager = XNZCacheManager();
+    final memoryBytes = cacheManager.getMemoryCacheBytes();
+    final diskBytes = await cacheManager.getDiskCacheBytes();
+
+    if (!mounted) return;
+    setState(() {
+      _memoryUsageText = _formatBytes(memoryBytes);
+      _diskUsageText = _formatBytes(diskBytes);
+      _isLoadingCacheUsage = false;
+    });
+  }
+
+  Future<void> _clearCacheAndRefreshUsage() async {
+    setState(() {
+      _isLoadingCacheUsage = true;
+    });
+
+    await XNZCacheManager().clearAll();
+    if (!mounted) return;
+
+    await _refreshCacheUsage();
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes < 1024) {
+      return '$bytes B';
+    }
+
+    const units = ['KB', 'MB', 'GB', 'TB'];
+    double value = bytes / 1024;
+    int unitIndex = 0;
+
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024;
+      unitIndex++;
+    }
+
+    return '${value.toStringAsFixed(value >= 100 ? 0 : 1)} ${units[unitIndex]}';
   }
 
   Future<void> _prepareDemoFile() async {
@@ -145,11 +194,58 @@ class _DemoPageState extends State<DemoPage> {
             onPressed: _prepareDemoFile,
             icon: const Icon(Icons.refresh),
           ),
+          IconButton(
+            tooltip: 'Refresh cache usage',
+            onPressed: _refreshCacheUsage,
+            icon: const Icon(Icons.storage),
+          ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _section(
+            title: 'XNZCacheManager',
+            description: '查看缓存占用（自动转 KB/MB）并支持一键清空缓存。',
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Memory: $_memoryUsageText'),
+                  const SizedBox(height: 4),
+                  Text('Disk: $_diskUsageText'),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      FilledButton(
+                        onPressed:
+                            _isLoadingCacheUsage ? null : _refreshCacheUsage,
+                        child: const Text('Refresh usage'),
+                      ),
+                      OutlinedButton(
+                        onPressed: _isLoadingCacheUsage
+                            ? null
+                            : _clearCacheAndRefreshUsage,
+                        child: const Text('Clear all cache'),
+                      ),
+                      if (_isLoadingCacheUsage) ...[
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
           _section(
             title: 'XNZNetworkImage',
             description: '直接通过 URL 加载网络图片，支持下载进度与失败态回调。',

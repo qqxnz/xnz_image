@@ -118,6 +118,27 @@ class XNZDiskCache {
     }
   }
 
+  /// 当前磁盘缓存占用（字节）
+  Future<int> getCurrentBytes() async {
+    await _init();
+    int totalBytes = 0;
+
+    await for (final entity in _cacheDir!.list(followLinks: false)) {
+      if (entity is! File) continue;
+      try {
+        final stat = await entity.stat();
+        totalBytes += stat.size;
+      } catch (e) {
+        XNZNetworkImageLogs.log(
+          'XNZDiskCache',
+          'getCurrentBytes stat error file=${entity.path} err=$e',
+        );
+      }
+    }
+
+    return totalBytes;
+  }
+
   Future<void> _enforceLimits() async {
     await _init();
     final now = DateTime.now();
