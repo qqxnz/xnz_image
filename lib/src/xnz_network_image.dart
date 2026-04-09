@@ -14,7 +14,10 @@ enum XNZNetworkImageDownloadStatus {
   failed,
 }
 
-@Deprecated('Use XNZNetworkImageDownloadStatus instead.')
+@Deprecated(
+  'Typo legacy alias. Use XNZNetworkImageDownloadStatus instead. '
+  'This alias will be removed in next major release.',
+)
 typedef XNZNetworkImageDonwloadStatus = XNZNetworkImageDownloadStatus;
 
 class XNZNetworkImage extends StatefulWidget {
@@ -67,6 +70,14 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   int _requestVersion = 0;
   DateTime? _lastProgressUpdateAt;
   double _lastProgressValue = -1;
+  XNZResolvedImage? _resolvedImageCache;
+  Uint8List? _resolvedImageCacheBytes;
+  String? _resolvedImageCacheUrl;
+  double? _resolvedImageCacheWidth;
+  double? _resolvedImageCacheHeight;
+  Color? _resolvedImageCacheColor;
+  BoxFit? _resolvedImageCacheFit;
+  int? _resolvedImageCacheAvifOverrideDurationMs;
 
   @override
   void initState() {
@@ -84,17 +95,26 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   @override
   void didUpdateWidget(covariant XNZNetworkImage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.imageUrl != widget.imageUrl) {
+    if (_shouldReload(oldWidget)) {
       XNZNetworkImageLogs.log(
         'XNZNetworkImage',
-        'didUpdateWidget url变化 ${oldWidget.imageUrl} -> ${widget.imageUrl}',
+        'didUpdateWidget 触发重载 ${oldWidget.imageUrl} -> ${widget.imageUrl}',
       );
       _cancelDownload();
       _status = XNZNetworkImageDownloadStatus.none;
       _imageData = null;
       _error = null;
+      _clearResolvedCache();
       _loadImage();
     }
+  }
+
+  bool _shouldReload(XNZNetworkImage oldWidget) {
+    return oldWidget.imageUrl != widget.imageUrl ||
+        oldWidget.connectTimeout != widget.connectTimeout ||
+        oldWidget.sendTimeout != widget.sendTimeout ||
+        oldWidget.receiveTimeout != widget.receiveTimeout ||
+        oldWidget.avifOverrideDurationMs != widget.avifOverrideDurationMs;
   }
 
   @override
@@ -109,6 +129,17 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
       XNZImageDownloader().cancel(_task!);
       _task = null;
     }
+  }
+
+  void _clearResolvedCache() {
+    _resolvedImageCache = null;
+    _resolvedImageCacheBytes = null;
+    _resolvedImageCacheUrl = null;
+    _resolvedImageCacheWidth = null;
+    _resolvedImageCacheHeight = null;
+    _resolvedImageCacheColor = null;
+    _resolvedImageCacheFit = null;
+    _resolvedImageCacheAvifOverrideDurationMs = null;
   }
 
   bool _isActiveRequest(int requestVersion, String requestUrl) {
@@ -145,6 +176,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
       setState(() {
         _imageData = memoryData;
         _status = XNZNetworkImageDownloadStatus.complete;
+        _clearResolvedCache();
       });
       return;
     }
@@ -157,6 +189,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
       setState(() {
         _imageData = diskData;
         _status = XNZNetworkImageDownloadStatus.complete;
+        _clearResolvedCache();
       });
       return;
     }
@@ -186,6 +219,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
           _task = null;
           _lastProgressUpdateAt = null;
           _lastProgressValue = -1;
+          _clearResolvedCache();
         });
       },
       onError: (error) {
@@ -196,6 +230,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
           _task = null;
           _lastProgressUpdateAt = null;
           _lastProgressValue = -1;
+          _clearResolvedCache();
         });
       },
       connectTimeout: widget.connectTimeout,
@@ -262,6 +297,39 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     );
   }
 
+  XNZResolvedImage _getResolvedImage(Uint8List bytes) {
+    final canUseCache = _resolvedImageCache != null &&
+        identical(_resolvedImageCacheBytes, bytes) &&
+        _resolvedImageCacheUrl == widget.imageUrl &&
+        _resolvedImageCacheWidth == widget.width &&
+        _resolvedImageCacheHeight == widget.height &&
+        _resolvedImageCacheColor == widget.color &&
+        _resolvedImageCacheFit == widget.fit &&
+        _resolvedImageCacheAvifOverrideDurationMs ==
+            widget.avifOverrideDurationMs;
+    if (canUseCache) {
+      return _resolvedImageCache!;
+    }
+
+    final resolved = _resolveImage(bytes);
+    _resolvedImageCache = resolved;
+    _resolvedImageCacheBytes = bytes;
+    _resolvedImageCacheUrl = widget.imageUrl;
+    _resolvedImageCacheWidth = widget.width;
+    _resolvedImageCacheHeight = widget.height;
+    _resolvedImageCacheColor = widget.color;
+    _resolvedImageCacheFit = widget.fit;
+    _resolvedImageCacheAvifOverrideDurationMs = widget.avifOverrideDurationMs;
+    return resolved;
+  }
+
+  Widget _buildEmptyPlaceholder() {
+    if (widget.width == null && widget.height == null) {
+      return const SizedBox.shrink();
+    }
+    return SizedBox(width: widget.width, height: widget.height);
+  }
+
   @override
   Widget build(BuildContext context) {
     switch (_status) {
@@ -271,24 +339,14 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
           final progress = _task!.total > 0 ? _task!.count / _task!.total : 0.0;
           return widget.progressIndicatorBuilder!(progress);
         }
-        return widget.placeholder ??
-            Container(
-              width: widget.width,
-              height: widget.height,
-              color: Colors.transparent,
-            );
+        return widget.placeholder ?? _buildEmptyPlaceholder();
       case XNZNetworkImageDownloadStatus.complete:
-        return _buildResolved(context, _resolveImage(_imageData!));
+        return _buildResolved(context, _getResolvedImage(_imageData!));
       case XNZNetworkImageDownloadStatus.failed:
         if (widget.loadFailedBuilder != null) {
           return widget.loadFailedBuilder!(widget.imageUrl, _error);
         }
-        return widget.placeholder ??
-            Container(
-              width: widget.width,
-              height: widget.height,
-              color: Colors.transparent,
-            );
+        return widget.placeholder ?? _buildEmptyPlaceholder();
     }
   }
 }
