@@ -71,7 +71,11 @@ class XNZImageDownloader {
     return future;
   }
 
-  final Dio dio = Dio();
+  final Dio dio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 5),
+    ),
+  );
   final List<XNZImageDownloaderTask> tasks = [];
   final Map<String, _SharedDownload> _sharedDownloads = {};
 
@@ -105,8 +109,6 @@ class XNZImageDownloader {
       options: Options(
         responseType: ResponseType.bytes,
         followRedirects: true,
-        maxRedirects: 5,
-        connectTimeout: task.connectTimeout,
         sendTimeout: task.sendTimeout,
         receiveTimeout: task.receiveTimeout,
         validateStatus: (status) =>
@@ -185,7 +187,6 @@ class XNZImageDownloaderTask {
   final CancelToken? cancelToken;
 
   /// 各类超时时间（毫秒）
-  final Duration connectTimeout;
   final Duration sendTimeout;
   final Duration receiveTimeout;
 
@@ -197,11 +198,9 @@ class XNZImageDownloaderTask {
     required this.onComplete,
     required this.onError,
     this.onReceiveProgress,
-    Duration? connectTimeout, // 连接超时
     Duration? sendTimeout, // 发送超时
     Duration? receiveTimeout, // 接收超时
   })  : cancelToken = CancelToken(),
-        connectTimeout = connectTimeout ?? const Duration(milliseconds: 5000),
         sendTimeout = sendTimeout ?? const Duration(milliseconds: 5000),
         receiveTimeout = receiveTimeout ?? const Duration(milliseconds: 5000);
 

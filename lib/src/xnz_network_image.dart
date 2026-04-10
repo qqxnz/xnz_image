@@ -31,7 +31,6 @@ class XNZNetworkImage extends StatefulWidget {
   final Widget Function(double progress)? progressIndicatorBuilder;
   final Widget Function(String url, dynamic error)? loadFailedBuilder;
 
-  final Duration? connectTimeout;
   final Duration? sendTimeout;
   final Duration? receiveTimeout;
 
@@ -48,7 +47,6 @@ class XNZNetworkImage extends StatefulWidget {
     this.renderBuilder,
     this.progressIndicatorBuilder,
     this.loadFailedBuilder,
-    this.connectTimeout,
     this.sendTimeout,
     this.receiveTimeout,
     this.avifOverrideDurationMs = -1,
@@ -111,7 +109,6 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
 
   bool _shouldReload(XNZNetworkImage oldWidget) {
     return oldWidget.imageUrl != widget.imageUrl ||
-        oldWidget.connectTimeout != widget.connectTimeout ||
         oldWidget.sendTimeout != widget.sendTimeout ||
         oldWidget.receiveTimeout != widget.receiveTimeout ||
         oldWidget.avifOverrideDurationMs != widget.avifOverrideDurationMs;
@@ -233,7 +230,6 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
           _clearResolvedCache();
         });
       },
-      connectTimeout: widget.connectTimeout,
       sendTimeout: widget.sendTimeout,
       receiveTimeout: widget.receiveTimeout,
     );
