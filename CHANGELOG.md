@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.6
+
+- Removed `connectTimeout` from `XNZNetworkImage` and unified connection-timeout behavior in core downloader.
+
 ## 0.1.5
 
 - Added SVG support for widget components: `XNZNetworkImage`, `XNZMemoryImage`, `XNZFileImage`, and `XNZAssetImage`.
