@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.8
+
+- Improved release process documentation and clarified publish order/checklist.
+- Synced README dependency versions to `0.1.8`.
+
 ## 0.1.7
 
 - Added `XNZAnimatedImage` controllable animated-image widget with pause/resume/replay/loop/completion hooks and timeline sync.
