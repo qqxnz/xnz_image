@@ -8,5 +8,5 @@ This package is intended for internal or advanced integration usage.
 
 ```yaml
 dependencies:
-  xnz_image_core: ^0.1.4
+  xnz_image_core: ^0.1.7
 ```
