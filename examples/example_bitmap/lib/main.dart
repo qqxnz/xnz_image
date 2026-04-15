@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:xnz_image/xnz_image.dart';
 
 const _demoBitmapUrl = 'https://picsum.photos/400/240';
+const _demoAnimatedAsset = 'assets/giphy.gif';
+const _demoAnimatedGifUrl =
+    'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHM5NHowNnVyYmd5amM5MTJsejg5eWJmM3dsM2hpMXR1dDNjMTB0eiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/uo6a2SrS7ZVVYc79bA/giphy.gif';
 const _invalidDemoImageUrl = 'https://sssa';
 
 void main() {
@@ -129,8 +132,121 @@ class DemoPage extends StatelessWidget {
               },
             ),
           ),
+          _section(
+            context: context,
+            title: 'XNZAnimatedImage (GIF Asset)',
+            description: '动画位图示例：支持暂停、继续、重播、循环与进度同步。',
+            child: const _AnimatedPreview(
+              image: XNZAssetImageProvider(_demoAnimatedAsset),
+            ),
+          ),
+          _section(
+            context: context,
+            title: 'XNZAnimatedImage (GIF Network)',
+            description: '网络 GIF 动画示例。',
+            child: _AnimatedPreview(
+              image: XNZNetworkImageProvider(_demoAnimatedGifUrl),
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _AnimatedPreview extends StatefulWidget {
+  const _AnimatedPreview({required this.image});
+
+  final ImageProvider image;
+
+  @override
+  State<_AnimatedPreview> createState() => _AnimatedPreviewState();
+}
+
+class _AnimatedPreviewState extends State<_AnimatedPreview> {
+  final XNZAnimatedImageController _controller = XNZAnimatedImageController();
+  bool _loop = true;
+  int _fps = 0;
+  int _frameCount = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 180,
+          height: 120,
+          child: XNZAnimatedImage(
+            image: widget.image,
+            controller: _controller,
+            loop: _loop,
+            fit: BoxFit.contain,
+            onLoaded: (duration, fps, frameCount) {
+              if (!mounted) return;
+              setState(() {
+                _fps = fps;
+                _frameCount = frameCount;
+              });
+            },
+            loadingBuilder: (_) =>
+                const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            errorBuilder: (context, error, stackTrace) => const Center(
+              child: Text('Animated image load failed'),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            final durationMs = _controller.duration.inMilliseconds;
+            final positionMs = _controller.position.inMilliseconds;
+            return Text(
+              'frame ${_controller.frameIndex + 1}/$_frameCount · '
+              'fps $_fps · ${positionMs}ms/${durationMs}ms',
+              style: Theme.of(context).textTheme.bodySmall,
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              tooltip: 'Play',
+              onPressed: _controller.play,
+              icon: const Icon(Icons.play_arrow),
+            ),
+            IconButton(
+              tooltip: 'Pause',
+              onPressed: _controller.pause,
+              icon: const Icon(Icons.pause),
+            ),
+            IconButton(
+              tooltip: 'Replay',
+              onPressed: _controller.replay,
+              icon: const Icon(Icons.replay),
+            ),
+            const Text('Loop'),
+            Switch(
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              value: _loop,
+              onChanged: (value) {
+                setState(() {
+                  _loop = value;
+                });
+              },
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

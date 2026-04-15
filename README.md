@@ -140,6 +140,45 @@ Image(
 )
 ```
 
+## 可控动画组件（帧解码播放）
+
+`XNZAnimatedImage` 支持将动画图片解码成帧并按时间轴播放，适用于 GIF / Animated WebP / APNG。
+
+支持能力：
+
+- 精准 UI 同步（可通过 `XNZAnimatedImageController` 监听 `position/progress/frameIndex`）
+- `play / pause / resume / replay`
+- 完成监听（`onCompleted`）
+- 循环开关（`loop`）
+
+```dart
+final controller = XNZAnimatedImageController();
+
+XNZAnimatedImage(
+  image: XNZNetworkImageProvider('https://example.com/demo.gif'),
+  controller: controller,
+  autoPlay: true,
+  loop: true,
+  onLoaded: (duration, fps, frameCount) {
+    debugPrint('duration=$duration fps=$fps frames=$frameCount');
+  },
+  onCompleted: (completedLoops) {
+    debugPrint('completedLoops=$completedLoops');
+  },
+)
+```
+
+如果你已注册 `XNZImageAvif()`，`XNZAnimatedImage` 会通过 `XNZImageSupport`
+自动识别 AVIF 并走 AVIF 动画解码；通常不需要手动传 `decoder`。
+
+```dart
+XNZImage.support(XNZImageAvif());
+
+XNZAnimatedImage(
+  image: XNZNetworkImageProvider('https://example.com/demo.avif'),
+)
+```
+
 ## 统一渲染回调（推荐）
 
 新版本提供 `renderBuilder`，用于统一处理位图与自定义渲染（如 SVG）。

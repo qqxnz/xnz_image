@@ -32,6 +32,10 @@ class XNZImageAvif implements XNZImageSupport {
         request.option('avifOverrideDurationMs') as int?;
     final scale = request.option('scale') as double? ?? 1.0;
 
+    final meta = <String, Object?>{
+      'animatedDecoder': _decodeAvifAnimatedImage,
+    };
+
     switch (request.sourceType) {
       case XNZImageSourceType.network:
         final bytes = request.bytes;
@@ -43,6 +47,7 @@ class XNZImageAvif implements XNZImageSupport {
               avifOverrideDurationMs: avifOverrideDurationMs,
             ),
             format: 'avif',
+            meta: meta,
           );
         }
         final uri = request.uri;
@@ -56,6 +61,7 @@ class XNZImageAvif implements XNZImageSupport {
             avifOverrideDurationMs: avifOverrideDurationMs,
           ),
           format: 'avif',
+          meta: meta,
         );
       case XNZImageSourceType.memory:
         final bytes = request.bytes;
@@ -69,6 +75,7 @@ class XNZImageAvif implements XNZImageSupport {
             avifOverrideDurationMs: avifOverrideDurationMs,
           ),
           format: 'avif',
+          meta: meta,
         );
       case XNZImageSourceType.file:
         final uri = request.uri;
@@ -82,6 +89,7 @@ class XNZImageAvif implements XNZImageSupport {
             avifOverrideDurationMs: avifOverrideDurationMs,
           ),
           format: 'avif',
+          meta: meta,
         );
       case XNZImageSourceType.asset:
         final assetName = request.option('assetName') as String?;
@@ -97,7 +105,51 @@ class XNZImageAvif implements XNZImageSupport {
             avifOverrideDurationMs: avifOverrideDurationMs,
           ),
           format: 'avif',
+          meta: meta,
         );
     }
   }
+}
+
+Future<Map<String, Object?>?> _decodeAvifAnimatedImage(dynamic request) async {
+  final bytes = request.bytes as Uint8List;
+  if (!isAvifBytes(bytes)) {
+    return null;
+  }
+
+  final codec = await loadMemoryAvifCodec(
+    bytes,
+    codecKey: Object.hash(
+      'xnz_avif_animated_image',
+      request.image.hashCode,
+      request.avifOverrideDurationMs,
+    ),
+    avifOverrideDurationMs: request.avifOverrideDurationMs as int?,
+  );
+
+  final frames = <Map<String, Object?>>[];
+  var duration = Duration.zero;
+  try {
+    for (var i = 0; i < codec.frameCount; i++) {
+      final frame = await codec.getNextFrame();
+      final frameDuration = frame.duration.inMilliseconds <= 0
+          ? const Duration(milliseconds: 1)
+          : frame.duration;
+      frames.add(
+        <String, Object?>{
+          'image': frame.image,
+          'duration': frameDuration,
+          'scale': (request.scale as num?)?.toDouble() ?? 1.0,
+        },
+      );
+      duration += frameDuration;
+    }
+  } finally {
+    codec.dispose();
+  }
+
+  return <String, Object?>{
+    'frames': frames,
+    'duration': duration,
+  };
 }
