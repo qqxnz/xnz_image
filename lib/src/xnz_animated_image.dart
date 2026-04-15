@@ -368,12 +368,15 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
         totalMs += frameMs <= 0 ? 1 : frameMs;
         frameEndMs.add(totalMs);
       }
+      final isStatic = decoded.frames.length <= 1;
 
       setState(() {
         _frames = decoded!.frames;
-        _duration = decoded.duration.inMilliseconds <= 0
-            ? Duration(milliseconds: totalMs)
-            : decoded.duration;
+        _duration = isStatic
+            ? Duration.zero
+            : decoded.duration.inMilliseconds <= 0
+                ? Duration(milliseconds: totalMs)
+                : decoded.duration;
         _frameEndMs = List<int>.unmodifiable(frameEndMs);
         _frameIndex = 0;
         _position = Duration.zero;
@@ -487,6 +490,7 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
     }
 
     final frames = <XNZAnimatedImageFrame>[];
+    final isSingleFrame = rawFrames.length <= 1;
     for (final rawFrame in rawFrames) {
       if (rawFrame is! Map<Object?, Object?>) {
         return null;
@@ -500,9 +504,11 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
       frames.add(
         XNZAnimatedImageFrame(
           image: image,
-          duration: duration.inMilliseconds <= 0
-              ? const Duration(milliseconds: 1)
-              : duration,
+          duration: isSingleFrame
+              ? duration
+              : duration.inMilliseconds <= 0
+                  ? const Duration(milliseconds: 1)
+                  : duration,
           scale: scale is num ? scale.toDouble() : 1.0,
         ),
       );
@@ -520,6 +526,9 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
   }
 
   static Duration _sumDuration(List<XNZAnimatedImageFrame> frames) {
+    if (frames.length <= 1) {
+      return Duration.zero;
+    }
     var duration = Duration.zero;
     for (final frame in frames) {
       duration += frame.duration.inMilliseconds <= 0
@@ -540,12 +549,15 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
 
     final frames = <XNZAnimatedImageFrame>[];
     var totalDuration = Duration.zero;
+    final isSingleFrame = codec.frameCount <= 1;
     try {
       for (var i = 0; i < codec.frameCount; i++) {
         final frame = await codec.getNextFrame();
-        final frameDuration = frame.duration.inMilliseconds <= 0
-            ? const Duration(milliseconds: 1)
-            : frame.duration;
+        final frameDuration = isSingleFrame
+            ? frame.duration
+            : frame.duration.inMilliseconds <= 0
+                ? const Duration(milliseconds: 1)
+                : frame.duration;
         frames.add(
           XNZAnimatedImageFrame(
             image: frame.image,

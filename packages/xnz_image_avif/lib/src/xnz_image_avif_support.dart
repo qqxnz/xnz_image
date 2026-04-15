@@ -129,12 +129,15 @@ Future<Map<String, Object?>?> _decodeAvifAnimatedImage(dynamic request) async {
 
   final frames = <Map<String, Object?>>[];
   var duration = Duration.zero;
+  final isSingleFrame = codec.frameCount <= 1;
   try {
     for (var i = 0; i < codec.frameCount; i++) {
       final frame = await codec.getNextFrame();
-      final frameDuration = frame.duration.inMilliseconds <= 0
-          ? const Duration(milliseconds: 1)
-          : frame.duration;
+      final frameDuration = isSingleFrame
+          ? frame.duration
+          : frame.duration.inMilliseconds <= 0
+              ? const Duration(milliseconds: 1)
+              : frame.duration;
       frames.add(
         <String, Object?>{
           'image': frame.image,

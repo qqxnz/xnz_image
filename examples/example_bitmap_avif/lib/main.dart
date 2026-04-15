@@ -271,9 +271,12 @@ class _AnimatedPreviewState extends State<_AnimatedPreview> {
           builder: (context, _) {
             final durationMs = _controller.duration.inMilliseconds;
             final positionMs = _controller.position.inMilliseconds;
+            final isStatic = _frameCount <= 1;
             return Text(
-              'frame ${_controller.frameIndex + 1}/$_frameCount · '
-              'fps $_fps · ${positionMs}ms/${durationMs}ms',
+              isStatic
+                  ? 'static image · frame 1/${_frameCount == 0 ? 1 : _frameCount} · fps 0'
+                  : 'frame ${_controller.frameIndex + 1}/$_frameCount · '
+                      'fps $_fps · ${positionMs}ms/${durationMs}ms',
               style: Theme.of(context).textTheme.bodySmall,
             );
           },
