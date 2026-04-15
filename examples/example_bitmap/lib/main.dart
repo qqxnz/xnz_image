@@ -148,6 +148,14 @@ class DemoPage extends StatelessWidget {
               image: XNZNetworkImageProvider(_demoAnimatedGifUrl),
             ),
           ),
+          _section(
+            context: context,
+            title: 'XNZAnimatedImage (Static PNG)',
+            description: '使用动画组件加载非动画图片（单帧）示例。',
+            child: const _AnimatedPreview(
+              image: XNZAssetImageProvider('assets/tg.png'),
+            ),
+          ),
         ],
       ),
     );
