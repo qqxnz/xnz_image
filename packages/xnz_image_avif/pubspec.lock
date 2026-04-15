@@ -396,18 +396,18 @@ packages:
     dependency: "direct main"
     description:
       name: xnz_image
-      sha256: "5ee1e05034af8aac38cfb61e2c6c78246a7de57ad96ab6c5423e0384b95de59c"
+      sha256: "89c7746839c4ed7d2dc2979c10a0af12fc045e4d1fc087f501b9245da00a2454"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.6"
+    version: "0.1.7"
   xnz_image_core:
     dependency: transitive
     description:
       name: xnz_image_core
-      sha256: "8e22af78ba7c10e439824f0bb784ca0e455f471fcd7e87879fdd921162f5cc13"
+      sha256: "304b70fb7901ad2044f15f4e2307c74448d501c377086d018673635a1bf314a3"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.6"
+    version: "0.1.7"
 sdks:
   dart: ">=3.5.0 <4.0.0"
   flutter: ">=3.24.0"

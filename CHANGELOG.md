@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.7
+
+- Added `XNZAnimatedImage` controllable animated-image widget with pause/resume/replay/loop/completion hooks and timeline sync.
+- Added animated demos in examples and improved static-image behavior when using animated widget.
+- Unified monorepo package version to `0.1.7`.
+
 ## 0.1.6
 
 - Removed `connectTimeout` from `XNZNetworkImage` and unified connection-timeout behavior in core downloader.

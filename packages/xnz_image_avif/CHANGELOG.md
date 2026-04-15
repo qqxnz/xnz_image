@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.7
+
+- Added automatic animated AVIF decoding integration for `XNZAnimatedImage` through `XNZImageSupport` metadata.
+- Unified monorepo package version to `0.1.7`.
+
 ## 0.1.4
 
 - Unified monorepo release version.
