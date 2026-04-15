@@ -142,14 +142,18 @@ Image(
 
 ## 可控动画组件（帧解码播放）
 
-`XNZAnimatedImage` 支持将动画图片解码成帧并按时间轴播放，适用于 GIF / Animated WebP / APNG。
+`XNZAnimatedImage` 支持将图片解码为帧并按时间轴播放，适用于 GIF / Animated WebP / APNG，
+并可在注册 `XNZImageAvif()` 后自动处理 AVIF 动图。
 
-支持能力：
+### 能力概览
 
-- 精准 UI 同步（可通过 `XNZAnimatedImageController` 监听 `position/progress/frameIndex`）
-- `play / pause / resume / replay`
-- 完成监听（`onCompleted`）
-- 循环开关（`loop`）
+- 精准 UI 同步：`position` / `progress` / `frameIndex`
+- 播放控制：`play / pause / resume / replay`
+- 回调：`onLoaded` / `onCompleted`
+- 循环开关：`loop`
+- 异常兜底：`errorBuilder`
+
+### 基础用法
 
 ```dart
 final controller = XNZAnimatedImageController();
@@ -159,23 +163,72 @@ XNZAnimatedImage(
   controller: controller,
   autoPlay: true,
   loop: true,
+  fit: BoxFit.contain,
   onLoaded: (duration, fps, frameCount) {
     debugPrint('duration=$duration fps=$fps frames=$frameCount');
   },
   onCompleted: (completedLoops) {
     debugPrint('completedLoops=$completedLoops');
   },
+  loadingBuilder: (_) => const Center(child: CircularProgressIndicator()),
+  errorBuilder: (context, error, stackTrace) {
+    return const Center(child: Text('Animated image load failed'));
+  },
 )
 ```
 
-如果你已注册 `XNZImageAvif()`，`XNZAnimatedImage` 会通过 `XNZImageSupport`
-自动识别 AVIF 并走 AVIF 动画解码；通常不需要手动传 `decoder`。
+### 控制器联动示例
+
+```dart
+IconButton(
+  onPressed: controller.play,
+  icon: const Icon(Icons.play_arrow),
+);
+IconButton(
+  onPressed: controller.pause,
+  icon: const Icon(Icons.pause),
+);
+IconButton(
+  onPressed: controller.replay,
+  icon: const Icon(Icons.replay),
+);
+```
+
+```dart
+AnimatedBuilder(
+  animation: controller,
+  builder: (context, _) {
+    return Text(
+      'frame=${controller.frameIndex} '
+      'progress=${controller.progress.toStringAsFixed(2)} '
+      'position=${controller.position.inMilliseconds}ms',
+    );
+  },
+)
+```
+
+### 使用动画组件加载静态图（单帧）
+
+```dart
+XNZAnimatedImage(
+  image: const XNZAssetImageProvider('assets/tg.png'),
+)
+```
+
+静态图会按单帧处理，示例层建议展示为 `fps 0` 语义。
+
+### AVIF 动图（自动识别）
+
+注册 AVIF 扩展后，`XNZAnimatedImage` 会通过 `XNZImageSupport` 自动匹配 AVIF 动画解码：
 
 ```dart
 XNZImage.support(XNZImageAvif());
 
 XNZAnimatedImage(
-  image: XNZNetworkImageProvider('https://example.com/demo.avif'),
+  image: XNZNetworkImageProvider(
+    'https://example.com/demo.avif',
+    avifOverrideDurationMs: -1,
+  ),
 )
 ```
 
