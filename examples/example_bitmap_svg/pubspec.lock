@@ -406,21 +406,21 @@ packages:
       path: "../.."
       relative: true
     source: path
-    version: "0.1.4"
+    version: "0.1.8"
   xnz_image_core:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       path: "../../packages/xnz_image_core"
       relative: true
     source: path
-    version: "0.1.4"
+    version: "0.1.8"
   xnz_image_svg:
     dependency: "direct main"
     description:
       path: "../../packages/xnz_image_svg"
       relative: true
     source: path
-    version: "0.1.4"
+    version: "0.1.8"
 sdks:
   dart: ">=3.5.0 <4.0.0"
   flutter: ">=3.24.0"

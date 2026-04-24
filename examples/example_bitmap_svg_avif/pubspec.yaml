@@ -24,6 +24,12 @@ dev_dependencies:
 dependency_overrides:
   xnz_image:
     path: ../../
+  xnz_image_core:
+    path: ../../packages/xnz_image_core
+  xnz_image_svg:
+    path: ../../packages/xnz_image_svg
+  xnz_image_avif:
+    path: ../../packages/xnz_image_avif
 
 flutter:
   uses-material-design: true

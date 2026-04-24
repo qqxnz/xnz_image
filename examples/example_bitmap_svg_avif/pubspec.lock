@@ -470,29 +470,28 @@ packages:
       path: "../.."
       relative: true
     source: path
-    version: "0.1.6"
+    version: "0.1.8"
   xnz_image_avif:
     dependency: "direct main"
     description:
       path: "../../packages/xnz_image_avif"
       relative: true
     source: path
-    version: "0.1.4"
+    version: "0.1.8"
   xnz_image_core:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: xnz_image_core
-      sha256: "8e22af78ba7c10e439824f0bb784ca0e455f471fcd7e87879fdd921162f5cc13"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.6"
+      path: "../../packages/xnz_image_core"
+      relative: true
+    source: path
+    version: "0.1.8"
   xnz_image_svg:
     dependency: "direct main"
     description:
       path: "../../packages/xnz_image_svg"
       relative: true
     source: path
-    version: "0.1.4"
+    version: "0.1.8"
 sdks:
   dart: ">=3.5.0 <4.0.0"
   flutter: ">=3.24.0"
