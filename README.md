@@ -21,16 +21,16 @@
 
 ```yaml
 dependencies:
-  xnz_image: ^0.1.8
+  xnz_image: ^0.1.9
 ```
 
 ### 2) 可选扩展（按需）
 
 ```yaml
 dependencies:
-  xnz_image: ^0.1.8
-  xnz_image_svg: ^0.1.8
-  xnz_image_avif: ^0.1.8
+  xnz_image: ^0.1.9
+  xnz_image_svg: ^0.1.9
+  xnz_image_avif: ^0.1.9
 ```
 
 > 在本仓库联调时可使用 `path` 依赖，发布到 pub 后建议改为版本依赖。

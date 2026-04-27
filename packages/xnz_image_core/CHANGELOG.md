@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.9 - 2026-04-27
+
+- Increased default image downloader timeout values to improve network robustness.
+- Unified monorepo package version to `0.1.9`.
+
 ## 0.1.8
 
 - Unified monorepo package version to `0.1.8`.

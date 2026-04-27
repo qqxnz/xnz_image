@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.9 - 2026-04-27
+
+- Unified image decode validation across providers for more consistent behavior.
+- Synced README dependency examples and monorepo package versions to `0.1.9`.
+
 ## 0.1.8
 
 - Improved release process documentation and clarified publish order/checklist.
