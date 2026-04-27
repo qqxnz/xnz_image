@@ -1,3 +1,7 @@
+/// Public entrypoint for the `xnz_image` package.
+///
+/// Export this library to access widgets, providers, cache helpers,
+/// and extension points for custom image format support.
 library xnz_image;
 
 export 'package:xnz_image_core/xnz_image_core.dart'

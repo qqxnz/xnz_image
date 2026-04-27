@@ -13,12 +13,15 @@ import 'xnz_file_image_provider.dart';
 import 'xnz_memory_image_provider.dart';
 import 'xnz_network_image_provider.dart';
 
+/// Decoder signature used by [XNZAnimatedImage] for custom frame decoding.
 typedef XNZAnimatedImageDecoder = Future<Object?> Function(
   XNZAnimatedImageDecodeRequest request,
 );
 
+/// Decode request passed to [XNZAnimatedImageDecoder].
 @immutable
 class XNZAnimatedImageDecodeRequest {
+  /// Creates a decode request.
   const XNZAnimatedImageDecodeRequest({
     required this.image,
     required this.bytes,
@@ -26,41 +29,63 @@ class XNZAnimatedImageDecodeRequest {
     this.avifOverrideDurationMs,
   });
 
+  /// Source image provider.
   final ImageProvider image;
+
+  /// Raw bytes resolved from [image].
   final Uint8List bytes;
+
+  /// Render scale used for decoded frames.
   final double scale;
+
+  /// Optional per-frame duration override used by AVIF decoders.
   final int? avifOverrideDurationMs;
 }
 
+/// A single decoded animation frame.
 @immutable
 class XNZAnimatedImageFrame {
+  /// Creates a frame.
   const XNZAnimatedImageFrame({
     required this.image,
     required this.duration,
     this.scale = 1.0,
   });
 
+  /// Frame bitmap.
   final ui.Image image;
+
+  /// Frame display duration.
   final Duration duration;
+
+  /// Frame scale.
   final double scale;
 }
 
+/// Fully decoded animation payload.
 @immutable
 class XNZAnimatedImageData {
+  /// Creates decoded animation data.
   const XNZAnimatedImageData({
     required this.frames,
     required this.duration,
   });
 
+  /// Ordered frame list.
   final List<XNZAnimatedImageFrame> frames;
+
+  /// Total animation duration.
   final Duration duration;
 }
 
+/// In-memory cache for decoded animated images.
 @immutable
 class XNZAnimatedImageCache {
+  /// Cached animations indexed by provider-derived key.
   final Map<String, XNZAnimatedImageData> caches =
       <String, XNZAnimatedImageData>{};
 
+  /// Clears all cached animations and disposes frame images.
   void clear() {
     for (final cached in caches.values) {
       for (final frame in cached.frames) {
@@ -70,6 +95,9 @@ class XNZAnimatedImageCache {
     caches.clear();
   }
 
+  /// Removes a cached animation and disposes its frame images.
+  ///
+  /// Returns `true` if the entry existed.
   bool evict(Object key) {
     final removed = caches.remove(key);
     if (removed == null) {
@@ -82,6 +110,7 @@ class XNZAnimatedImageCache {
   }
 }
 
+/// Controller for playback state and commands of [XNZAnimatedImage].
 class XNZAnimatedImageController extends ChangeNotifier {
   VoidCallback? _playCallback;
   VoidCallback? _pauseCallback;
@@ -95,13 +124,25 @@ class XNZAnimatedImageController extends ChangeNotifier {
   bool _isPlaying = false;
   bool _isCompleted = false;
 
+  /// Current playback position within a loop.
   Duration get position => _position;
+
+  /// Single-loop duration.
   Duration get duration => _duration;
+
+  /// Current frame index.
   int get frameIndex => _frameIndex;
+
+  /// Number of completed loops.
   int get completedLoops => _completedLoops;
+
+  /// Whether playback is currently running.
   bool get isPlaying => _isPlaying;
+
+  /// Whether non-looping playback has completed.
   bool get isCompleted => _isCompleted;
 
+  /// Normalized progress in range `0.0..1.0`.
   double get progress {
     final totalMs = _duration.inMilliseconds;
     if (totalMs <= 0) {
@@ -110,14 +151,19 @@ class XNZAnimatedImageController extends ChangeNotifier {
     return (_position.inMilliseconds / totalMs).clamp(0.0, 1.0);
   }
 
+  /// Starts playback.
   void play() => _playCallback?.call();
 
+  /// Pauses playback.
   void pause() => _pauseCallback?.call();
 
+  /// Resumes playback from current position.
   void resume() => _resumeCallback?.call();
 
+  /// Restarts playback from first frame.
   void replay() => _replayCallback?.call();
 
+  /// Binds command callbacks from an owning widget state.
   void bind({
     required VoidCallback onPlay,
     required VoidCallback onPause,
@@ -130,6 +176,7 @@ class XNZAnimatedImageController extends ChangeNotifier {
     _replayCallback = onReplay;
   }
 
+  /// Unbinds all command callbacks.
   void unbind() {
     _playCallback = null;
     _pauseCallback = null;
@@ -137,6 +184,7 @@ class XNZAnimatedImageController extends ChangeNotifier {
     _replayCallback = null;
   }
 
+  /// Synchronizes exposed playback state and notifies listeners on change.
   void sync({
     required Duration position,
     required Duration duration,
@@ -163,8 +211,10 @@ class XNZAnimatedImageController extends ChangeNotifier {
   }
 }
 
+/// Widget that renders and controls animated image playback.
 @immutable
 class XNZAnimatedImage extends StatefulWidget {
+  /// Creates an [XNZAnimatedImage].
   const XNZAnimatedImage({
     super.key,
     required this.image,
@@ -190,32 +240,74 @@ class XNZAnimatedImage extends StatefulWidget {
     this.matchTextDirection = false,
   });
 
+  /// Global decode cache for animated image data.
   static XNZAnimatedImageCache cache = XNZAnimatedImageCache();
 
+  /// Source image provider.
   final ImageProvider image;
+
+  /// Optional external playback controller.
   final XNZAnimatedImageController? controller;
+
+  /// Builder shown while first frame is loading.
   final Widget Function(BuildContext context)? loadingBuilder;
+
+  /// Builder shown when load/decode fails.
   final Widget Function(
     BuildContext context,
     Object error,
     StackTrace? stackTrace,
   )? errorBuilder;
+
+  /// Callback invoked after frames are loaded.
   final void Function(Duration duration, int fps, int frameCount)? onLoaded;
+
+  /// Callback invoked when each loop completes.
   final void Function(int completedLoops)? onCompleted;
+
+  /// Optional custom decoder.
   final XNZAnimatedImageDecoder? decoder;
+
+  /// Whether to start playback automatically after load.
   final bool autoPlay;
+
+  /// Whether playback repeats indefinitely.
   final bool loop;
+
+  /// Whether decoded animation data should be cached.
   final bool useCache;
+
+  /// Target width.
   final double? width;
+
+  /// Target height.
   final double? height;
+
+  /// Optional color filter.
   final Color? color;
+
+  /// Blend mode for [color].
   final BlendMode? colorBlendMode;
+
+  /// Box fit for rendered frame.
   final BoxFit? fit;
+
+  /// How to align the image within its bounds.
   final AlignmentGeometry alignment;
+
+  /// How to paint repeated image tiles.
   final ImageRepeat repeat;
+
+  /// Optional center slice for 9-patch like stretching.
   final Rect? centerSlice;
+
+  /// Whether to mirror horizontally in RTL contexts.
   final bool matchTextDirection;
+
+  /// Semantic label for accessibility.
   final String? semanticLabel;
+
+  /// Whether to exclude semantics for this widget.
   final bool excludeFromSemantics;
 
   @override

@@ -7,10 +7,18 @@ import 'package:xnz_image_core/xnz_image_core.dart';
 import 'package:xnz_image/src/xnz_memory_image_provider.dart';
 import 'package:xnz_image/src/xnz_resolved_image.dart';
 
+/// Download lifecycle states for [XNZNetworkImage].
 enum XNZNetworkImageDownloadStatus {
+  /// Initial state before loading starts.
   none,
+
+  /// Image bytes are being downloaded.
   downloading,
+
+  /// Image bytes were downloaded and can be rendered.
   complete,
+
+  /// Download failed.
   failed,
 }
 
@@ -20,22 +28,45 @@ enum XNZNetworkImageDownloadStatus {
 )
 typedef XNZNetworkImageDonwloadStatus = XNZNetworkImageDownloadStatus;
 
+/// Stateful widget that downloads, caches, and renders a network image.
 class XNZNetworkImage extends StatefulWidget {
+  /// Remote image url.
   final String imageUrl;
+
+  /// Target render width.
   final double? width;
+
+  /// Target render height.
   final double? height;
+
+  /// Optional color filter.
   final Color? color;
+
+  /// Box fit for the rendered image.
   final BoxFit? fit;
+
+  /// Placeholder widget shown while loading or when failing without callback.
   final Widget? placeholder;
+
+  /// Optional render hook to wrap or replace the default rendered result.
   final XNZRenderBuilder? renderBuilder;
+
+  /// Progress widget builder with value in range `0.0..1.0`.
   final Widget Function(double progress)? progressIndicatorBuilder;
+
+  /// Error widget builder when download fails.
   final Widget Function(String url, dynamic error)? loadFailedBuilder;
 
+  /// Optional HTTP send timeout.
   final Duration? sendTimeout;
+
+  /// Optional HTTP receive timeout.
   final Duration? receiveTimeout;
 
+  /// Optional frame duration override used by AVIF decoders.
   final int? avifOverrideDurationMs;
 
+  /// Creates an [XNZNetworkImage].
   const XNZNetworkImage({
     super.key,
     required this.imageUrl,
@@ -56,7 +87,11 @@ class XNZNetworkImage extends StatefulWidget {
   State<StatefulWidget> createState() => StateXNZNetworkImage();
 }
 
+/// State for [XNZNetworkImage].
 class StateXNZNetworkImage extends State<XNZNetworkImage> {
+  /// Creates [StateXNZNetworkImage].
+  StateXNZNetworkImage();
+
   static const Duration _progressUpdateInterval = Duration(milliseconds: 100);
   static const double _progressDeltaThreshold = 0.01;
 
