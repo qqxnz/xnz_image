@@ -52,6 +52,47 @@ rg -n "path:\\s+\\.\\./\\.\\.|path:\\s+\\.\\./\\.\\./packages" examples/*/pubspe
 rg -n "xnz_image(_core|_svg|_avif)?:\\s*\\^" README.md packages/*/README.md
 ```
 
+### 2.1 CHANGELOG 更新方法（基于 Git 提交记录）
+
+`CHANGELOG.md` 建议基于“上一个发布 Tag 到当前 `HEAD`”的提交记录整理，避免遗漏。
+
+1. 确认统计区间（以最新 tag 为起点）：
+```bash
+LAST_TAG=$(git describe --tags --abbrev=0)
+echo "$LAST_TAG..HEAD"
+```
+
+2. 先看全量提交（用于总览）：
+```bash
+git log --oneline --no-merges "$LAST_TAG"..HEAD
+```
+
+3. 按包筛选提交（用于各包 `CHANGELOG.md`）：
+```bash
+# 根包 xnz_image（按根包代码目录筛选）
+git log --no-merges --pretty=format:'- %s (%h)' "$LAST_TAG"..HEAD -- lib test
+
+# xnz_image_core
+git log --no-merges --pretty=format:'- %s (%h)' "$LAST_TAG"..HEAD -- packages/xnz_image_core
+
+# xnz_image_svg
+git log --no-merges --pretty=format:'- %s (%h)' "$LAST_TAG"..HEAD -- packages/xnz_image_svg
+
+# xnz_image_avif
+git log --no-merges --pretty=format:'- %s (%h)' "$LAST_TAG"..HEAD -- packages/xnz_image_avif
+```
+
+4. 写入规则（建议）：
+- 在各自 `CHANGELOG.md` 顶部新增 `## <version> - YYYY-MM-DD`。
+- 仅记录用户可感知变更：`feat` / `fix` / 重要 `perf` / 破坏性变更。
+- 纯发布提交（如 `chore(release): ...`）不写入条目。
+- 多包共用一次改动时，分别写入受影响包的 changelog，描述保持一致或按包能力细化。
+
+5. 提交前核对 changelog 是否都已更新：
+```bash
+git diff -- CHANGELOG.md packages/*/CHANGELOG.md
+```
+
 ## 3. 发布顺序（Monorepo）
 
 按依赖关系发布：
