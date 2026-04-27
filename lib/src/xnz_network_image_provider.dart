@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'dart:ui' as ui;
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:xnz_image_core/xnz_image_core.dart';
-
+import 'package:xnz_image/src/xnz_image_decode_utils.dart';
 import 'package:xnz_image/src/xnz_proxy_image_stream_completer.dart';
 
 class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
@@ -70,22 +69,54 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
     ImageDecoderCallback decode,
   ) async {
     XNZImageLogs.log('XNZNetworkImageProvider', '_loadAsync');
-    final Uint8List data = await _loadImageData(key.imageUrl);
-    unawaited(XNZCacheManager().setCache(key.imageUrl, data));
-    final ui.ImmutableBuffer buffer = await ui.ImmutableBuffer.fromUint8List(
-      data,
-    );
-    return decode(buffer);
-  }
-
-  Future<Uint8List> _loadImageData(String imageUrl) async {
-    Uint8List? data = await XNZCacheManager().getCache(imageUrl);
-    if (data != null) {
+    Uint8List data = await _loadImageData(key.imageUrl, useCache: true);
+    try {
+      final codec = await XNZImageDecodeUtils.decodeChecked(
+        data: data,
+        decode: decode,
+        source: key.imageUrl,
+      );
+      unawaited(XNZCacheManager().setCache(key.imageUrl, data));
+      return codec;
+    } catch (firstError) {
       XNZImageLogs.log(
         'XNZNetworkImageProvider',
-        '_loadImageData-返回缓存对象',
+        '_loadAsync-首次解码失败，清理缓存并重试, url:${key.imageUrl}, error:$firstError',
       );
-      return data;
+      await XNZCacheManager().removeCache(key.imageUrl);
+    }
+
+    data = await _loadImageData(key.imageUrl, useCache: false);
+    try {
+      final codec = await XNZImageDecodeUtils.decodeChecked(
+        data: data,
+        decode: decode,
+        source: key.imageUrl,
+      );
+      unawaited(XNZCacheManager().setCache(key.imageUrl, data));
+      return codec;
+    } catch (retryError) {
+      throw StateError(
+        'Invalid image data after retry: ${key.imageUrl}, '
+        'bytes:${data.length}, reason:$retryError',
+      );
+    }
+  }
+
+  Future<Uint8List> _loadImageData(
+    String imageUrl, {
+    required bool useCache,
+  }) async {
+    Uint8List? data;
+    if (useCache) {
+      data = await XNZCacheManager().getCache(imageUrl);
+      if (data != null) {
+        XNZImageLogs.log(
+          'XNZNetworkImageProvider',
+          '_loadImageData-返回缓存对象',
+        );
+        return data;
+      }
     }
     XNZImageLogs.log('XNZNetworkImageProvider', '_loadImageData-开始下载');
     final completer = Completer<Uint8List?>();

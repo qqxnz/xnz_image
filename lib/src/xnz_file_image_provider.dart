@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:xnz_image_core/xnz_image_core.dart';
 
+import 'package:xnz_image/src/xnz_image_decode_utils.dart';
 import 'package:xnz_image/src/xnz_proxy_image_stream_completer.dart';
 
 class XNZFileImageProvider extends ImageProvider<XNZFileImageProvider> {
@@ -73,10 +74,11 @@ class XNZFileImageProvider extends ImageProvider<XNZFileImageProvider> {
     XNZImageLogs.log(
         'XNZFileImageProvider', '_loadAsync-内置解码 ${key.file.path}');
     final bytes = await key.file.readAsBytes();
-    final ui.ImmutableBuffer buffer = await ui.ImmutableBuffer.fromUint8List(
-      bytes,
+    return XNZImageDecodeUtils.decodeChecked(
+      data: bytes,
+      decode: decode,
+      source: key.file.path,
     );
-    return decode(buffer);
   }
 
   @override

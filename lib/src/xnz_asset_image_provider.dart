@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:xnz_image_core/xnz_image_core.dart';
 
+import 'package:xnz_image/src/xnz_image_decode_utils.dart';
 import 'package:xnz_image/src/xnz_proxy_image_stream_completer.dart';
 
 class XNZAssetImageProvider extends ImageProvider<XNZAssetImageProvider> {
@@ -88,10 +89,11 @@ class XNZAssetImageProvider extends ImageProvider<XNZAssetImageProvider> {
     XNZImageLogs.log(
         'XNZAssetImageProvider', '_loadAsync-内置解码 ${key._resolvedAssetName}');
     final data = await _loadAssetData(key);
-    final ui.ImmutableBuffer buffer = await ui.ImmutableBuffer.fromUint8List(
-      data,
+    return XNZImageDecodeUtils.decodeChecked(
+      data: data,
+      decode: decode,
+      source: key._resolvedAssetName,
     );
-    return decode(buffer);
   }
 
   Future<Uint8List> _loadAssetData(XNZAssetImageProvider key) async {
