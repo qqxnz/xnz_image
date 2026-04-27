@@ -73,7 +73,7 @@ class XNZImageDownloader {
 
   final Dio dio = Dio(
     BaseOptions(
-      connectTimeout: const Duration(seconds: 5),
+      connectTimeout: const Duration(seconds: 12),
     ),
   );
   final List<XNZImageDownloaderTask> tasks = [];
@@ -202,7 +202,7 @@ class XNZImageDownloaderTask {
     Duration? receiveTimeout, // 接收超时
   })  : cancelToken = CancelToken(),
         sendTimeout = sendTimeout ?? const Duration(milliseconds: 5000),
-        receiveTimeout = receiveTimeout ?? const Duration(milliseconds: 5000);
+        receiveTimeout = receiveTimeout ?? const Duration(seconds: 12);
 
   void cancel() {
     cancelToken?.cancel('Canceled by user!');
