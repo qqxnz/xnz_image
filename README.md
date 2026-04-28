@@ -1,6 +1,6 @@
 # XNZImage
 
-English | [中文](#中文)
+English | [中文](README.zh-CN.md)
 
 A Flutter image loading package with unified rendering and cache management.
 It supports network, memory, file, and asset image sources, and provides an extensible architecture for extra formats.
@@ -211,12 +211,6 @@ More complete demo apps are under:
 - `examples/example_bitmap_avif`
 - `examples/example_bitmap_svg_avif`
 
----
-
-## 中文
-
-面向 Flutter 的图片加载组件，提供网络、内存、文件、Asset 四种图片渲染能力，以及统一缓存管理。
-仓库采用“核心包 + 可选扩展包”架构。
 
 ## 概览
 
