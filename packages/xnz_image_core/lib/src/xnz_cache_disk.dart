@@ -7,6 +7,8 @@ import 'package:xnz_image_core/src/xnz_image_cache_logs.dart';
 class XNZDiskCache {
   static XNZDiskCache? _instance;
   static Directory? _cacheDir;
+  static final Map<String, DateTime> _lastTouchAt = <String, DateTime>{};
+  static const Duration _touchInterval = Duration(minutes: 10);
 
   static Future<XNZDiskCache> getInstance() async {
     _instance ??= XNZDiskCache();
@@ -67,8 +69,7 @@ class XNZDiskCache {
 
     try {
       final data = await file.readAsBytes();
-      // 更新最近使用时间
-      await file.setLastModified(DateTime.now());
+      await _touchOnReadIfNeeded(file, url);
       return data;
     } catch (e) {
       XNZImageLogs.log(
@@ -85,8 +86,9 @@ class XNZDiskCache {
     final file = _fileForUrl(url);
 
     try {
+      // 写入数据会更新文件元信息，避免重复 setLastModified 造成额外 I/O。
       await file.writeAsBytes(data, flush: true);
-      await file.setLastModified(DateTime.now());
+      _lastTouchAt[url] = DateTime.now();
     } catch (e) {
       XNZImageLogs.log(
         'XNZDiskCache',
@@ -103,6 +105,7 @@ class XNZDiskCache {
     if (file.existsSync()) {
       await file.delete();
     }
+    _lastTouchAt.remove(url);
   }
 
   /// 清空全部缓存
@@ -112,6 +115,24 @@ class XNZDiskCache {
     if (_cacheDir!.existsSync()) {
       await _cacheDir!.delete(recursive: true);
       await _cacheDir!.create();
+    }
+    _lastTouchAt.clear();
+  }
+
+  Future<void> _touchOnReadIfNeeded(File file, String url) async {
+    final now = DateTime.now();
+    final last = _lastTouchAt[url];
+    if (last != null && now.difference(last) < _touchInterval) {
+      XNZImageLogs.log('XNZDiskCache', 'disk_touch_skipped interval url=$url');
+      return;
+    }
+
+    try {
+      await file.setLastModified(now);
+      _lastTouchAt[url] = now;
+      XNZImageLogs.log('XNZDiskCache', 'disk_touch_done url=$url');
+    } catch (e) {
+      XNZImageLogs.log('XNZDiskCache', 'disk_touch_failed url=$url err=$e');
     }
   }
 
