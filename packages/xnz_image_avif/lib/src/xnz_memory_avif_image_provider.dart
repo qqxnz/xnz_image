@@ -32,8 +32,14 @@ Future<AvifCodec> loadMemoryAvifCodec(
   required int codecKey,
   int? avifOverrideDurationMs = -1,
 }) async {
-  final bytesUint8List = bytes.buffer.asUint8List(0);
-  final fType = _getAvifFileType(bytesUint8List.sublist(0, 16));
+  const int _avifHeaderLength = 16;
+  final bytesUint8List = bytes.buffer.asUint8List(0, bytes.length);
+  if (bytesUint8List.length < _avifHeaderLength) {
+    throw const FormatException(
+      'Invalid AVIF bytes: empty or truncated data.',
+    );
+  }
+  final fType = _getAvifFileType(bytesUint8List.sublist(0, _avifHeaderLength));
   if (fType == AvifFileType.unknown) {
     throw StateError('Loaded file is not an avif file.');
   }

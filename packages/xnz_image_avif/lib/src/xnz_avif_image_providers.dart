@@ -79,6 +79,9 @@ class XNZAvifNetworkImageProvider
         'Failed to load AVIF image data: $url, error: ${downloadError ?? "unknown"}',
       );
     }
+    if (data.isEmpty) {
+      throw const FormatException('Invalid AVIF bytes: empty image data.');
+    }
     return data;
   }
 }
