@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.11
+
+- Synced README dependency examples and monorepo package versions to `0.1.11`.
+
 ## 0.1.10 - 2026-04-28
 
 - Added bilingual README content, API dartdoc improvements, and pub example updates.

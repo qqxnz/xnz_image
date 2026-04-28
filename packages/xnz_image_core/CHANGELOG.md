@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.11
+
+- Added disk cache cleanup by last-hit time.
+- Unified monorepo package version to `0.1.11`.
+
 ## 0.1.10 - 2026-04-28
 
 - Removed disk cache cleanup and size limit logic.

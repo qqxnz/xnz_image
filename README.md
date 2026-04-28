@@ -20,16 +20,16 @@ This repository uses a **core + extension** architecture:
 
 ```yaml
 dependencies:
-  xnz_image: ^0.1.10
+  xnz_image: ^0.1.11
 ```
 
 ### 2) Optional extensions
 
 ```yaml
 dependencies:
-  xnz_image: ^0.1.10
-  xnz_image_svg: ^0.1.10
-  xnz_image_avif: ^0.1.10
+  xnz_image: ^0.1.11
+  xnz_image_svg: ^0.1.11
+  xnz_image_avif: ^0.1.11
 ```
 
 For local development in this monorepo, you may use `path` dependencies.
@@ -233,16 +233,16 @@ More complete demo apps are under:
 
 ```yaml
 dependencies:
-  xnz_image: ^0.1.10
+  xnz_image: ^0.1.11
 ```
 
 ### 2) 可选扩展（按需）
 
 ```yaml
 dependencies:
-  xnz_image: ^0.1.10
-  xnz_image_svg: ^0.1.10
-  xnz_image_avif: ^0.1.10
+  xnz_image: ^0.1.11
+  xnz_image_svg: ^0.1.11
+  xnz_image_avif: ^0.1.11
 ```
 
 在本仓库联调时可使用 `path` 依赖。

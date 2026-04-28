@@ -332,10 +332,10 @@ packages:
     dependency: "direct main"
     description:
       name: xnz_image_core
-      sha256: "6524c6113e0aff20a810441c11252e4458b03e2ad2ebc1ec9841970236542e03"
+      sha256: "3c6a42ac0564a7f9fdf1c0bdd5a46725270b6d959812872565ff4d5d93eb032c"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.10"
+    version: "0.1.11"
 sdks:
   dart: ">=3.5.0 <4.0.0"
   flutter: ">=3.24.0"
