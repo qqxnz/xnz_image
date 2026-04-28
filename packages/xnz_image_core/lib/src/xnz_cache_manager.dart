@@ -116,4 +116,10 @@ class XNZCacheManager {
     final diskCache = await XNZDiskCache.getInstance();
     return diskCache.getCurrentBytes();
   }
+
+  // 删除超过指定时间未命中的磁盘缓存，返回删除文件数
+  Future<int> clearUnusedDiskCache(Duration maxUnusedDuration) async {
+    final diskCache = await XNZDiskCache.getInstance();
+    return diskCache.clearUnusedSince(maxUnusedDuration);
+  }
 }

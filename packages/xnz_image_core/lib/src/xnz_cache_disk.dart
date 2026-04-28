@@ -119,6 +119,45 @@ class XNZDiskCache {
     _lastTouchAt.clear();
   }
 
+  /// 删除超过 [maxUnusedDuration] 未命中的磁盘缓存文件。
+  ///
+  /// 返回成功删除的文件数量。
+  Future<int> clearUnusedSince(Duration maxUnusedDuration) async {
+    await _init();
+
+    if (maxUnusedDuration <= Duration.zero) {
+      return 0;
+    }
+
+    final expireBefore = DateTime.now().subtract(maxUnusedDuration);
+    int deletedCount = 0;
+
+    await for (final entity in _cacheDir!.list(followLinks: false)) {
+      if (entity is! File) continue;
+
+      try {
+        final stat = await entity.stat();
+        if (!stat.modified.isBefore(expireBefore)) {
+          continue;
+        }
+        await entity.delete();
+        deletedCount++;
+      } catch (e) {
+        XNZImageLogs.log(
+          'XNZDiskCache',
+          'clearUnusedSince failed file=${entity.path} err=$e',
+        );
+      }
+    }
+
+    _lastTouchAt.removeWhere((_, lastTouch) => lastTouch.isBefore(expireBefore));
+    XNZImageLogs.log(
+      'XNZDiskCache',
+      'clearUnusedSince done maxUnused=$maxUnusedDuration deleted=$deletedCount',
+    );
+    return deletedCount;
+  }
+
   Future<void> _touchOnReadIfNeeded(File file, String url) async {
     final now = DateTime.now();
     final last = _lastTouchAt[url];

@@ -189,6 +189,14 @@ Future<void> printCacheUsage() async {
 Future<void> clearAllCache() async {
   await XNZCacheManager().clearAll();
 }
+
+Future<void> clearUnusedDiskCache() async {
+  // Delete disk cache entries not used for 30 days.
+  final deleted = await XNZCacheManager().clearUnusedDiskCache(
+    const Duration(days: 30),
+  );
+  print('Deleted disk cache files: $deleted');
+}
 ```
 
 ## Platform Notes
@@ -393,6 +401,14 @@ Future<void> printCacheUsage() async {
 
 Future<void> clearAllCache() async {
   await XNZCacheManager().clearAll();
+}
+
+Future<void> clearUnusedDiskCache() async {
+  // 删除 30 天未命中的磁盘缓存。
+  final deleted = await XNZCacheManager().clearUnusedDiskCache(
+    const Duration(days: 30),
+  );
+  print('Deleted disk cache files: $deleted');
 }
 ```
 
