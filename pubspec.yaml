@@ -1,5 +1,5 @@
 name: xnz_image
-description: A Flutter component package with a demo app for network image loading and caching-ready UI behavior.
+description: Flutter image component for unified loading, downloading, and caching of network/memory/file/asset images, with extensible SVG/AVIF format support.
 version: 0.1.10
 homepage: https://github.com/qqxnz/xnz_image.git
 repository: https://github.com/qqxnz/xnz_image.git
