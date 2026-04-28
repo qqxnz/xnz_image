@@ -6,8 +6,8 @@ AVIF support extension for `xnz_image`.
 
 ```yaml
 dependencies:
-  xnz_image: ^0.1.9
-  xnz_image_avif: ^0.1.9
+  xnz_image: ^0.1.10
+  xnz_image_avif: ^0.1.10
 ```
 
 ## Usage

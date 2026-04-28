@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.10 - 2026-04-28
+
+- Removed disk cache cleanup and size limit logic.
+- Improved disk cache touch-check behavior with a fixed interval on cache hits.
+- Unified monorepo package version to `0.1.10`.
+
 ## 0.1.9 - 2026-04-27
 
 - Increased default image downloader timeout values to improve network robustness.

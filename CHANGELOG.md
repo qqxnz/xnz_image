@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.10 - 2026-04-28
+
+- Added bilingual README content, API dartdoc improvements, and pub example updates.
+- Synced README dependency examples and monorepo package versions to `0.1.10`.
+
 ## 0.1.9 - 2026-04-27
 
 - Unified image decode validation across providers for more consistent behavior.

@@ -1,6 +1,6 @@
 name: xnz_image
 description: A Flutter component package with a demo app for network image loading and caching-ready UI behavior.
-version: 0.1.9
+version: 0.1.10
 homepage: https://github.com/qqxnz/xnz_image.git
 repository: https://github.com/qqxnz/xnz_image.git
 platforms:
@@ -17,7 +17,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  xnz_image_core: ^0.1.9
+  xnz_image_core: ^0.1.10
 
 
 dev_dependencies:
