@@ -83,7 +83,7 @@ git log --no-merges --pretty=format:'- %s (%h)' "$LAST_TAG"..HEAD -- packages/xn
 ```
 
 4. 写入规则（建议）：
-- 在各自 `CHANGELOG.md` 顶部新增 `## <version> - YYYY-MM-DD`。
+- 在各自 `CHANGELOG.md` 顶部新增 `## <version>`（不包含日期）。
 - 仅记录用户可感知变更：`feat` / `fix` / 重要 `perf` / 破坏性变更。
 - 纯发布提交（如 `chore(release): ...`）不写入条目。
 - 多包共用一次改动时，分别写入受影响包的 changelog，描述保持一致或按包能力细化。
