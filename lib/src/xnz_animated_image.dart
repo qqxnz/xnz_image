@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -81,16 +82,41 @@ class XNZAnimatedImageData {
 /// In-memory cache for decoded animated images.
 @immutable
 class XNZAnimatedImageCache {
+  /// Creates an animated image cache with bounded entry count.
+  XNZAnimatedImageCache({this.maxEntries = 64})
+      : assert(maxEntries > 0, 'maxEntries must be greater than zero');
+
+  /// Maximum number of cached animated entries.
+  final int maxEntries;
+
   /// Cached animations indexed by provider-derived key.
-  final Map<String, XNZAnimatedImageData> caches =
-      <String, XNZAnimatedImageData>{};
+  final LinkedHashMap<String, XNZAnimatedImageData> caches =
+      LinkedHashMap<String, XNZAnimatedImageData>();
+
+  /// Returns a cached entry and refreshes its recency.
+  XNZAnimatedImageData? get(String key) {
+    final value = caches.remove(key);
+    if (value == null) {
+      return null;
+    }
+    caches[key] = value;
+    return value;
+  }
+
+  /// Stores a cache entry and evicts least-recently-used entries when needed.
+  void set(String key, XNZAnimatedImageData data) {
+    final previous = caches.remove(key);
+    if (previous != null && !identical(previous, data)) {
+      _disposeData(previous);
+    }
+    caches[key] = data;
+    _evictOverflowIfNeeded();
+  }
 
   /// Clears all cached animations and disposes frame images.
   void clear() {
     for (final cached in caches.values) {
-      for (final frame in cached.frames) {
-        frame.image.dispose();
-      }
+      _disposeData(cached);
     }
     caches.clear();
   }
@@ -103,10 +129,24 @@ class XNZAnimatedImageCache {
     if (removed == null) {
       return false;
     }
-    for (final frame in removed.frames) {
+    _disposeData(removed);
+    return true;
+  }
+
+  void _evictOverflowIfNeeded() {
+    while (caches.length > maxEntries) {
+      final oldestKey = caches.keys.first;
+      final removed = caches.remove(oldestKey);
+      if (removed != null) {
+        _disposeData(removed);
+      }
+    }
+  }
+
+  static void _disposeData(XNZAnimatedImageData data) {
+    for (final frame in data.frames) {
       frame.image.dispose();
     }
-    return true;
   }
 }
 
@@ -334,6 +374,7 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
   int _loadToken = 0;
   Object? _loadError;
   StackTrace? _loadErrorStackTrace;
+  bool _framesSharedWithCache = false;
 
   XNZAnimatedImageFrame? get _frame =>
       _frames.length > _frameIndex ? _frames[_frameIndex] : null;
@@ -370,6 +411,7 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
   void dispose() {
     _activeController.unbind();
     _ticker.dispose();
+    _disposeCurrentFramesIfOwned();
     super.dispose();
   }
 
@@ -415,6 +457,29 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
     );
   }
 
+  void _disposeFrames(List<XNZAnimatedImageFrame> frames) {
+    for (final frame in frames) {
+      frame.image.dispose();
+    }
+  }
+
+  void _disposeCurrentFramesIfOwned() {
+    if (_frames.isEmpty || _framesSharedWithCache) {
+      return;
+    }
+    _disposeFrames(_frames);
+  }
+
+  void _disposeDecodedIfEphemeral({
+    required XNZAnimatedImageData decoded,
+    required bool shouldKeepInCache,
+  }) {
+    if (shouldKeepInCache) {
+      return;
+    }
+    _disposeFrames(decoded.frames);
+  }
+
   void _resetPlayback() {
     _ticker.stop();
     _frameIndex = 0;
@@ -440,17 +505,33 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
     try {
       final key = _cacheKey(widget.image);
       XNZAnimatedImageData? decoded;
+      var decodedIsCached = false;
       if (widget.useCache && key != null) {
-        decoded = XNZAnimatedImage.cache.caches[key];
+        decoded = XNZAnimatedImage.cache.get(key);
+        decodedIsCached = decoded != null;
       }
       decoded ??= await _decodeImage(widget.image);
 
       if (!mounted || loadToken != _loadToken) {
+        _disposeDecodedIfEphemeral(
+          decoded: decoded,
+          shouldKeepInCache: decodedIsCached,
+        );
         return;
       }
 
       if (widget.useCache && key != null) {
-        XNZAnimatedImage.cache.caches.putIfAbsent(key, () => decoded!);
+        final existing = XNZAnimatedImage.cache.get(key);
+        if (existing == null) {
+          XNZAnimatedImage.cache.set(key, decoded);
+          decodedIsCached = true;
+        } else {
+          if (!identical(existing, decoded)) {
+            _disposeFrames(decoded.frames);
+          }
+          decoded = existing;
+          decodedIsCached = true;
+        }
       }
 
       final frameEndMs = <int>[];
@@ -462,8 +543,11 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
       }
       final isStatic = decoded.frames.length <= 1;
 
+      final previousFrames = _frames;
+      final previousFramesSharedWithCache = _framesSharedWithCache;
       setState(() {
         _frames = decoded!.frames;
+        _framesSharedWithCache = decodedIsCached;
         _duration = isStatic
             ? Duration.zero
             : decoded.duration.inMilliseconds <= 0
@@ -477,6 +561,9 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
         _isCompleted = false;
         _completedLoops = 0;
       });
+      if (!previousFramesSharedWithCache && previousFrames.isNotEmpty) {
+        _disposeFrames(previousFrames);
+      }
 
       final durationMs = _duration.inMilliseconds;
       final fps =

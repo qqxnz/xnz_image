@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,6 +19,24 @@ class _TestAssetBundle extends CachingAssetBundle {
 }
 
 void main() {
+  Future<XNZAnimatedImageData> buildAnimatedData(Uint8List bytes) async {
+    final codec = await ui.instantiateImageCodec(bytes);
+    try {
+      final frame = await codec.getNextFrame();
+      return XNZAnimatedImageData(
+        frames: <XNZAnimatedImageFrame>[
+          XNZAnimatedImageFrame(
+            image: frame.image,
+            duration: const Duration(milliseconds: 100),
+          ),
+        ],
+        duration: const Duration(milliseconds: 100),
+      );
+    } finally {
+      codec.dispose();
+    }
+  }
+
   testWidgets('XnzNetCacheImage renders', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -129,6 +149,30 @@ void main() {
     expect(cache.get('b'), isNull);
     expect(cache.get('a'), isNotNull);
     expect(cache.get('c'), isNotNull);
+  });
+
+  test('XNZAnimatedImageCache evicts least recently used entries', () async {
+    final Uint8List pngBytes =
+        File('examples/example_bitmap/assets/tg.png').readAsBytesSync();
+    final cache = XNZAnimatedImageCache(maxEntries: 2);
+    final a = await buildAnimatedData(pngBytes);
+    final b = await buildAnimatedData(pngBytes);
+    final c = await buildAnimatedData(pngBytes);
+
+    cache.set('a', a);
+    cache.set('b', b);
+    expect(cache.caches.keys.toList(), equals(<String>['a', 'b']));
+
+    // Touch a so b becomes LRU.
+    expect(cache.get('a'), same(a));
+    expect(cache.caches.keys.toList(), equals(<String>['b', 'a']));
+
+    // Insert c -> should evict b.
+    cache.set('c', c);
+    expect(cache.caches.containsKey('b'), isFalse);
+    expect(cache.caches.keys.toList(), equals(<String>['a', 'c']));
+
+    cache.clear();
   });
 
   test('XNZAssetImageProvider equality includes package and scale', () {
