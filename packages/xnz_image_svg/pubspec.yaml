@@ -1,6 +1,6 @@
 name: xnz_image_svg
 description: SVG support extension for xnz_image.
-version: 0.1.11
+version: 0.1.12
 homepage: https://github.com/qqxnz/xnz_image.git
 repository: https://github.com/qqxnz/xnz_image.git
 
@@ -11,7 +11,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  xnz_image: ^0.1.11
+  xnz_image: ^0.1.12
   flutter_svg: ^2.0.10+1
 
 dev_dependencies:

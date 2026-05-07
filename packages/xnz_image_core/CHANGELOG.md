@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.12
+
+- Made memory observer `init` / `dispose` idempotent.
+- Unified monorepo package version to `0.1.12`.
+
 ## 0.1.11
 
 - Added disk cache cleanup by last-hit time.

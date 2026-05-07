@@ -6,8 +6,8 @@ SVG support extension for `xnz_image`.
 
 ```yaml
 dependencies:
-  xnz_image: ^0.1.11
-  xnz_image_svg: ^0.1.11
+  xnz_image: ^0.1.12
+  xnz_image_svg: ^0.1.12
 ```
 
 ## Usage

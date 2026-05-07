@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.12
+
+- Improved memory observer init/dispose idempotency and animated image cache eviction behavior.
+- Synced README dependency examples and monorepo package versions to `0.1.12`.
+
 ## 0.1.11
 
 - Synced README dependency examples and monorepo package versions to `0.1.11`.
