@@ -6,12 +6,19 @@ class XNZImageMemoryObserver with WidgetsBindingObserver {
   static final XNZImageMemoryObserver _instance =
       XNZImageMemoryObserver._internal();
 
+  bool _isObserving = false;
+
   XNZImageMemoryObserver._internal();
 
   factory XNZImageMemoryObserver() => _instance;
 
   void init() {
+    if (_isObserving) {
+      XNZImageLogs.log('XNZImageMemoryObserver', 'init skipped: already observing');
+      return;
+    }
     WidgetsBinding.instance.addObserver(this);
+    _isObserving = true;
     XNZImageLogs.log('XNZImageMemoryObserver', 'init');
   }
 
@@ -26,6 +33,12 @@ class XNZImageMemoryObserver with WidgetsBindingObserver {
   }
 
   void dispose() {
+    if (!_isObserving) {
+      XNZImageLogs.log('XNZImageMemoryObserver', 'dispose skipped: not observing');
+      return;
+    }
     WidgetsBinding.instance.removeObserver(this);
+    _isObserving = false;
+    XNZImageLogs.log('XNZImageMemoryObserver', 'dispose');
   }
 }
