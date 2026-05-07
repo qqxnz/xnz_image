@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -12,6 +13,11 @@ import 'package:xnz_image_example_bitmap/main.dart';
 import 'test_data/bulk_image_urls.dart';
 
 const _invalidDemoImageUrl = 'https://sssa';
+
+void _printReport(String title, Map<String, dynamic> payload) {
+  print('===== $title =====');
+  print(const JsonEncoder.withIndent('  ').convert(payload));
+}
 
 Future<void> _pumpFor(
   WidgetTester tester,
@@ -241,6 +247,15 @@ void main() {
         report['image_log_count'] = imageLogs.length;
         report['image_failure_log_count'] = imageFailures.length;
         binding.reportData = report;
+        _printReport('Base ListView Report', <String, dynamic>{
+          'frames_collected': report['frames_collected'],
+          'avg_frame_ms': report['avg_frame_ms'],
+          'worst_frame_ms': report['worst_frame_ms'],
+          'jank_rate_over_33ms': report['jank_rate_over_33ms'],
+          'severe_jank_rate_over_100ms': report['severe_jank_rate_over_100ms'],
+          'image_log_count': report['image_log_count'],
+          'image_failure_log_count': report['image_failure_log_count'],
+        });
       } finally {
         SchedulerBinding.instance.removeTimingsCallback(onFrameTimings);
         XNZImageLogs.showLogs = previousShowLogs;
@@ -353,6 +368,16 @@ void main() {
             severeJankRate.toStringAsFixed(4);
         report['bulk_image_log_count'] = imageLogs.length;
         binding.reportData = report;
+        _printReport('Bulk ListView Report', <String, dynamic>{
+          'bulk_url_count': report['bulk_url_count'],
+          'bulk_frames_collected': report['bulk_frames_collected'],
+          'bulk_avg_frame_ms': report['bulk_avg_frame_ms'],
+          'bulk_worst_frame_ms': report['bulk_worst_frame_ms'],
+          'bulk_jank_rate_over_33ms': report['bulk_jank_rate_over_33ms'],
+          'bulk_severe_jank_rate_over_100ms':
+              report['bulk_severe_jank_rate_over_100ms'],
+          'bulk_image_log_count': report['bulk_image_log_count'],
+        });
       } finally {
         SchedulerBinding.instance.removeTimingsCallback(onFrameTimings);
         XNZImageLogs.showLogs = previousShowLogs;
