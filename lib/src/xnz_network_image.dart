@@ -156,6 +156,17 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     }
   }
 
+  void _setCacheSafely(String url, Uint8List bytes) {
+    unawaited(
+      XNZCacheManager().setCache(url, bytes).catchError((Object error) {
+        XNZImageLogs.log(
+          'XNZNetworkImage',
+          '缓存写入失败 url:$url error:$error',
+        );
+      }),
+    );
+  }
+
   void _clearResolvedCache() {
     _resolvedImageCache = null;
     _resolvedImageCacheBytes = null;
@@ -193,76 +204,99 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   void _loadImage() async {
     final requestVersion = ++_requestVersion;
     final requestUrl = widget.imageUrl;
+    final normalizedUrl = requestUrl.trim();
 
-    final memoryData = XNZCacheManager().getMemoryCache(requestUrl);
-    if (memoryData != null) {
-      XNZImageLogs.log('XNZNetworkImage', '内存缓存命中 $requestUrl');
+    if (normalizedUrl.isEmpty) {
       if (!_isActiveRequest(requestVersion, requestUrl)) return;
       setState(() {
-        _imageData = memoryData;
-        _status = XNZNetworkImageDownloadStatus.complete;
+        _status = XNZNetworkImageDownloadStatus.failed;
+        _error = ArgumentError.value(widget.imageUrl, 'imageUrl', 'is empty');
+        _task = null;
         _clearResolvedCache();
       });
       return;
     }
-
-    final diskData = await XNZCacheManager().getDiskCache(requestUrl);
-    if (!_isActiveRequest(requestVersion, requestUrl)) return;
-
-    if (diskData != null) {
-      XNZImageLogs.log('XNZNetworkImage', '硬盘缓存命中 $requestUrl');
-      setState(() {
-        _imageData = diskData;
-        _status = XNZNetworkImageDownloadStatus.complete;
-        _clearResolvedCache();
-      });
-      return;
-    }
-
-    setState(() {
-      _status = XNZNetworkImageDownloadStatus.downloading;
-      _error = null;
-      _lastProgressUpdateAt = null;
-      _lastProgressValue = -1;
-    });
-
-    _task = XNZImageDownloaderTask(
-      url: requestUrl,
-      onReceiveProgress: (count, total) {
-        if (_isActiveRequest(requestVersion, requestUrl) &&
-            widget.progressIndicatorBuilder != null &&
-            _shouldRebuildForProgress(count, total)) {
-          setState(() {});
-        }
-      },
-      onComplete: (bytes) {
+    try {
+      final memoryData = XNZCacheManager().getMemoryCache(normalizedUrl);
+      if (memoryData != null) {
+        XNZImageLogs.log('XNZNetworkImage', '内存缓存命中 $normalizedUrl');
         if (!_isActiveRequest(requestVersion, requestUrl)) return;
-        unawaited(XNZCacheManager().setCache(requestUrl, bytes));
         setState(() {
-          _imageData = bytes;
+          _imageData = memoryData;
           _status = XNZNetworkImageDownloadStatus.complete;
-          _task = null;
-          _lastProgressUpdateAt = null;
-          _lastProgressValue = -1;
           _clearResolvedCache();
         });
-      },
-      onError: (error) {
-        if (!_isActiveRequest(requestVersion, requestUrl)) return;
-        setState(() {
-          _status = XNZNetworkImageDownloadStatus.failed;
-          _error = error;
-          _task = null;
-          _lastProgressUpdateAt = null;
-          _lastProgressValue = -1;
-          _clearResolvedCache();
-        });
-      },
-      sendTimeout: widget.sendTimeout,
-      receiveTimeout: widget.receiveTimeout,
-    );
+        return;
+      }
 
-    XNZImageDownloader().start(_task!);
+      final diskData = await XNZCacheManager().getDiskCache(normalizedUrl);
+      if (!_isActiveRequest(requestVersion, requestUrl)) return;
+
+      if (diskData != null) {
+        XNZImageLogs.log('XNZNetworkImage', '硬盘缓存命中 $normalizedUrl');
+        setState(() {
+          _imageData = diskData;
+          _status = XNZNetworkImageDownloadStatus.complete;
+          _clearResolvedCache();
+        });
+        return;
+      }
+
+      setState(() {
+        _status = XNZNetworkImageDownloadStatus.downloading;
+        _error = null;
+        _lastProgressUpdateAt = null;
+        _lastProgressValue = -1;
+      });
+
+      _task = XNZImageDownloaderTask(
+        url: normalizedUrl,
+        onReceiveProgress: (count, total) {
+          if (_isActiveRequest(requestVersion, requestUrl) &&
+              widget.progressIndicatorBuilder != null &&
+              _shouldRebuildForProgress(count, total)) {
+            setState(() {});
+          }
+        },
+        onComplete: (bytes) {
+          if (!_isActiveRequest(requestVersion, requestUrl)) return;
+          _setCacheSafely(normalizedUrl, bytes);
+          setState(() {
+            _imageData = bytes;
+            _status = XNZNetworkImageDownloadStatus.complete;
+            _task = null;
+            _lastProgressUpdateAt = null;
+            _lastProgressValue = -1;
+            _clearResolvedCache();
+          });
+        },
+        onError: (error) {
+          if (!_isActiveRequest(requestVersion, requestUrl)) return;
+          setState(() {
+            _status = XNZNetworkImageDownloadStatus.failed;
+            _error = error;
+            _task = null;
+            _lastProgressUpdateAt = null;
+            _lastProgressValue = -1;
+            _clearResolvedCache();
+          });
+        },
+        sendTimeout: widget.sendTimeout,
+        receiveTimeout: widget.receiveTimeout,
+      );
+
+      XNZImageDownloader().start(_task!);
+    } catch (error) {
+      if (!_isActiveRequest(requestVersion, requestUrl)) return;
+      setState(() {
+        _status = XNZNetworkImageDownloadStatus.failed;
+        _error = error;
+        _task = null;
+        _lastProgressUpdateAt = null;
+        _lastProgressValue = -1;
+        _clearResolvedCache();
+      });
+    }
   }
 
   XNZResolvedImage _resolveImage(Uint8List bytes) {

@@ -20,6 +20,17 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
   final double scale;
   final int? avifOverrideDurationMs;
 
+  void _setCacheSafely(Uint8List data) {
+    unawaited(
+      XNZCacheManager().setCache(imageUrl, data).catchError((Object error) {
+        XNZImageLogs.log(
+          'XNZNetworkImageProvider',
+          '_setCacheSafely 失败 url:$imageUrl error:$error',
+        );
+      }),
+    );
+  }
+
   @override
   Future<XNZNetworkImageProvider> obtainKey(ImageConfiguration configuration) {
     XNZImageLogs.log('XNZNetworkImageProvider', 'obtainKey');
@@ -76,7 +87,7 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
         decode: decode,
         source: key.imageUrl,
       );
-      unawaited(XNZCacheManager().setCache(key.imageUrl, data));
+      _setCacheSafely(data);
       return codec;
     } catch (firstError) {
       XNZImageLogs.log(
@@ -93,7 +104,7 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
         decode: decode,
         source: key.imageUrl,
       );
-      unawaited(XNZCacheManager().setCache(key.imageUrl, data));
+      _setCacheSafely(data);
       return codec;
     } catch (retryError) {
       throw StateError(
@@ -124,16 +135,26 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
     final task = XNZImageDownloaderTask(
       url: imageUrl,
       onComplete: (bytes) {
-        completer.complete(bytes);
+        if (!completer.isCompleted) {
+          completer.complete(bytes);
+        }
         XNZImageLogs.log('XNZNetworkImageProvider', '_loadImageData-下载完成');
       },
       onError: (error) {
         downloadError = error;
         XNZImageLogs.log('XNZNetworkImageProvider', '_loadImageData-下载失败');
-        completer.complete(null);
+        if (!completer.isCompleted) {
+          completer.complete(null);
+        }
       },
     );
-    XNZImageDownloader().start(task);
+    try {
+      XNZImageDownloader().start(task);
+    } catch (error) {
+      throw Exception(
+        'Failed to start image download: $imageUrl, error: $error',
+      );
+    }
     data = await completer.future;
     if (data == null) {
       throw Exception(
