@@ -374,7 +374,6 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
   int _loadToken = 0;
   Object? _loadError;
   StackTrace? _loadErrorStackTrace;
-  bool _framesSharedWithCache = false;
 
   XNZAnimatedImageFrame? get _frame =>
       _frames.length > _frameIndex ? _frames[_frameIndex] : null;
@@ -464,20 +463,10 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
   }
 
   void _disposeCurrentFramesIfOwned() {
-    if (_frames.isEmpty || _framesSharedWithCache) {
+    if (_frames.isEmpty) {
       return;
     }
     _disposeFrames(_frames);
-  }
-
-  void _disposeDecodedIfEphemeral({
-    required XNZAnimatedImageData decoded,
-    required bool shouldKeepInCache,
-  }) {
-    if (shouldKeepInCache) {
-      return;
-    }
-    _disposeFrames(decoded.frames);
   }
 
   void _resetPlayback() {
@@ -505,32 +494,33 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
     try {
       final key = _cacheKey(widget.image);
       XNZAnimatedImageData? decoded;
-      var decodedIsCached = false;
+      var decodedFromCache = false;
       if (widget.useCache && key != null) {
-        decoded = XNZAnimatedImage.cache.get(key);
-        decodedIsCached = decoded != null;
+        final cached = XNZAnimatedImage.cache.get(key);
+        if (cached != null) {
+          decoded = _cloneDecodedData(cached);
+          decodedFromCache = true;
+        }
       }
       decoded ??= await _decodeImage(widget.image);
 
       if (!mounted || loadToken != _loadToken) {
-        _disposeDecodedIfEphemeral(
-          decoded: decoded,
-          shouldKeepInCache: decodedIsCached,
-        );
+        _disposeFrames(decoded.frames);
         return;
       }
 
       if (widget.useCache && key != null) {
-        final existing = XNZAnimatedImage.cache.get(key);
-        if (existing == null) {
-          XNZAnimatedImage.cache.set(key, decoded);
-          decodedIsCached = true;
-        } else {
-          if (!identical(existing, decoded)) {
+        if (!decodedFromCache) {
+          final existing = XNZAnimatedImage.cache.get(key);
+          if (existing == null) {
+            // Cache owns decoded handles; widget uses cloned handles.
+            XNZAnimatedImage.cache.set(key, decoded);
+            decoded = _cloneDecodedData(decoded);
+          } else {
+            // Another loader inserted into cache first.
             _disposeFrames(decoded.frames);
+            decoded = _cloneDecodedData(existing);
           }
-          decoded = existing;
-          decodedIsCached = true;
         }
       }
 
@@ -544,10 +534,8 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
       final isStatic = decoded.frames.length <= 1;
 
       final previousFrames = _frames;
-      final previousFramesSharedWithCache = _framesSharedWithCache;
       setState(() {
         _frames = decoded!.frames;
-        _framesSharedWithCache = decodedIsCached;
         _duration = isStatic
             ? Duration.zero
             : decoded.duration.inMilliseconds <= 0
@@ -561,7 +549,7 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
         _isCompleted = false;
         _completedLoops = 0;
       });
-      if (!previousFramesSharedWithCache && previousFrames.isNotEmpty) {
+      if (previousFrames.isNotEmpty) {
         _disposeFrames(previousFrames);
       }
 
@@ -715,6 +703,19 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
           : frame.duration;
     }
     return duration;
+  }
+
+  static XNZAnimatedImageData _cloneDecodedData(XNZAnimatedImageData data) {
+    final frames = data.frames
+        .map(
+          (frame) => XNZAnimatedImageFrame(
+            image: frame.image.clone(),
+            duration: frame.duration,
+            scale: frame.scale,
+          ),
+        )
+        .toList(growable: false);
+    return XNZAnimatedImageData(frames: frames, duration: data.duration);
   }
 
   static Future<XNZAnimatedImageData> _defaultDecode(
@@ -941,7 +942,14 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
       return 'network:${provider.imageUrl}|scale:${provider.scale}|avif:${provider.avifOverrideDurationMs}';
     }
     if (provider is NetworkImage) {
-      return 'network:${provider.url}|scale:${provider.scale}';
+      final headerEntries = provider.headers?.entries.toList()
+        ?..sort((a, b) => a.key.compareTo(b.key));
+      final headersHash = headerEntries == null
+          ? 0
+          : Object.hashAll(
+              headerEntries.map((entry) => Object.hash(entry.key, entry.value)),
+            );
+      return 'network:${provider.url}|scale:${provider.scale}|headers:$headersHash';
     }
     if (provider is XNZFileImageProvider) {
       return 'file:${provider.file.path}|scale:${provider.scale}|avif:${provider.avifOverrideDurationMs}';
@@ -950,7 +958,7 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
       return 'file:${provider.file.path}|scale:${provider.scale}';
     }
     if (provider is XNZAssetImageProvider) {
-      return 'asset:${provider.assetName}|package:${provider.package}|scale:${provider.scale}|avif:${provider.avifOverrideDurationMs}';
+      return 'asset:${provider.assetName}|package:${provider.package}|bundle:${provider.bundle}|scale:${provider.scale}|avif:${provider.avifOverrideDurationMs}';
     }
     if (provider is AssetImage) {
       return 'asset:${provider.assetName}|package:${provider.package}';

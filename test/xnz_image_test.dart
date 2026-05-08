@@ -206,4 +206,114 @@ void main() {
     expect(a == d, isTrue);
     expect(a.hashCode, equals(d.hashCode));
   });
+
+  testWidgets(
+    'XNZAnimatedImage cache key isolates different asset bundles',
+    (tester) async {
+      final Uint8List tinyPng =
+          File('examples/example_bitmap/web/icons/Icon-192.png')
+              .readAsBytesSync();
+      final Uint8List largePng =
+          File('examples/example_bitmap/assets/tg.png').readAsBytesSync();
+      final bundleA = _TestAssetBundle(tinyPng);
+      final bundleB = _TestAssetBundle(largePng);
+      XNZAnimatedImage.cache.clear();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: XNZAnimatedImage(
+              image: XNZAssetImageProvider(
+                'assets/same_name.png',
+                bundle: bundleA,
+              ),
+              useCache: true,
+              autoPlay: false,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+
+      final firstRaw = tester.widget<RawImage>(find.byType(RawImage));
+      final firstWidth = firstRaw.image?.width;
+      expect(firstWidth, equals(192));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: XNZAnimatedImage(
+              image: XNZAssetImageProvider(
+                'assets/same_name.png',
+                bundle: bundleB,
+              ),
+              useCache: true,
+              autoPlay: false,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+
+      final secondRaw = tester.widget<RawImage>(find.byType(RawImage));
+      final secondWidth = secondRaw.image?.width;
+      expect(secondWidth, equals(138));
+
+      XNZAnimatedImage.cache.clear();
+    },
+  );
+
+  testWidgets(
+    'XNZAnimatedImage uses cloned frame handles for cache ownership safety',
+    (tester) async {
+      final previousCache = XNZAnimatedImage.cache;
+      final localCache = XNZAnimatedImageCache(maxEntries: 8);
+      XNZAnimatedImage.cache = localCache;
+      addTearDown(() {
+        localCache.clear();
+        XNZAnimatedImage.cache = previousCache;
+      });
+
+      final Uint8List png =
+          File('examples/example_bitmap/web/icons/Icon-192.png')
+              .readAsBytesSync();
+      final bundle = _TestAssetBundle(png);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: XNZAnimatedImage(
+              image: XNZAssetImageProvider(
+                'assets/clone_check.png',
+                bundle: bundle,
+              ),
+              useCache: true,
+              autoPlay: false,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+
+      final rendered = tester.widget<RawImage>(find.byType(RawImage)).image;
+      expect(rendered, isNotNull);
+      expect(localCache.caches.length, equals(1));
+
+      final cached = localCache.caches.values.single.frames.first.image;
+      expect(identical(rendered, cached), isFalse);
+      expect(rendered!.isCloneOf(cached), isTrue);
+    },
+  );
 }
