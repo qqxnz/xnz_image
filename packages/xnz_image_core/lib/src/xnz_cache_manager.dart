@@ -1,13 +1,19 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:xnz_image_core/src/xnz_cache_disk.dart';
 import 'package:xnz_image_core/src/xnz_cache_memory.dart';
 import 'package:xnz_image_core/src/xnz_image_cache_logs.dart';
 
 class XNZCacheManager {
   static XNZCacheManager? _instance;
+  static const int _bytesPerMb = 1024 * 1024;
 
-  /// 300MB 内存缓存
-  static const int _maxMemoryBytes = 300 * 1024 * 1024;
+  /// 默认内存缓存上限：
+  /// - 非 Web：300MB
+  /// - Web：48MB（配合浏览器 HTTP 缓存）
+  static const int _defaultMaxMemoryBytesNative = 300 * _bytesPerMb;
+  static const int _defaultMaxMemoryBytesWeb = 48 * _bytesPerMb;
+  static const int _maxMemoryBytes =
+      kIsWeb ? _defaultMaxMemoryBytesWeb : _defaultMaxMemoryBytesNative;
 
   late final XNZMemoryCache<String> memoryCache;
 
@@ -109,6 +115,11 @@ class XNZCacheManager {
   // 当前内存缓存占用（字节）
   int getMemoryCacheBytes() {
     return memoryCache.currentBytes;
+  }
+
+  // 当前内存缓存上限（字节）
+  int getMemoryCacheMaxBytes() {
+    return memoryCache.maxBytes;
   }
 
   // 当前磁盘缓存占用（字节）

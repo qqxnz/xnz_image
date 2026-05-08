@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -13,6 +12,7 @@ import 'xnz_asset_image_provider.dart';
 import 'xnz_file_image_provider.dart';
 import 'xnz_memory_image_provider.dart';
 import 'xnz_network_image_provider.dart';
+import 'xnz_network_bytes_loader.dart';
 
 /// Decoder signature used by [XNZAnimatedImage] for custom frame decoding.
 typedef XNZAnimatedImageDecoder = Future<Object?> Function(
@@ -903,10 +903,10 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
       if (cached != null) {
         return cached;
       }
-      return _loadNetworkBytes(Uri.parse(provider.imageUrl));
+      return xnzLoadNetworkBytes(Uri.parse(provider.imageUrl));
     }
     if (provider is NetworkImage) {
-      return _loadNetworkBytes(
+      return xnzLoadNetworkBytes(
         Uri.parse(provider.url),
         headers: provider.headers,
       );
@@ -934,28 +934,6 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
       'Unsupported ImageProvider type: ${provider.runtimeType}. '
       'Use Memory/File/Network/Asset providers or pass a custom decoder.',
     );
-  }
-
-  static Future<Uint8List> _loadNetworkBytes(
-    Uri uri, {
-    Map<String, String>? headers,
-  }) async {
-    final httpClient = HttpClient();
-    try {
-      final request = await httpClient.getUrl(uri);
-      headers?.forEach(request.headers.add);
-      final response = await request.close();
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw HttpException(
-          'Request failed, statusCode: ${response.statusCode}',
-          uri: uri,
-        );
-      }
-      final bytes = await consolidateHttpClientResponseBytes(response);
-      return Uint8List.fromList(bytes);
-    } finally {
-      httpClient.close(force: true);
-    }
   }
 
   static String? _cacheKey(ImageProvider provider) {

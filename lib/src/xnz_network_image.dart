@@ -1,6 +1,6 @@
 import 'dart:async';
+import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:xnz_image_core/xnz_image_core.dart';
 
@@ -115,13 +115,6 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   @override
   void initState() {
     super.initState();
-    if (kIsWeb) {
-      _status = XNZNetworkImageDownloadStatus.failed;
-      _error = UnsupportedError(
-        'XNZNetworkImage does not support the web platform.',
-      );
-      return;
-    }
     _loadImage();
   }
 

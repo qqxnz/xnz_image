@@ -178,9 +178,11 @@ import 'package:xnz_image/xnz_image.dart';
 Future<void> printCacheUsage() async {
   final cacheManager = XNZCacheManager();
   final memoryBytes = cacheManager.getMemoryCacheBytes();
+  final memoryMaxBytes = cacheManager.getMemoryCacheMaxBytes();
   final diskBytes = await cacheManager.getDiskCacheBytes();
 
   print('Memory cache: $memoryBytes B');
+  print('Memory cache max: $memoryMaxBytes B');
   print('Disk cache: $diskBytes B');
 }
 
@@ -199,8 +201,10 @@ Future<void> clearUnusedDiskCache() async {
 
 ## 平台说明
 
-- 暂不支持 Web。
-- 在 Web 上使用不支持的路径可能抛出 `UnsupportedError`。
+- Web 平台支持 `XNZNetworkImage`、`XNZMemoryImage`、`XNZAssetImage` 与 `XNZAnimatedImage`。
+- Web 平台仅启用内存缓存，不启用磁盘缓存。
+- Web 内存缓存默认上限 48MB（非 Web 平台默认 300MB）。
+- `XNZFileImage` / `XNZFileImageProvider` 在 Web 上不支持，调用时会抛出 `UnsupportedError`。
 
 ## 运行示例
 
