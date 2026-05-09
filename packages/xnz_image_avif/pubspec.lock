@@ -395,18 +395,16 @@ packages:
   xnz_image:
     dependency: "direct main"
     description:
-      name: xnz_image
-      sha256: "0fb1ebdf6350d967c44dacbf71d56f8750b1911913bf023f9bfd6e60744c3eca"
-      url: "https://pub.dev"
-    source: hosted
+      path: "../.."
+      relative: true
+    source: path
     version: "0.1.12"
   xnz_image_core:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: xnz_image_core
-      sha256: a0b1386d7e0eaddf7f78dcf145888f1804497e60ddec7a119dbde70e05c87509
-      url: "https://pub.dev"
-    source: hosted
+      path: "../xnz_image_core"
+      relative: true
+    source: path
     version: "0.1.12"
 sdks:
   dart: ">=3.5.0 <4.0.0"

@@ -6,6 +6,11 @@ import 'xnz_network_bytes_loader_stub.dart'
 Future<Uint8List> xnzLoadNetworkBytes(
   Uri uri, {
   Map<String, String>? headers,
+  bool includeHeadersInCacheKey = false,
 }) {
-  return xnzLoadNetworkBytesImpl(uri, headers: headers);
+  return xnzLoadNetworkBytesImpl(
+    uri,
+    headers: headers,
+    includeHeadersInCacheKey: includeHeadersInCacheKey,
+  );
 }

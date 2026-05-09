@@ -10,6 +10,7 @@ export 'package:xnz_image_core/xnz_image_core.dart'
         XNZImageRequest,
         XNZImageSourceType,
         XNZImageSupport,
+        XNZUrlRequest,
         xnzNormalizeNetworkUrl;
 
 export 'src/xnz_image.dart';

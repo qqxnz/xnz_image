@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 import 'package:xnz_image_core/src/xnz_image_cache_logs.dart';
 
@@ -33,35 +32,20 @@ class XNZDiskCache {
     );
   }
 
-  /// URL -> 文件名（FNV-1a 64 位哈希，无第三方依赖）
-  String _fileNameForUrl(String url) {
-    const int fnvOffsetBasis = 0xcbf29ce484222325;
-    const int fnvPrime = 0x100000001b3;
-    const int mask64 = 0xffffffffffffffff;
-
-    int hash = fnvOffsetBasis;
-    for (final b in utf8.encode(url)) {
-      hash ^= b;
-      hash = (hash * fnvPrime) & mask64;
-    }
-
-    return hash.toRadixString(16).padLeft(16, '0');
-  }
-
-  File _fileForUrl(String url) {
-    return File('${_cacheDir!.path}/${_fileNameForUrl(url)}');
+  File _fileForCacheKey(String cacheKey) {
+    return File('${_cacheDir!.path}/$cacheKey');
   }
 
   /// 是否存在
-  Future<bool> has(String url) async {
+  Future<bool> has(String cacheKey) async {
     await _init();
-    return _fileForUrl(url).exists();
+    return _fileForCacheKey(cacheKey).exists();
   }
 
   /// 读取缓存（并更新最近使用时间）
-  Future<Uint8List?> get(String url) async {
+  Future<Uint8List?> get(String cacheKey) async {
     await _init();
-    final file = _fileForUrl(url);
+    final file = _fileForCacheKey(cacheKey);
 
     if (!file.existsSync()) {
       return null;
@@ -69,43 +53,43 @@ class XNZDiskCache {
 
     try {
       final data = await file.readAsBytes();
-      await _touchOnReadIfNeeded(file, url);
+      await _touchOnReadIfNeeded(file, cacheKey);
       return data;
     } catch (e) {
       XNZImageLogs.log(
         'XNZDiskCache',
-        'get error url=$url err=$e',
+        'get error key=$cacheKey err=$e',
       );
       return null;
     }
   }
 
   /// 写入缓存
-  Future<void> set(String url, Uint8List data) async {
+  Future<void> set(String cacheKey, Uint8List data) async {
     await _init();
-    final file = _fileForUrl(url);
+    final file = _fileForCacheKey(cacheKey);
 
     try {
       // 写入数据会更新文件元信息，避免重复 setLastModified 造成额外 I/O。
       await file.writeAsBytes(data, flush: true);
-      _lastTouchAt[url] = DateTime.now();
+      _lastTouchAt[cacheKey] = DateTime.now();
     } catch (e) {
       XNZImageLogs.log(
         'XNZDiskCache',
-        'set error url=$url err=$e',
+        'set error key=$cacheKey err=$e',
       );
     }
   }
 
   /// 移除单个缓存
-  Future<void> remove(String url) async {
+  Future<void> remove(String cacheKey) async {
     await _init();
-    final file = _fileForUrl(url);
+    final file = _fileForCacheKey(cacheKey);
 
     if (file.existsSync()) {
       await file.delete();
     }
-    _lastTouchAt.remove(url);
+    _lastTouchAt.remove(cacheKey);
   }
 
   /// 清空全部缓存
@@ -150,7 +134,8 @@ class XNZDiskCache {
       }
     }
 
-    _lastTouchAt.removeWhere((_, lastTouch) => lastTouch.isBefore(expireBefore));
+    _lastTouchAt
+        .removeWhere((_, lastTouch) => lastTouch.isBefore(expireBefore));
     XNZImageLogs.log(
       'XNZDiskCache',
       'clearUnusedSince done maxUnused=$maxUnusedDuration deleted=$deletedCount',
@@ -158,20 +143,22 @@ class XNZDiskCache {
     return deletedCount;
   }
 
-  Future<void> _touchOnReadIfNeeded(File file, String url) async {
+  Future<void> _touchOnReadIfNeeded(File file, String cacheKey) async {
     final now = DateTime.now();
-    final last = _lastTouchAt[url];
+    final last = _lastTouchAt[cacheKey];
     if (last != null && now.difference(last) < _touchInterval) {
-      XNZImageLogs.log('XNZDiskCache', 'disk_touch_skipped interval url=$url');
+      XNZImageLogs.log(
+          'XNZDiskCache', 'disk_touch_skipped interval key=$cacheKey');
       return;
     }
 
     try {
       await file.setLastModified(now);
-      _lastTouchAt[url] = now;
-      XNZImageLogs.log('XNZDiskCache', 'disk_touch_done url=$url');
+      _lastTouchAt[cacheKey] = now;
+      XNZImageLogs.log('XNZDiskCache', 'disk_touch_done key=$cacheKey');
     } catch (e) {
-      XNZImageLogs.log('XNZDiskCache', 'disk_touch_failed url=$url err=$e');
+      XNZImageLogs.log(
+          'XNZDiskCache', 'disk_touch_failed key=$cacheKey err=$e');
     }
   }
 

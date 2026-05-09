@@ -12,20 +12,31 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
 
   XNZNetworkImageProvider(
     String imageUrl, {
+    this.headers,
+    this.includeHeadersInCacheKey = false,
     this.scale = 1.0,
     this.avifOverrideDurationMs = -1,
   }) : imageUrl = xnzNormalizeNetworkUrl(imageUrl);
 
   final String imageUrl;
+  final Map<String, String>? headers;
+  final bool includeHeadersInCacheKey;
   final double scale;
   final int? avifOverrideDurationMs;
 
+  XNZUrlRequest get _request => XNZUrlRequest(
+        imageUrl,
+        headers: headers,
+        includeHeadersInCacheKey: includeHeadersInCacheKey,
+      );
+
   void _setCacheSafely(Uint8List data) {
+    final request = _request;
     unawaited(
-      XNZCacheManager().setCache(imageUrl, data).catchError((Object error) {
+      XNZCacheManager().setCache(request, data).catchError((Object error) {
         XNZImageLogs.log(
           'XNZNetworkImageProvider',
-          '_setCacheSafely 失败 url:$imageUrl error:$error',
+          '_setCacheSafely 失败 url:${request.url} error:$error',
         );
       }),
     );
@@ -47,6 +58,8 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
       sourceType: XNZImageSourceType.network,
       uri: Uri.tryParse(key.imageUrl),
       options: <String, Object?>{
+        'headers': key.headers,
+        'includeHeadersInCacheKey': key.includeHeadersInCacheKey,
         'scale': key.scale,
         'avifOverrideDurationMs': key.avifOverrideDurationMs,
       },
@@ -80,7 +93,8 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
     ImageDecoderCallback decode,
   ) async {
     XNZImageLogs.log('XNZNetworkImageProvider', '_loadAsync');
-    Uint8List data = await _loadImageData(key.imageUrl, useCache: true);
+    final request = key._request;
+    Uint8List data = await _loadImageData(request, useCache: true);
     try {
       final codec = await XNZImageDecodeUtils.decodeChecked(
         data: data,
@@ -94,10 +108,10 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
         'XNZNetworkImageProvider',
         '_loadAsync-首次解码失败，清理缓存并重试, url:${key.imageUrl}, error:$firstError',
       );
-      await XNZCacheManager().removeCache(key.imageUrl);
+      await XNZCacheManager().removeCache(request);
     }
 
-    data = await _loadImageData(key.imageUrl, useCache: false);
+    data = await _loadImageData(request, useCache: false);
     try {
       final codec = await XNZImageDecodeUtils.decodeChecked(
         data: data,
@@ -115,13 +129,12 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
   }
 
   Future<Uint8List> _loadImageData(
-    String imageUrl, {
+    XNZUrlRequest request, {
     required bool useCache,
   }) async {
-    final normalizedUrl = xnzNormalizeNetworkUrl(imageUrl);
     Uint8List? data;
     if (useCache) {
-      data = await XNZCacheManager().getCache(normalizedUrl);
+      data = await XNZCacheManager().getCache(request);
       if (data != null) {
         XNZImageLogs.log(
           'XNZNetworkImageProvider',
@@ -134,7 +147,7 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
     final completer = Completer<Uint8List?>();
     Object? downloadError;
     final task = XNZImageDownloaderTask(
-      url: normalizedUrl,
+      request: request,
       onComplete: (bytes) {
         if (!completer.isCompleted) {
           completer.complete(bytes);
@@ -153,13 +166,13 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
       XNZImageDownloader().start(task);
     } catch (error) {
       throw Exception(
-        'Failed to start image download: $normalizedUrl, error: $error',
+        'Failed to start image download: ${request.url}, error: $error',
       );
     }
     data = await completer.future;
     if (data == null) {
       throw Exception(
-        'Failed to load image data: $normalizedUrl, error: ${downloadError ?? "unknown"}',
+        'Failed to load image data: ${request.url}, error: ${downloadError ?? "unknown"}',
       );
     }
     return data;
@@ -170,10 +183,14 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
       identical(this, other) ||
       other is XNZNetworkImageProvider &&
           runtimeType == other.runtimeType &&
-          imageUrl == other.imageUrl &&
+          _request == other._request &&
           scale == other.scale &&
           avifOverrideDurationMs == other.avifOverrideDurationMs;
 
   @override
-  int get hashCode => Object.hash(imageUrl, scale, avifOverrideDurationMs);
+  int get hashCode => Object.hash(
+        _request,
+        scale,
+        avifOverrideDurationMs,
+      );
 }

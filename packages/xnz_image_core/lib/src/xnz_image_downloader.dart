@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:xnz_image_core/src/xnz_cache_manager.dart';
 import 'package:xnz_image_core/src/xnz_image_cache_logs.dart';
-import 'package:xnz_image_core/src/support/xnz_network_url.dart';
+import 'package:xnz_image_core/src/support/xnz_url_request.dart';
 
 typedef XNZProgressCallback = void Function(int count, int total);
 
@@ -11,44 +11,19 @@ class XNZImageDownloader {
   static final XNZImageDownloader _singleton = XNZImageDownloader._internal();
   static final Map<String, Future<Uint8List?>> _inflightDownloads = {};
 
-  static String _buildRequestKey(
-    String imageUrl, {
-    Map<String, String>? headers,
-  }) {
-    final normalizedUrl = xnzNormalizeNetworkUrl(imageUrl);
-    if (headers == null || headers.isEmpty) {
-      return normalizedUrl;
-    }
-    final normalized = headers.entries
-        .map((entry) => MapEntry(entry.key.toLowerCase(), entry.value))
-        .toList(growable: false)
-      ..sort((a, b) {
-        final keyCompare = a.key.compareTo(b.key);
-        if (keyCompare != 0) {
-          return keyCompare;
-        }
-        return a.value.compareTo(b.value);
-      });
-    final serialized =
-        normalized.map((entry) => '${entry.key}:${entry.value}').join('|');
-    return '$normalizedUrl|headers:$serialized';
-  }
-
   /// 下载图片并缓存
   static Future<Uint8List?> downloadImageDataAndCache(
-    String imageUrl, {
-    Map<String, String>? headers,
-  }) async {
-    final normalizedUrl = xnzNormalizeNetworkUrl(imageUrl);
-    if (normalizedUrl.isEmpty) {
+    XNZUrlRequest request,
+  ) async {
+    if (request.url.isEmpty) {
       XNZImageLogs.log(
           'XNZImageDownloader', 'downloadImageDataAndCache empty image url');
       return null;
     }
 
-    final requestKey = _buildRequestKey(normalizedUrl, headers: headers);
+    final requestKey = request.requestKey;
     final cacheManager = XNZCacheManager();
-    final cachedData = await cacheManager.getCache(requestKey);
+    final cachedData = await cacheManager.getCache(request);
     if (cachedData != null) {
       XNZImageLogs.log('XNZImageDownloader',
           'downloadImageDataAndCache cache hit $requestKey');
@@ -69,10 +44,9 @@ class XNZImageDownloader {
     _inflightDownloads[requestKey] = future;
 
     final task = XNZImageDownloaderTask(
-      url: normalizedUrl,
-      headers: headers,
+      request: request,
       onComplete: (bytes) {
-        unawaited(cacheManager.setCache(requestKey, bytes));
+        unawaited(cacheManager.setCache(request, bytes));
         if (!completer.isCompleted) {
           completer.complete(bytes);
         }
@@ -211,8 +185,7 @@ class XNZImageDownloader {
 }
 
 class XNZImageDownloaderTask {
-  final String url;
-  final Map<String, String>? headers;
+  final XNZUrlRequest request;
   final XNZProgressCallback? onReceiveProgress;
   final Function(Uint8List)? onComplete;
   final Function(dynamic)? onError;
@@ -225,12 +198,15 @@ class XNZImageDownloaderTask {
   int count = 0;
   int total = 0;
 
-  String get requestKey =>
-      XNZImageDownloader._buildRequestKey(url, headers: headers);
+  String get url => request.url;
+
+  Map<String, String>? get headers =>
+      request.headers.isEmpty ? null : request.headers;
+
+  String get requestKey => request.requestKey;
 
   XNZImageDownloaderTask({
-    required this.url,
-    this.headers,
+    required this.request,
     required this.onComplete,
     required this.onError,
     this.onReceiveProgress,

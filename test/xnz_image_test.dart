@@ -142,39 +142,45 @@ void main() {
 
   test('XNZImageDownloaderTask requestKey isolates headers safely', () {
     final withoutHeaders = XNZImageDownloaderTask(
-      url: 'https://example.com/image.png',
+      request: XNZUrlRequest('https://example.com/image.png'),
       onComplete: (_) {},
       onError: (_) {},
     );
     final headersA = XNZImageDownloaderTask(
-      url: 'https://example.com/image.png',
-      headers: <String, String>{
-        'Authorization': 'Bearer token-a',
-        'X-Tenant': 'foo',
-      },
+      request: XNZUrlRequest(
+        'https://example.com/image.png',
+        headers: <String, String>{
+          'Authorization': 'Bearer token-a',
+          'X-Tenant': 'foo',
+        },
+      ),
       onComplete: (_) {},
       onError: (_) {},
     );
     final headersAReordered = XNZImageDownloaderTask(
-      url: 'https://example.com/image.png',
-      headers: <String, String>{
-        'x-tenant': 'foo',
-        'authorization': 'Bearer token-a',
-      },
+      request: XNZUrlRequest(
+        'https://example.com/image.png',
+        headers: <String, String>{
+          'x-tenant': 'foo',
+          'authorization': 'Bearer token-a',
+        },
+      ),
       onComplete: (_) {},
       onError: (_) {},
     );
     final headersB = XNZImageDownloaderTask(
-      url: 'https://example.com/image.png',
-      headers: <String, String>{
-        'Authorization': 'Bearer token-b',
-        'X-Tenant': 'foo',
-      },
+      request: XNZUrlRequest(
+        'https://example.com/image.png',
+        headers: <String, String>{
+          'Authorization': 'Bearer token-b',
+          'X-Tenant': 'foo',
+        },
+      ),
       onComplete: (_) {},
       onError: (_) {},
     );
     final withWhitespaceUrl = XNZImageDownloaderTask(
-      url: '  https://example.com/image.png  ',
+      request: XNZUrlRequest('  https://example.com/image.png  '),
       onComplete: (_) {},
       onError: (_) {},
     );
@@ -184,6 +190,33 @@ void main() {
     expect(headersA.requestKey, equals(headersAReordered.requestKey));
     expect(headersA.requestKey, isNot(equals(headersB.requestKey)));
     expect(headersA.requestKey, isNot(equals(withoutHeaders.requestKey)));
+  });
+
+  test('XNZUrlRequest cacheKey is configurable by headers strategy', () {
+    final urlOnlyA = XNZUrlRequest(
+      'https://example.com/a.png',
+      headers: <String, String>{'Authorization': 'Bearer token-a'},
+      includeHeadersInCacheKey: false,
+    );
+    final urlOnlyB = XNZUrlRequest(
+      'https://example.com/a.png',
+      headers: <String, String>{'Authorization': 'Bearer token-b'},
+      includeHeadersInCacheKey: false,
+    );
+    final withHeadersA = XNZUrlRequest(
+      'https://example.com/a.png',
+      headers: <String, String>{'Authorization': 'Bearer token-a'},
+      includeHeadersInCacheKey: true,
+    );
+    final withHeadersB = XNZUrlRequest(
+      'https://example.com/a.png',
+      headers: <String, String>{'Authorization': 'Bearer token-b'},
+      includeHeadersInCacheKey: true,
+    );
+
+    expect(urlOnlyA.cacheKey, equals(urlOnlyB.cacheKey));
+    expect(withHeadersA.cacheKey, isNot(equals(withHeadersB.cacheKey)));
+    expect(withHeadersA.requestKey, isNot(equals(withHeadersB.requestKey)));
   });
 
   test('XNZMemoryCache evicts least recently used items by bytes', () {

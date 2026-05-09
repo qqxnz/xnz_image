@@ -14,13 +14,23 @@ class XNZAvifNetworkImageProvider
     extends ImageProvider<XNZAvifNetworkImageProvider> {
   XNZAvifNetworkImageProvider(
     String imageUrl, {
+    this.headers,
+    this.includeHeadersInCacheKey = false,
     this.scale = 1.0,
     this.avifOverrideDurationMs = -1,
   }) : imageUrl = _normalizeNetworkUrl(imageUrl);
 
   final String imageUrl;
+  final Map<String, String>? headers;
+  final bool includeHeadersInCacheKey;
   final double scale;
   final int? avifOverrideDurationMs;
+
+  XNZUrlRequest get _request => XNZUrlRequest(
+        imageUrl,
+        headers: headers,
+        includeHeadersInCacheKey: includeHeadersInCacheKey,
+      );
 
   @override
   Future<XNZAvifNetworkImageProvider> obtainKey(
@@ -49,7 +59,7 @@ class XNZAvifNetworkImageProvider
 
   Future<AvifCodec> _loadAsync(XNZAvifNetworkImageProvider key) async {
     final bytes = await _loadImageData(key.imageUrl);
-    unawaited(XNZCacheManager().setCache(key.imageUrl, bytes));
+    unawaited(XNZCacheManager().setCache(key._request, bytes));
     return loadMemoryAvifCodec(
       bytes,
       codecKey: hashCode,
@@ -58,8 +68,8 @@ class XNZAvifNetworkImageProvider
   }
 
   Future<Uint8List> _loadImageData(String url) async {
-    final normalizedUrl = _normalizeNetworkUrl(url);
-    Uint8List? data = await XNZCacheManager().getCache(normalizedUrl);
+    final request = _request;
+    Uint8List? data = await XNZCacheManager().getCache(request);
     if (data != null) {
       return data;
     }
@@ -67,7 +77,7 @@ class XNZAvifNetworkImageProvider
     final completer = Completer<Uint8List?>();
     Object? downloadError;
     final task = XNZImageDownloaderTask(
-      url: normalizedUrl,
+      request: request,
       onComplete: (bytes) => completer.complete(bytes),
       onError: (error) {
         downloadError = error;
@@ -79,7 +89,7 @@ class XNZAvifNetworkImageProvider
     data = await completer.future;
     if (data == null) {
       throw Exception(
-        'Failed to load AVIF image data: $normalizedUrl, error: ${downloadError ?? "unknown"}',
+        'Failed to load AVIF image data: ${request.url}, error: ${downloadError ?? "unknown"}',
       );
     }
     if (data.isEmpty) {
@@ -93,12 +103,16 @@ class XNZAvifNetworkImageProvider
       identical(this, other) ||
       other is XNZAvifNetworkImageProvider &&
           runtimeType == other.runtimeType &&
-          imageUrl == other.imageUrl &&
+          _request == other._request &&
           scale == other.scale &&
           avifOverrideDurationMs == other.avifOverrideDurationMs;
 
   @override
-  int get hashCode => Object.hash(imageUrl, scale, avifOverrideDurationMs);
+  int get hashCode => Object.hash(
+        _request,
+        scale,
+        avifOverrideDurationMs,
+      );
 }
 
 class XNZAvifMemoryImageProvider extends XNZMemoryAvifImage {

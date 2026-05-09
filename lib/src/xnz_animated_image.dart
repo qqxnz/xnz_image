@@ -900,16 +900,27 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
       return provider.file.readAsBytes();
     }
     if (provider is XNZNetworkImageProvider) {
-      final cached = await XNZCacheManager().getCache(provider.imageUrl);
+      final request = XNZUrlRequest(
+        provider.imageUrl,
+        headers: provider.headers,
+        includeHeadersInCacheKey: provider.includeHeadersInCacheKey,
+      );
+      final cached = await XNZCacheManager().getCache(request);
       if (cached != null) {
         return cached;
       }
-      return xnzLoadNetworkBytes(Uri.parse(provider.imageUrl));
+      return xnzLoadNetworkBytes(
+        Uri.parse(provider.imageUrl),
+        headers: provider.headers,
+        includeHeadersInCacheKey: provider.includeHeadersInCacheKey,
+      );
     }
     if (provider is NetworkImage) {
       return xnzLoadNetworkBytes(
         Uri.parse(provider.url),
         headers: provider.headers,
+        includeHeadersInCacheKey:
+            provider.headers != null && provider.headers!.isNotEmpty,
       );
     }
 

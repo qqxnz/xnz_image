@@ -5,7 +5,10 @@ import 'package:flutter/foundation.dart';
 Future<Uint8List> xnzLoadNetworkBytesImpl(
   Uri uri, {
   Map<String, String>? headers,
+  bool includeHeadersInCacheKey = false,
 }) async {
+  // IO loader does not manage cache locally; the flag is for API parity.
+  final _ = includeHeadersInCacheKey;
   final httpClient = HttpClient();
   try {
     final request = await httpClient.getUrl(uri);

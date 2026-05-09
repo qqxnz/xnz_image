@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:xnz_image_core/src/support/xnz_network_url.dart';
 import 'package:xnz_image_core/src/xnz_cache_disk.dart';
 import 'package:xnz_image_core/src/xnz_cache_memory.dart';
 import 'package:xnz_image_core/src/xnz_image_cache_logs.dart';
+import 'package:xnz_image_core/src/support/xnz_url_request.dart';
 
 class XNZCacheManager {
   static XNZCacheManager? _instance;
@@ -28,60 +28,60 @@ class XNZCacheManager {
   }
 
   // 是否存在缓存（内存优先）
-  Future<bool> hasCache(String url) async {
-    final encodedUrl = Uri.encodeComponent(xnzNormalizeNetworkUrl(url));
+  Future<bool> hasCache(XNZUrlRequest request) async {
+    final cacheKey = request.cacheKey;
 
-    if (memoryCache.has(encodedUrl)) {
-      XNZImageLogs.log('XNZNetworkImage', 'hasCache $url 内存存在');
+    if (memoryCache.has(cacheKey)) {
+      XNZImageLogs.log('XNZNetworkImage', 'hasCache ${request.url} 内存存在');
       return true;
     }
 
     final diskCache = await XNZDiskCache.getInstance();
-    final hasDisk = await diskCache.has(encodedUrl);
+    final hasDisk = await diskCache.has(cacheKey);
     if (hasDisk) {
-      XNZImageLogs.log('XNZNetworkImage', 'hasCache $url 磁盘存在');
+      XNZImageLogs.log('XNZNetworkImage', 'hasCache ${request.url} 磁盘存在');
     }
     return hasDisk;
   }
 
   // 获取缓存（LRU 生效）
-  Future<Uint8List?> getCache(String url) async {
-    final encodedUrl = Uri.encodeComponent(xnzNormalizeNetworkUrl(url));
+  Future<Uint8List?> getCache(XNZUrlRequest request) async {
+    final cacheKey = request.cacheKey;
 
     // 1️⃣ 内存
-    final memoryData = memoryCache.get(encodedUrl);
+    final memoryData = memoryCache.get(cacheKey);
     if (memoryData != null) {
-      XNZImageLogs.log('XNZNetworkImage', 'getCache $url 内存命中');
+      XNZImageLogs.log('XNZNetworkImage', 'getCache ${request.url} 内存命中');
       return memoryData;
     }
 
     // 2️⃣ 磁盘
     final diskCache = await XNZDiskCache.getInstance();
-    final diskData = await diskCache.get(encodedUrl);
+    final diskData = await diskCache.get(cacheKey);
     if (diskData != null) {
-      XNZImageLogs.log('XNZNetworkImage', 'getCache $url 磁盘命中');
-      memoryCache.put(encodedUrl, diskData);
+      XNZImageLogs.log('XNZNetworkImage', 'getCache ${request.url} 磁盘命中');
+      memoryCache.put(cacheKey, diskData);
     }
 
     return diskData;
   }
 
   // 设置缓存（内存 + 磁盘）
-  Future<void> setCache(String url, Uint8List data) async {
-    final encodedUrl = Uri.encodeComponent(xnzNormalizeNetworkUrl(url));
-    memoryCache.put(encodedUrl, data);
+  Future<void> setCache(XNZUrlRequest request, Uint8List data) async {
+    final cacheKey = request.cacheKey;
+    memoryCache.put(cacheKey, data);
 
     final diskCache = await XNZDiskCache.getInstance();
-    await diskCache.set(encodedUrl, data);
+    await diskCache.set(cacheKey, data);
   }
 
   // 移除缓存
-  Future<void> removeCache(String url) async {
-    final encodedUrl = Uri.encodeComponent(xnzNormalizeNetworkUrl(url));
-    memoryCache.remove(encodedUrl);
+  Future<void> removeCache(XNZUrlRequest request) async {
+    final cacheKey = request.cacheKey;
+    memoryCache.remove(cacheKey);
 
     final diskCache = await XNZDiskCache.getInstance();
-    await diskCache.remove(encodedUrl);
+    await diskCache.remove(cacheKey);
   }
 
   // 清空所有缓存
@@ -93,22 +93,22 @@ class XNZCacheManager {
   }
 
   // 只取内存（LRU）
-  Uint8List? getMemoryCache(String url) {
-    final encodedUrl = Uri.encodeComponent(xnzNormalizeNetworkUrl(url));
-    final data = memoryCache.get(encodedUrl);
+  Uint8List? getMemoryCache(XNZUrlRequest request) {
+    final cacheKey = request.cacheKey;
+    final data = memoryCache.get(cacheKey);
     if (data != null) {
-      XNZImageLogs.log('XNZNetworkImage', 'getMemoryCache $url 命中');
+      XNZImageLogs.log('XNZNetworkImage', 'getMemoryCache ${request.url} 命中');
     }
     return data;
   }
 
   // 只取磁盘（并写回内存）
-  Future<Uint8List?> getDiskCache(String url) async {
-    final encodedUrl = Uri.encodeComponent(xnzNormalizeNetworkUrl(url));
+  Future<Uint8List?> getDiskCache(XNZUrlRequest request) async {
+    final cacheKey = request.cacheKey;
     final diskCache = await XNZDiskCache.getInstance();
-    final data = await diskCache.get(encodedUrl);
+    final data = await diskCache.get(cacheKey);
     if (data != null) {
-      memoryCache.put(encodedUrl, data);
+      memoryCache.put(cacheKey, data);
     }
     return data;
   }

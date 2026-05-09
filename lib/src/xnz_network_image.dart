@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:xnz_image_core/xnz_image_core.dart';
 
@@ -63,6 +63,14 @@ class XNZNetworkImage extends StatefulWidget {
   /// Optional HTTP receive timeout.
   final Duration? receiveTimeout;
 
+  /// Optional HTTP headers.
+  final Map<String, String>? headers;
+
+  /// Whether cache key should include normalized headers.
+  ///
+  /// Default false uses URL-only cache key.
+  final bool includeHeadersInCacheKey;
+
   /// Optional frame duration override used by AVIF decoders.
   final int? avifOverrideDurationMs;
 
@@ -80,6 +88,8 @@ class XNZNetworkImage extends StatefulWidget {
     this.loadFailedBuilder,
     this.sendTimeout,
     this.receiveTimeout,
+    this.headers,
+    this.includeHeadersInCacheKey = false,
     this.avifOverrideDurationMs = -1,
   });
 
@@ -139,6 +149,8 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     final oldUrl = xnzNormalizeNetworkUrl(oldWidget.imageUrl);
     final newUrl = xnzNormalizeNetworkUrl(widget.imageUrl);
     return oldUrl != newUrl ||
+        !mapEquals(oldWidget.headers, widget.headers) ||
+        oldWidget.includeHeadersInCacheKey != widget.includeHeadersInCacheKey ||
         oldWidget.sendTimeout != widget.sendTimeout ||
         oldWidget.receiveTimeout != widget.receiveTimeout ||
         oldWidget.avifOverrideDurationMs != widget.avifOverrideDurationMs;
@@ -158,12 +170,20 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     }
   }
 
-  void _setCacheSafely(String url, Uint8List bytes) {
+  XNZUrlRequest _buildRequest() {
+    return XNZUrlRequest(
+      widget.imageUrl,
+      headers: widget.headers,
+      includeHeadersInCacheKey: widget.includeHeadersInCacheKey,
+    );
+  }
+
+  void _setCacheSafely(XNZUrlRequest request, Uint8List bytes) {
     unawaited(
-      XNZCacheManager().setCache(url, bytes).catchError((Object error) {
+      XNZCacheManager().setCache(request, bytes).catchError((Object error) {
         XNZImageLogs.log(
           'XNZNetworkImage',
-          '缓存写入失败 url:$url error:$error',
+          '缓存写入失败 url:${request.url} error:$error',
         );
       }),
     );
@@ -180,10 +200,10 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     _resolvedImageCacheAvifOverrideDurationMs = null;
   }
 
-  bool _isActiveRequest(int requestVersion, String requestUrl) {
+  bool _isActiveRequest(int requestVersion, String requestKey) {
     return mounted &&
         requestVersion == _requestVersion &&
-        requestUrl == widget.imageUrl;
+        requestKey == _buildRequest().requestKey;
   }
 
   bool _shouldRebuildForProgress(int count, int total) {
@@ -205,11 +225,12 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
 
   void _loadImage() async {
     final requestVersion = ++_requestVersion;
-    final requestUrl = widget.imageUrl;
-    final normalizedUrl = xnzNormalizeNetworkUrl(requestUrl);
+    final request = _buildRequest();
+    final requestKey = request.requestKey;
+    final normalizedUrl = request.url;
 
     if (normalizedUrl.isEmpty) {
-      if (!_isActiveRequest(requestVersion, requestUrl)) return;
+      if (!_isActiveRequest(requestVersion, requestKey)) return;
       setState(() {
         _status = XNZNetworkImageDownloadStatus.failed;
         _error = ArgumentError.value(widget.imageUrl, 'imageUrl', 'is empty');
@@ -219,10 +240,10 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
       return;
     }
     try {
-      final memoryData = XNZCacheManager().getMemoryCache(normalizedUrl);
+      final memoryData = XNZCacheManager().getMemoryCache(request);
       if (memoryData != null) {
         XNZImageLogs.log('XNZNetworkImage', '内存缓存命中 $normalizedUrl');
-        if (!_isActiveRequest(requestVersion, requestUrl)) return;
+        if (!_isActiveRequest(requestVersion, requestKey)) return;
         setState(() {
           _imageData = memoryData;
           _status = XNZNetworkImageDownloadStatus.complete;
@@ -231,8 +252,8 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
         return;
       }
 
-      final diskData = await XNZCacheManager().getDiskCache(normalizedUrl);
-      if (!_isActiveRequest(requestVersion, requestUrl)) return;
+      final diskData = await XNZCacheManager().getDiskCache(request);
+      if (!_isActiveRequest(requestVersion, requestKey)) return;
 
       if (diskData != null) {
         XNZImageLogs.log('XNZNetworkImage', '硬盘缓存命中 $normalizedUrl');
@@ -252,17 +273,17 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
       });
 
       _task = XNZImageDownloaderTask(
-        url: normalizedUrl,
+        request: request,
         onReceiveProgress: (count, total) {
-          if (_isActiveRequest(requestVersion, requestUrl) &&
+          if (_isActiveRequest(requestVersion, requestKey) &&
               widget.progressIndicatorBuilder != null &&
               _shouldRebuildForProgress(count, total)) {
             setState(() {});
           }
         },
         onComplete: (bytes) {
-          if (!_isActiveRequest(requestVersion, requestUrl)) return;
-          _setCacheSafely(normalizedUrl, bytes);
+          if (!_isActiveRequest(requestVersion, requestKey)) return;
+          _setCacheSafely(request, bytes);
           setState(() {
             _imageData = bytes;
             _status = XNZNetworkImageDownloadStatus.complete;
@@ -273,7 +294,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
           });
         },
         onError: (error) {
-          if (!_isActiveRequest(requestVersion, requestUrl)) return;
+          if (!_isActiveRequest(requestVersion, requestKey)) return;
           setState(() {
             _status = XNZNetworkImageDownloadStatus.failed;
             _error = error;
@@ -289,7 +310,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
 
       XNZImageDownloader().start(_task!);
     } catch (error) {
-      if (!_isActiveRequest(requestVersion, requestUrl)) return;
+      if (!_isActiveRequest(requestVersion, requestKey)) return;
       setState(() {
         _status = XNZNetworkImageDownloadStatus.failed;
         _error = error;
@@ -302,12 +323,14 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   }
 
   XNZResolvedImage _resolveImage(Uint8List bytes) {
-    final normalizedUrl = xnzNormalizeNetworkUrl(widget.imageUrl);
+    final requestUrl = _buildRequest();
     final request = XNZImageRequest(
       sourceType: XNZImageSourceType.network,
-      uri: Uri.tryParse(normalizedUrl),
+      uri: requestUrl.uri,
       bytes: bytes,
       options: <String, Object?>{
+        'headers': widget.headers,
+        'includeHeadersInCacheKey': widget.includeHeadersInCacheKey,
         'width': widget.width,
         'height': widget.height,
         'fit': widget.fit,
@@ -365,10 +388,10 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   }
 
   XNZResolvedImage _getResolvedImage(Uint8List bytes) {
-    final normalizedUrl = xnzNormalizeNetworkUrl(widget.imageUrl);
+    final requestKey = _buildRequest().requestKey;
     final canUseCache = _resolvedImageCache != null &&
         identical(_resolvedImageCacheBytes, bytes) &&
-        _resolvedImageCacheUrl == normalizedUrl &&
+        _resolvedImageCacheUrl == requestKey &&
         _resolvedImageCacheWidth == widget.width &&
         _resolvedImageCacheHeight == widget.height &&
         _resolvedImageCacheColor == widget.color &&
@@ -382,7 +405,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     final resolved = _resolveImage(bytes);
     _resolvedImageCache = resolved;
     _resolvedImageCacheBytes = bytes;
-    _resolvedImageCacheUrl = normalizedUrl;
+    _resolvedImageCacheUrl = requestKey;
     _resolvedImageCacheWidth = widget.width;
     _resolvedImageCacheHeight = widget.height;
     _resolvedImageCacheColor = widget.color;
