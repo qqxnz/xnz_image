@@ -21,7 +21,11 @@ class XNZAvifNetworkImageProvider
   }) : imageUrl = _normalizeNetworkUrl(imageUrl);
 
   final String imageUrl;
+
+  /// Optional HTTP headers for AVIF network requests.
   final Map<String, String>? headers;
+
+  /// Whether cache key includes normalized headers.
   final bool includeHeadersInCacheKey;
   final double scale;
   final int? avifOverrideDurationMs;

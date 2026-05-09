@@ -117,6 +117,29 @@ Image(
 )
 ```
 
+## Authenticated Network Requests
+
+`XNZNetworkImage` and `XNZNetworkImageProvider` support optional `headers`.
+
+```dart
+XNZNetworkImage(
+  imageUrl: 'https://example.com/private/image.png',
+  headers: {'Authorization': 'Bearer <token>'},
+  // Default is false (URL-only cache key).
+  includeHeadersInCacheKey: true,
+)
+```
+
+### Cache Key Strategy
+
+`includeHeadersInCacheKey` controls cache isolation behavior:
+
+- `false` (default): cache key is URL-only, better hit-rate for public images
+- `true`: cache key is URL+headers, safer for auth/tenant-specific images
+
+Note: request de-duplication always uses URL+headers internally to avoid
+mixing in-flight downloads from different header contexts.
+
 ## Animated Image Playback
 
 `XNZAnimatedImage` decodes frames and plays on a timeline. It is suitable for GIF / Animated WebP / APNG,

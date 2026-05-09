@@ -21,6 +21,8 @@ class XNZImageDownloader {
       return null;
     }
 
+    // requestKey is used for in-flight de-duplication (URL + headers).
+    // cacheKey behavior is controlled inside [request] separately.
     final requestKey = request.requestKey;
     final cacheManager = XNZCacheManager();
     final cachedData = await cacheManager.getCache(request);

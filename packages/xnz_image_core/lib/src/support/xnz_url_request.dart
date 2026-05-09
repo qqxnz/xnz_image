@@ -28,7 +28,8 @@ class XNZUrlRequest {
 
   /// Request de-duplication key.
   ///
-  /// Always includes headers when present.
+  /// Always includes headers when present to avoid mixing in-flight requests
+  /// from different auth/header contexts.
   String get requestKey {
     if (headers.isEmpty) {
       return url;
@@ -40,6 +41,9 @@ class XNZUrlRequest {
   ///
   /// Uses URL only by default, and includes headers when
   /// [includeHeadersInCacheKey] is true.
+  ///
+  /// This allows callers to keep high hit-ratio by default (`url-only`) and
+  /// opt into stronger isolation (`url+headers`) only for private resources.
   String get cacheKey {
     final source = includeHeadersInCacheKey ? requestKey : url;
     return xnzBuildCacheKey(source);

@@ -19,7 +19,14 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
   }) : imageUrl = xnzNormalizeNetworkUrl(imageUrl);
 
   final String imageUrl;
+
+  /// Optional HTTP headers for the network request.
   final Map<String, String>? headers;
+
+  /// Cache key strategy for [XNZUrlRequest].
+  ///
+  /// `false` (default): URL-only cache key.
+  /// `true`: URL+headers cache key.
   final bool includeHeadersInCacheKey;
   final double scale;
   final int? avifOverrideDurationMs;

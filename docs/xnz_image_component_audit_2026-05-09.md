@@ -273,3 +273,20 @@
 2. `flutter test`（`packages/xnz_image_avif`）通过  
 3. `flutter analyze`（`packages/xnz_image_avif`）通过  
 4. 根仓 `flutter analyze` 仅有示例目录历史 info，不属于本次修复引入
+
+---
+
+## 11. URL 请求对象化改造（2026-05-09）
+
+为统一下载去重与缓存键策略，已新增 `XNZUrlRequest` 并落地到核心链路：
+
+1. `XNZImageDownloader` 与 `XNZImageDownloaderTask` 改为基于 `XNZUrlRequest`
+2. `XNZCacheManager` 改为基于 `XNZUrlRequest` 获取/写入缓存
+3. 对外网络类增加 `headers` 与 `includeHeadersInCacheKey`（默认 `false`）
+
+策略说明：
+
+1. `requestKey`：始终使用 `URL + headers`（用于 in-flight 下载去重）
+2. `cacheKey`：默认 `URL-only`，当 `includeHeadersInCacheKey=true` 时使用 `URL + headers`
+
+该设计保持公共图片高命中率，同时为后续鉴权/多租户隔离场景提供可选能力。

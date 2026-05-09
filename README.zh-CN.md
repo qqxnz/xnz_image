@@ -115,6 +115,28 @@ Image(
 )
 ```
 
+## 鉴权网络请求
+
+`XNZNetworkImage` 与 `XNZNetworkImageProvider` 支持可选 `headers`：
+
+```dart
+XNZNetworkImage(
+  imageUrl: 'https://example.com/private/image.png',
+  headers: {'Authorization': 'Bearer <token>'},
+  // 默认 false（仅 URL 作为 cache key）
+  includeHeadersInCacheKey: true,
+)
+```
+
+### Cache Key 策略
+
+`includeHeadersInCacheKey` 控制缓存隔离行为：
+
+- `false`（默认）：cache key 仅使用 URL，公共图片命中率更高
+- `true`：cache key 使用 URL+headers，更适合鉴权/多租户私有资源
+
+说明：下载中的请求去重（in-flight de-dup）始终使用 URL+headers，避免不同请求头上下文互相复用同一个下载任务。
+
 ## 动图播放
 
 `XNZAnimatedImage` 会解码帧并按时间线播放，适用于 GIF / Animated WebP / APNG。

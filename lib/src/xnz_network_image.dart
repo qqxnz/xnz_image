@@ -64,11 +64,14 @@ class XNZNetworkImage extends StatefulWidget {
   final Duration? receiveTimeout;
 
   /// Optional HTTP headers.
+  ///
+  /// Use this for authenticated or tenant-scoped image endpoints.
   final Map<String, String>? headers;
 
   /// Whether cache key should include normalized headers.
   ///
-  /// Default false uses URL-only cache key.
+  /// Default `false` uses URL-only cache key for better cache hit-rate.
+  /// Set to `true` when different headers can produce different image bytes.
   final bool includeHeadersInCacheKey;
 
   /// Optional frame duration override used by AVIF decoders.

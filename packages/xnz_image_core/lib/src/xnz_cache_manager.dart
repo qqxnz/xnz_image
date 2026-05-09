@@ -29,6 +29,8 @@ class XNZCacheManager {
 
   // 是否存在缓存（内存优先）
   Future<bool> hasCache(XNZUrlRequest request) async {
+    // All cache lookups are keyed by request.cacheKey so callers can choose
+    // URL-only or URL+headers behavior at request construction time.
     final cacheKey = request.cacheKey;
 
     if (memoryCache.has(cacheKey)) {
