@@ -68,11 +68,10 @@ class XNZNetworkImage extends StatefulWidget {
   /// Use this for authenticated or tenant-scoped image endpoints.
   final Map<String, String>? headers;
 
-  /// Whether cache key should include normalized headers.
+  /// Cache key generation strategy.
   ///
-  /// Default `false` uses URL-only cache key for better cache hit-rate.
-  /// Set to `true` when different headers can produce different image bytes.
-  final bool includeHeadersInCacheKey;
+  /// Defaults to [XNZCacheKeyStrategy.urlOnly].
+  final XNZCacheKeyStrategy cacheKeyStrategy;
 
   /// Optional frame duration override used by AVIF decoders.
   final int? avifOverrideDurationMs;
@@ -92,7 +91,7 @@ class XNZNetworkImage extends StatefulWidget {
     this.sendTimeout,
     this.receiveTimeout,
     this.headers,
-    this.includeHeadersInCacheKey = false,
+    this.cacheKeyStrategy = XNZCacheKeyStrategy.urlOnly,
     this.avifOverrideDurationMs = -1,
   });
 
@@ -153,7 +152,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     final newUrl = xnzNormalizeNetworkUrl(widget.imageUrl);
     return oldUrl != newUrl ||
         !mapEquals(oldWidget.headers, widget.headers) ||
-        oldWidget.includeHeadersInCacheKey != widget.includeHeadersInCacheKey ||
+        oldWidget.cacheKeyStrategy != widget.cacheKeyStrategy ||
         oldWidget.sendTimeout != widget.sendTimeout ||
         oldWidget.receiveTimeout != widget.receiveTimeout ||
         oldWidget.avifOverrideDurationMs != widget.avifOverrideDurationMs;
@@ -177,7 +176,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     return XNZUrlRequest(
       widget.imageUrl,
       headers: widget.headers,
-      includeHeadersInCacheKey: widget.includeHeadersInCacheKey,
+      cacheKeyStrategy: widget.cacheKeyStrategy,
     );
   }
 
@@ -333,7 +332,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
       bytes: bytes,
       options: <String, Object?>{
         'headers': widget.headers,
-        'includeHeadersInCacheKey': widget.includeHeadersInCacheKey,
+        'cacheKeyStrategy': widget.cacheKeyStrategy,
         'width': widget.width,
         'height': widget.height,
         'fit': widget.fit,

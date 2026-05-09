@@ -123,17 +123,16 @@ Image(
 XNZNetworkImage(
   imageUrl: 'https://example.com/private/image.png',
   headers: {'Authorization': 'Bearer <token>'},
-  // 默认 false（仅 URL 作为 cache key）
-  includeHeadersInCacheKey: true,
+  cacheKeyStrategy: XNZCacheKeyStrategy.urlAndHeaders,
 )
 ```
 
 ### Cache Key 策略
 
-`includeHeadersInCacheKey` 控制缓存隔离行为：
+`cacheKeyStrategy` 控制缓存隔离行为：
 
-- `false`（默认）：cache key 仅使用 URL，公共图片命中率更高
-- `true`：cache key 使用 URL+headers，更适合鉴权/多租户私有资源
+- `XNZCacheKeyStrategy.urlOnly`（默认）：cache key 仅使用 URL，公共图命中率更高
+- `XNZCacheKeyStrategy.urlAndHeaders`：cache key 使用 URL+headers，适合私有资源
 
 说明：下载中的请求去重（in-flight de-dup）始终使用 URL+headers，避免不同请求头上下文互相复用同一个下载任务。
 

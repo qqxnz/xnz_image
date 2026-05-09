@@ -3,12 +3,21 @@ import 'package:flutter/foundation.dart';
 import 'xnz_cache_key.dart';
 import 'xnz_network_url.dart';
 
+/// Strategy used to build cache keys for network requests.
+enum XNZCacheKeyStrategy {
+  /// Cache key uses URL only.
+  urlOnly,
+
+  /// Cache key uses URL + normalized headers.
+  urlAndHeaders,
+}
+
 /// Immutable network request descriptor used by downloader/cache layers.
 class XNZUrlRequest {
   XNZUrlRequest(
     String url, {
     Map<String, String>? headers,
-    this.includeHeadersInCacheKey = false,
+    this.cacheKeyStrategy = XNZCacheKeyStrategy.urlOnly,
   })  : url = xnzNormalizeNetworkUrl(url),
         headers = Map<String, String>.unmodifiable(_normalizeHeaders(headers));
 
@@ -18,10 +27,8 @@ class XNZUrlRequest {
   /// Canonicalized request headers (lower-cased key, sorted by key/value).
   final Map<String, String> headers;
 
-  /// Whether cache key includes normalized headers.
-  ///
-  /// Default `false` means cache key uses URL only.
-  final bool includeHeadersInCacheKey;
+  /// Cache key generation strategy.
+  final XNZCacheKeyStrategy cacheKeyStrategy;
 
   /// Parsed URI of [url], or null if the URL is invalid.
   Uri? get uri => Uri.tryParse(url);
@@ -39,13 +46,15 @@ class XNZUrlRequest {
 
   /// Cache storage key.
   ///
-  /// Uses URL only by default, and includes headers when
-  /// [includeHeadersInCacheKey] is true.
+  /// Uses URL only by default, and includes headers when strategy is
+  /// [XNZCacheKeyStrategy.urlAndHeaders].
   ///
   /// This allows callers to keep high hit-ratio by default (`url-only`) and
   /// opt into stronger isolation (`url+headers`) only for private resources.
   String get cacheKey {
-    final source = includeHeadersInCacheKey ? requestKey : url;
+    final source = cacheKeyStrategy == XNZCacheKeyStrategy.urlAndHeaders
+        ? requestKey
+        : url;
     return xnzBuildCacheKey(source);
   }
 
@@ -86,13 +95,13 @@ class XNZUrlRequest {
       other is XNZUrlRequest &&
           runtimeType == other.runtimeType &&
           url == other.url &&
-          includeHeadersInCacheKey == other.includeHeadersInCacheKey &&
+          cacheKeyStrategy == other.cacheKeyStrategy &&
           mapEquals(headers, other.headers);
 
   @override
   int get hashCode => Object.hash(
         url,
-        includeHeadersInCacheKey,
+        cacheKeyStrategy,
         Object.hashAll(
           headers.entries
               .map((entry) => Object.hash(entry.key, entry.value))

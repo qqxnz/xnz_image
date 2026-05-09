@@ -15,7 +15,7 @@ class XNZAvifNetworkImageProvider
   XNZAvifNetworkImageProvider(
     String imageUrl, {
     this.headers,
-    this.includeHeadersInCacheKey = false,
+    this.cacheKeyStrategy = XNZCacheKeyStrategy.urlOnly,
     this.scale = 1.0,
     this.avifOverrideDurationMs = -1,
   }) : imageUrl = _normalizeNetworkUrl(imageUrl);
@@ -25,15 +25,15 @@ class XNZAvifNetworkImageProvider
   /// Optional HTTP headers for AVIF network requests.
   final Map<String, String>? headers;
 
-  /// Whether cache key includes normalized headers.
-  final bool includeHeadersInCacheKey;
+  /// Cache key generation strategy.
+  final XNZCacheKeyStrategy cacheKeyStrategy;
   final double scale;
   final int? avifOverrideDurationMs;
 
   XNZUrlRequest get _request => XNZUrlRequest(
         imageUrl,
         headers: headers,
-        includeHeadersInCacheKey: includeHeadersInCacheKey,
+        cacheKeyStrategy: cacheKeyStrategy,
       );
 
   @override

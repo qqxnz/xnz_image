@@ -5,12 +5,12 @@ import 'package:xnz_image_core/xnz_image_core.dart';
 Future<Uint8List> xnzLoadNetworkBytesImpl(
   Uri uri, {
   Map<String, String>? headers,
-  bool includeHeadersInCacheKey = false,
+  XNZCacheKeyStrategy cacheKeyStrategy = XNZCacheKeyStrategy.urlOnly,
 }) async {
   final request = XNZUrlRequest(
     uri.toString(),
     headers: headers,
-    includeHeadersInCacheKey: includeHeadersInCacheKey,
+    cacheKeyStrategy: cacheKeyStrategy,
   );
   final bytes = await XNZImageDownloader.downloadImageDataAndCache(
     request,

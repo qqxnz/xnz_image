@@ -125,17 +125,16 @@ Image(
 XNZNetworkImage(
   imageUrl: 'https://example.com/private/image.png',
   headers: {'Authorization': 'Bearer <token>'},
-  // Default is false (URL-only cache key).
-  includeHeadersInCacheKey: true,
+  cacheKeyStrategy: XNZCacheKeyStrategy.urlAndHeaders,
 )
 ```
 
 ### Cache Key Strategy
 
-`includeHeadersInCacheKey` controls cache isolation behavior:
+`cacheKeyStrategy` controls cache isolation behavior:
 
-- `false` (default): cache key is URL-only, better hit-rate for public images
-- `true`: cache key is URL+headers, safer for auth/tenant-specific images
+- `XNZCacheKeyStrategy.urlOnly` (default): URL-only cache key, better hit-rate
+- `XNZCacheKeyStrategy.urlAndHeaders`: URL+headers cache key, safer isolation
 
 Note: request de-duplication always uses URL+headers internally to avoid
 mixing in-flight downloads from different header contexts.

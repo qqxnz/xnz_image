@@ -196,22 +196,22 @@ void main() {
     final urlOnlyA = XNZUrlRequest(
       'https://example.com/a.png',
       headers: <String, String>{'Authorization': 'Bearer token-a'},
-      includeHeadersInCacheKey: false,
+      cacheKeyStrategy: XNZCacheKeyStrategy.urlOnly,
     );
     final urlOnlyB = XNZUrlRequest(
       'https://example.com/a.png',
       headers: <String, String>{'Authorization': 'Bearer token-b'},
-      includeHeadersInCacheKey: false,
+      cacheKeyStrategy: XNZCacheKeyStrategy.urlOnly,
     );
     final withHeadersA = XNZUrlRequest(
       'https://example.com/a.png',
       headers: <String, String>{'Authorization': 'Bearer token-a'},
-      includeHeadersInCacheKey: true,
+      cacheKeyStrategy: XNZCacheKeyStrategy.urlAndHeaders,
     );
     final withHeadersB = XNZUrlRequest(
       'https://example.com/a.png',
       headers: <String, String>{'Authorization': 'Bearer token-b'},
-      includeHeadersInCacheKey: true,
+      cacheKeyStrategy: XNZCacheKeyStrategy.urlAndHeaders,
     );
 
     expect(urlOnlyA.cacheKey, equals(urlOnlyB.cacheKey));

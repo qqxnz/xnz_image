@@ -282,11 +282,11 @@
 
 1. `XNZImageDownloader` 与 `XNZImageDownloaderTask` 改为基于 `XNZUrlRequest`
 2. `XNZCacheManager` 改为基于 `XNZUrlRequest` 获取/写入缓存
-3. 对外网络类增加 `headers` 与 `includeHeadersInCacheKey`（默认 `false`）
+3. 对外网络类增加 `headers` 与 `cacheKeyStrategy`（默认 `urlOnly`）
 
 策略说明：
 
 1. `requestKey`：始终使用 `URL + headers`（用于 in-flight 下载去重）
-2. `cacheKey`：默认 `URL-only`，当 `includeHeadersInCacheKey=true` 时使用 `URL + headers`
+2. `cacheKey`：默认 `URL-only`，当 `cacheKeyStrategy=urlAndHeaders` 时使用 `URL + headers`
 
 该设计保持公共图片高命中率，同时为后续鉴权/多租户隔离场景提供可选能力。

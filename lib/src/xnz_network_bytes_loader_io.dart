@@ -1,14 +1,15 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:xnz_image_core/xnz_image_core.dart';
 
 Future<Uint8List> xnzLoadNetworkBytesImpl(
   Uri uri, {
   Map<String, String>? headers,
-  bool includeHeadersInCacheKey = false,
+  XNZCacheKeyStrategy cacheKeyStrategy = XNZCacheKeyStrategy.urlOnly,
 }) async {
-  // IO loader does not manage cache locally; the flag is for API parity.
-  final _ = includeHeadersInCacheKey;
+  // IO loader does not manage cache locally; the option is for API parity.
+  final _ = cacheKeyStrategy;
   final httpClient = HttpClient();
   try {
     final request = await httpClient.getUrl(uri);

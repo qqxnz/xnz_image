@@ -32,8 +32,8 @@ class XNZImageAvif implements XNZImageSupport {
         request.option('avifOverrideDurationMs') as int?;
     final scale = request.option('scale') as double? ?? 1.0;
     final headers = request.option('headers') as Map<String, String>?;
-    final includeHeadersInCacheKey =
-        request.option('includeHeadersInCacheKey') as bool? ?? false;
+    final cacheKeyStrategy =
+        request.option('cacheKeyStrategy') as XNZCacheKeyStrategy?;
 
     final meta = <String, Object?>{
       'animatedDecoder': _decodeAvifAnimatedImage,
@@ -61,7 +61,7 @@ class XNZImageAvif implements XNZImageSupport {
           provider: XNZAvifNetworkImageProvider(
             uri.toString(),
             headers: headers,
-            includeHeadersInCacheKey: includeHeadersInCacheKey,
+            cacheKeyStrategy: cacheKeyStrategy ?? XNZCacheKeyStrategy.urlOnly,
             scale: scale,
             avifOverrideDurationMs: avifOverrideDurationMs,
           ),

@@ -13,7 +13,7 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
   XNZNetworkImageProvider(
     String imageUrl, {
     this.headers,
-    this.includeHeadersInCacheKey = false,
+    this.cacheKeyStrategy = XNZCacheKeyStrategy.urlOnly,
     this.scale = 1.0,
     this.avifOverrideDurationMs = -1,
   }) : imageUrl = xnzNormalizeNetworkUrl(imageUrl);
@@ -23,18 +23,15 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
   /// Optional HTTP headers for the network request.
   final Map<String, String>? headers;
 
-  /// Cache key strategy for [XNZUrlRequest].
-  ///
-  /// `false` (default): URL-only cache key.
-  /// `true`: URL+headers cache key.
-  final bool includeHeadersInCacheKey;
+  /// Cache key generation strategy.
+  final XNZCacheKeyStrategy cacheKeyStrategy;
   final double scale;
   final int? avifOverrideDurationMs;
 
   XNZUrlRequest get _request => XNZUrlRequest(
         imageUrl,
         headers: headers,
-        includeHeadersInCacheKey: includeHeadersInCacheKey,
+        cacheKeyStrategy: cacheKeyStrategy,
       );
 
   void _setCacheSafely(Uint8List data) {
@@ -66,7 +63,7 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
       uri: Uri.tryParse(key.imageUrl),
       options: <String, Object?>{
         'headers': key.headers,
-        'includeHeadersInCacheKey': key.includeHeadersInCacheKey,
+        'cacheKeyStrategy': key.cacheKeyStrategy,
         'scale': key.scale,
         'avifOverrideDurationMs': key.avifOverrideDurationMs,
       },

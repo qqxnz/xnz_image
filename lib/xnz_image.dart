@@ -6,6 +6,7 @@ library xnz_image;
 
 export 'package:xnz_image_core/xnz_image_core.dart'
     show
+        XNZCacheKeyStrategy,
         XNZImageBuildResult,
         XNZImageRequest,
         XNZImageSourceType,
