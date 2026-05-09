@@ -8,6 +8,7 @@ Future<Uint8List> xnzLoadNetworkBytesImpl(
 }) async {
   final bytes = await XNZImageDownloader.downloadImageDataAndCache(
     uri.toString(),
+    headers: headers,
   );
   if (bytes == null) {
     throw StateError('Failed to load network bytes: $uri');

@@ -10,48 +10,75 @@ class XNZImageDownloader {
   static final XNZImageDownloader _singleton = XNZImageDownloader._internal();
   static final Map<String, Future<Uint8List?>> _inflightDownloads = {};
 
+  static String _buildRequestKey(
+    String imageUrl, {
+    Map<String, String>? headers,
+  }) {
+    if (headers == null || headers.isEmpty) {
+      return imageUrl;
+    }
+    final normalized = headers.entries
+        .map((entry) => MapEntry(entry.key.toLowerCase(), entry.value))
+        .toList(growable: false)
+      ..sort((a, b) {
+        final keyCompare = a.key.compareTo(b.key);
+        if (keyCompare != 0) {
+          return keyCompare;
+        }
+        return a.value.compareTo(b.value);
+      });
+    final serialized =
+        normalized.map((entry) => '${entry.key}:${entry.value}').join('|');
+    return '$imageUrl|headers:$serialized';
+  }
+
   /// 下载图片并缓存
-  static Future<Uint8List?> downloadImageDataAndCache(String imageUrl) async {
+  static Future<Uint8List?> downloadImageDataAndCache(
+    String imageUrl, {
+    Map<String, String>? headers,
+  }) async {
     if (imageUrl.trim().isEmpty) {
       XNZImageLogs.log(
           'XNZImageDownloader', 'downloadImageDataAndCache empty image url');
       return null;
     }
 
+    final requestKey = _buildRequestKey(imageUrl, headers: headers);
     final cacheManager = XNZCacheManager();
-    final cachedData = await cacheManager.getCache(imageUrl);
+    final cachedData = await cacheManager.getCache(requestKey);
     if (cachedData != null) {
       XNZImageLogs.log('XNZImageDownloader',
-          'downloadImageDataAndCache cache hit $imageUrl');
+          'downloadImageDataAndCache cache hit $requestKey');
       return cachedData;
     }
 
-    final inflight = _inflightDownloads[imageUrl];
+    final inflight = _inflightDownloads[requestKey];
     if (inflight != null) {
       XNZImageLogs.log('XNZImageDownloader',
-          'downloadImageDataAndCache reuse inflight task $imageUrl');
+          'downloadImageDataAndCache reuse inflight task $requestKey');
       return inflight;
     }
 
     final completer = Completer<Uint8List?>();
     final future = completer.future.whenComplete(() {
-      _inflightDownloads.remove(imageUrl);
+      _inflightDownloads.remove(requestKey);
     });
-    _inflightDownloads[imageUrl] = future;
+    _inflightDownloads[requestKey] = future;
 
     final task = XNZImageDownloaderTask(
       url: imageUrl,
+      headers: headers,
       onComplete: (bytes) {
-        unawaited(cacheManager.setCache(imageUrl, bytes));
+        unawaited(cacheManager.setCache(requestKey, bytes));
         if (!completer.isCompleted) {
           completer.complete(bytes);
         }
         XNZImageLogs.log(
-            'XNZImageDownloader', 'downloadImageDataAndCache done $imageUrl');
+            'XNZImageDownloader', 'downloadImageDataAndCache done $requestKey');
       },
       onError: (error) {
         XNZImageLogs.log('XNZImageDownloader',
-            'downloadImageDataAndCache failed $imageUrl, error: $error');
+            'downloadImageDataAndCache failed $requestKey, error: $error');
         if (!completer.isCompleted) {
           completer.complete(null);
         }
@@ -62,7 +89,7 @@ class XNZImageDownloader {
       XNZImageDownloader().start(task);
     } catch (e) {
       XNZImageLogs.log('XNZImageDownloader',
-          'downloadImageDataAndCache start failed $imageUrl, error: $e');
+          'downloadImageDataAndCache start failed $requestKey, error: $e');
       if (!completer.isCompleted) {
         completer.complete(null);
       }
@@ -87,7 +114,7 @@ class XNZImageDownloader {
 
   void start(XNZImageDownloaderTask task) {
     tasks.add(task);
-    final shared = _sharedDownloads[task.url];
+    final shared = _sharedDownloads[task.requestKey];
     if (shared != null) {
       shared.subscribers.add(task);
       if (shared.total > 0) {
@@ -95,19 +122,20 @@ class XNZImageDownloader {
         task.total = shared.total;
         task.onReceiveProgress?.call(shared.count, shared.total);
       }
-      XNZImageLogs.log('XNZImageDownloader', '复用下载任务 ${task.url}');
+      XNZImageLogs.log('XNZImageDownloader', '复用下载任务 ${task.requestKey}');
       return;
     }
 
     final newShared = _SharedDownload();
     newShared.subscribers.add(task);
-    _sharedDownloads[task.url] = newShared;
+    _sharedDownloads[task.requestKey] = newShared;
 
-    XNZImageLogs.log('XNZImageDownloader', '开始下载 ${task.url}');
+    XNZImageLogs.log('XNZImageDownloader', '开始下载 ${task.requestKey}');
     dio.get<List<int>>(
       task.url,
       options: Options(
         responseType: ResponseType.bytes,
+        headers: task.headers,
         followRedirects: true,
         sendTimeout: task.sendTimeout,
         receiveTimeout: task.receiveTimeout,
@@ -140,7 +168,7 @@ class XNZImageDownloader {
         subscriber.onComplete?.call(bytes);
         tasks.remove(subscriber);
       }
-      _sharedDownloads.remove(task.url);
+      _sharedDownloads.remove(task.requestKey);
     }).catchError((e) {
       XNZImageLogs.log('XNZImageDownloader', '下载失败 ${task.url} e:$e');
 
@@ -150,20 +178,20 @@ class XNZImageDownloader {
         subscriber.onError?.call(e);
         tasks.remove(subscriber);
       }
-      _sharedDownloads.remove(task.url);
+      _sharedDownloads.remove(task.requestKey);
     });
   }
 
   void cancel(XNZImageDownloaderTask task) {
     task.cancel();
     tasks.remove(task);
-    final shared = _sharedDownloads[task.url];
+    final shared = _sharedDownloads[task.requestKey];
     if (shared == null) return;
 
     shared.subscribers.remove(task);
     if (shared.subscribers.isEmpty) {
       shared.cancelToken.cancel('Canceled by user!');
-      _sharedDownloads.remove(task.url);
+      _sharedDownloads.remove(task.requestKey);
     }
   }
 
@@ -181,6 +209,7 @@ class XNZImageDownloader {
 
 class XNZImageDownloaderTask {
   final String url;
+  final Map<String, String>? headers;
   final XNZProgressCallback? onReceiveProgress;
   final Function(Uint8List)? onComplete;
   final Function(dynamic)? onError;
@@ -193,8 +222,12 @@ class XNZImageDownloaderTask {
   int count = 0;
   int total = 0;
 
+  String get requestKey =>
+      XNZImageDownloader._buildRequestKey(url, headers: headers);
+
   XNZImageDownloaderTask({
     required this.url,
+    this.headers,
     required this.onComplete,
     required this.onError,
     this.onReceiveProgress,

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -51,7 +52,7 @@ void main() {
     );
 
     expect(find.byType(XNZNetworkImage), findsOneWidget);
-  });
+  }, skip: kIsWeb);
 
   testWidgets('XNZMemoryImage renders from bytes', (tester) async {
     final Uint8List pngBytes = base64Decode(
@@ -130,6 +131,46 @@ void main() {
     expect(a.hashCode, equals(d.hashCode));
   });
 
+  test('XNZImageDownloaderTask requestKey isolates headers safely', () {
+    final withoutHeaders = XNZImageDownloaderTask(
+      url: 'https://example.com/image.png',
+      onComplete: (_) {},
+      onError: (_) {},
+    );
+    final headersA = XNZImageDownloaderTask(
+      url: 'https://example.com/image.png',
+      headers: <String, String>{
+        'Authorization': 'Bearer token-a',
+        'X-Tenant': 'foo',
+      },
+      onComplete: (_) {},
+      onError: (_) {},
+    );
+    final headersAReordered = XNZImageDownloaderTask(
+      url: 'https://example.com/image.png',
+      headers: <String, String>{
+        'x-tenant': 'foo',
+        'authorization': 'Bearer token-a',
+      },
+      onComplete: (_) {},
+      onError: (_) {},
+    );
+    final headersB = XNZImageDownloaderTask(
+      url: 'https://example.com/image.png',
+      headers: <String, String>{
+        'Authorization': 'Bearer token-b',
+        'X-Tenant': 'foo',
+      },
+      onComplete: (_) {},
+      onError: (_) {},
+    );
+
+    expect(withoutHeaders.requestKey, equals('https://example.com/image.png'));
+    expect(headersA.requestKey, equals(headersAReordered.requestKey));
+    expect(headersA.requestKey, isNot(equals(headersB.requestKey)));
+    expect(headersA.requestKey, isNot(equals(withoutHeaders.requestKey)));
+  });
+
   test('XNZMemoryCache evicts least recently used items by bytes', () {
     final cache = XNZMemoryCache<String>(5);
     final one = Uint8List.fromList([1, 1]); // 2 bytes
@@ -151,29 +192,33 @@ void main() {
     expect(cache.get('c'), isNotNull);
   });
 
-  test('XNZAnimatedImageCache evicts least recently used entries', () async {
-    final Uint8List pngBytes =
-        File('examples/example_bitmap/assets/tg.png').readAsBytesSync();
-    final cache = XNZAnimatedImageCache(maxEntries: 2);
-    final a = await buildAnimatedData(pngBytes);
-    final b = await buildAnimatedData(pngBytes);
-    final c = await buildAnimatedData(pngBytes);
+  test(
+    'XNZAnimatedImageCache evicts least recently used entries',
+    () async {
+      final Uint8List pngBytes =
+          File('examples/example_bitmap/assets/tg.png').readAsBytesSync();
+      final cache = XNZAnimatedImageCache(maxEntries: 2);
+      final a = await buildAnimatedData(pngBytes);
+      final b = await buildAnimatedData(pngBytes);
+      final c = await buildAnimatedData(pngBytes);
 
-    cache.set('a', a);
-    cache.set('b', b);
-    expect(cache.caches.keys.toList(), equals(<String>['a', 'b']));
+      cache.set('a', a);
+      cache.set('b', b);
+      expect(cache.caches.keys.toList(), equals(<String>['a', 'b']));
 
-    // Touch a so b becomes LRU.
-    expect(cache.get('a'), same(a));
-    expect(cache.caches.keys.toList(), equals(<String>['b', 'a']));
+      // Touch a so b becomes LRU.
+      expect(cache.get('a'), same(a));
+      expect(cache.caches.keys.toList(), equals(<String>['b', 'a']));
 
-    // Insert c -> should evict b.
-    cache.set('c', c);
-    expect(cache.caches.containsKey('b'), isFalse);
-    expect(cache.caches.keys.toList(), equals(<String>['a', 'c']));
+      // Insert c -> should evict b.
+      cache.set('c', c);
+      expect(cache.caches.containsKey('b'), isFalse);
+      expect(cache.caches.keys.toList(), equals(<String>['a', 'c']));
 
-    cache.clear();
-  });
+      cache.clear();
+    },
+    skip: kIsWeb,
+  );
 
   test('XNZAssetImageProvider equality includes package and scale', () {
     const a = XNZAssetImageProvider(
@@ -269,6 +314,7 @@ void main() {
 
       XNZAnimatedImage.cache.clear();
     },
+    skip: kIsWeb,
   );
 
   testWidgets(
@@ -315,5 +361,6 @@ void main() {
       expect(identical(rendered, cached), isFalse);
       expect(rendered!.isCloneOf(cached), isTrue);
     },
+    skip: kIsWeb,
   );
 }

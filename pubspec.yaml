@@ -19,6 +19,10 @@ dependencies:
     sdk: flutter
   xnz_image_core: ^0.1.12
 
+dependency_overrides:
+  xnz_image_core:
+    path: packages/xnz_image_core
+
 
 dev_dependencies:
   flutter_test:

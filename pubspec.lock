@@ -331,10 +331,9 @@ packages:
   xnz_image_core:
     dependency: "direct main"
     description:
-      name: xnz_image_core
-      sha256: a0b1386d7e0eaddf7f78dcf145888f1804497e60ddec7a119dbde70e05c87509
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/xnz_image_core"
+      relative: true
+    source: path
     version: "0.1.12"
 sdks:
   dart: ">=3.5.0 <4.0.0"
