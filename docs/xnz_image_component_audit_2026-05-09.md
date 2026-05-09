@@ -237,3 +237,39 @@
 - `packages/xnz_image_avif/lib/src/xnz_image_avif_support.dart`
 - `packages/xnz_image_svg/lib/src/xnz_image_svg_support.dart`
 
+---
+
+## 10. P0/P1 修复进展（2026-05-09）
+
+本次已完成并合入代码的高优先级修复如下：
+
+1. 已修复：AVIF Provider key 不稳定问题  
+   - 为 `XNZAvifNetworkImageProvider`、`XNZAvifFileImageProvider`、`XNZAvifAssetImageProvider` 补充 `==/hashCode`。  
+   - 关键字段已纳入比较：URL/path/asset/package/bundle/scale/avifOverrideDurationMs。
+
+2. 已修复：`XNZMemoryAvifImage` 相等性遗漏 `avifOverrideDurationMs`  
+   - `==/hashCode` 已纳入该字段，避免不同动画时长覆盖策略错误复用缓存。
+
+3. 已修复：AVIF 初始化异常被吞掉的问题  
+   - `MultiFrameAvifCodec` 现在会保存初始化异常，并在 `ready()` / `getNextFrame()` 显式抛出，提升可观测性与定位效率。
+
+4. 已修复：网络 URL 规范化不一致问题  
+   - 新增统一规范化函数：`xnzNormalizeNetworkUrl(String)`（当前策略为 `trim`）。  
+   - 已接入 `XNZNetworkImage`、`XNZNetworkImageProvider`、`XNZImageDownloader`、`XNZCacheManager`，确保缓存键与下载键一致。
+
+### 本次新增/更新测试
+
+1. 主包测试新增：
+   - `XNZNetworkImageProvider` URL 规范化与 identity 行为测试
+   - `XNZImageDownloaderTask.requestKey` 对空白 URL 的一致性测试
+
+2. `xnz_image_avif` 子包新增：
+   - `XNZMemoryAvifImage` equality/hashCode（含 `avifOverrideDurationMs`）
+   - AVIF network/file/asset provider equality/hashCode
+
+### 验证结果
+
+1. `flutter test`（主包）通过  
+2. `flutter test`（`packages/xnz_image_avif`）通过  
+3. `flutter analyze`（`packages/xnz_image_avif`）通过  
+4. 根仓 `flutter analyze` 仅有示例目录历史 info，不属于本次修复引入

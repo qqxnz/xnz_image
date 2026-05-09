@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:xnz_image_core/src/support/xnz_network_url.dart';
 import 'package:xnz_image_core/src/xnz_cache_disk.dart';
 import 'package:xnz_image_core/src/xnz_cache_memory.dart';
 import 'package:xnz_image_core/src/xnz_image_cache_logs.dart';
@@ -28,7 +29,7 @@ class XNZCacheManager {
 
   // 是否存在缓存（内存优先）
   Future<bool> hasCache(String url) async {
-    final encodedUrl = Uri.encodeComponent(url);
+    final encodedUrl = Uri.encodeComponent(xnzNormalizeNetworkUrl(url));
 
     if (memoryCache.has(encodedUrl)) {
       XNZImageLogs.log('XNZNetworkImage', 'hasCache $url 内存存在');
@@ -45,7 +46,7 @@ class XNZCacheManager {
 
   // 获取缓存（LRU 生效）
   Future<Uint8List?> getCache(String url) async {
-    final encodedUrl = Uri.encodeComponent(url);
+    final encodedUrl = Uri.encodeComponent(xnzNormalizeNetworkUrl(url));
 
     // 1️⃣ 内存
     final memoryData = memoryCache.get(encodedUrl);
@@ -67,7 +68,7 @@ class XNZCacheManager {
 
   // 设置缓存（内存 + 磁盘）
   Future<void> setCache(String url, Uint8List data) async {
-    final encodedUrl = Uri.encodeComponent(url);
+    final encodedUrl = Uri.encodeComponent(xnzNormalizeNetworkUrl(url));
     memoryCache.put(encodedUrl, data);
 
     final diskCache = await XNZDiskCache.getInstance();
@@ -76,7 +77,7 @@ class XNZCacheManager {
 
   // 移除缓存
   Future<void> removeCache(String url) async {
-    final encodedUrl = Uri.encodeComponent(url);
+    final encodedUrl = Uri.encodeComponent(xnzNormalizeNetworkUrl(url));
     memoryCache.remove(encodedUrl);
 
     final diskCache = await XNZDiskCache.getInstance();
@@ -93,7 +94,7 @@ class XNZCacheManager {
 
   // 只取内存（LRU）
   Uint8List? getMemoryCache(String url) {
-    final encodedUrl = Uri.encodeComponent(url);
+    final encodedUrl = Uri.encodeComponent(xnzNormalizeNetworkUrl(url));
     final data = memoryCache.get(encodedUrl);
     if (data != null) {
       XNZImageLogs.log('XNZNetworkImage', 'getMemoryCache $url 命中');
@@ -103,7 +104,7 @@ class XNZCacheManager {
 
   // 只取磁盘（并写回内存）
   Future<Uint8List?> getDiskCache(String url) async {
-    final encodedUrl = Uri.encodeComponent(url);
+    final encodedUrl = Uri.encodeComponent(xnzNormalizeNetworkUrl(url));
     final diskCache = await XNZDiskCache.getInstance();
     final data = await diskCache.get(encodedUrl);
     if (data != null) {

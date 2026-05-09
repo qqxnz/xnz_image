@@ -136,7 +136,9 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   }
 
   bool _shouldReload(XNZNetworkImage oldWidget) {
-    return oldWidget.imageUrl != widget.imageUrl ||
+    final oldUrl = xnzNormalizeNetworkUrl(oldWidget.imageUrl);
+    final newUrl = xnzNormalizeNetworkUrl(widget.imageUrl);
+    return oldUrl != newUrl ||
         oldWidget.sendTimeout != widget.sendTimeout ||
         oldWidget.receiveTimeout != widget.receiveTimeout ||
         oldWidget.avifOverrideDurationMs != widget.avifOverrideDurationMs;
@@ -204,7 +206,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   void _loadImage() async {
     final requestVersion = ++_requestVersion;
     final requestUrl = widget.imageUrl;
-    final normalizedUrl = requestUrl.trim();
+    final normalizedUrl = xnzNormalizeNetworkUrl(requestUrl);
 
     if (normalizedUrl.isEmpty) {
       if (!_isActiveRequest(requestVersion, requestUrl)) return;
@@ -300,9 +302,10 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   }
 
   XNZResolvedImage _resolveImage(Uint8List bytes) {
+    final normalizedUrl = xnzNormalizeNetworkUrl(widget.imageUrl);
     final request = XNZImageRequest(
       sourceType: XNZImageSourceType.network,
-      uri: Uri.tryParse(widget.imageUrl),
+      uri: Uri.tryParse(normalizedUrl),
       bytes: bytes,
       options: <String, Object?>{
         'width': widget.width,
@@ -362,9 +365,10 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   }
 
   XNZResolvedImage _getResolvedImage(Uint8List bytes) {
+    final normalizedUrl = xnzNormalizeNetworkUrl(widget.imageUrl);
     final canUseCache = _resolvedImageCache != null &&
         identical(_resolvedImageCacheBytes, bytes) &&
-        _resolvedImageCacheUrl == widget.imageUrl &&
+        _resolvedImageCacheUrl == normalizedUrl &&
         _resolvedImageCacheWidth == widget.width &&
         _resolvedImageCacheHeight == widget.height &&
         _resolvedImageCacheColor == widget.color &&
@@ -378,7 +382,7 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     final resolved = _resolveImage(bytes);
     _resolvedImageCache = resolved;
     _resolvedImageCacheBytes = bytes;
-    _resolvedImageCacheUrl = widget.imageUrl;
+    _resolvedImageCacheUrl = normalizedUrl;
     _resolvedImageCacheWidth = widget.width;
     _resolvedImageCacheHeight = widget.height;
     _resolvedImageCacheColor = widget.color;

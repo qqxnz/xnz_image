@@ -131,6 +131,15 @@ void main() {
     expect(a.hashCode, equals(d.hashCode));
   });
 
+  test('XNZNetworkImageProvider normalizes url for identity', () {
+    final a = XNZNetworkImageProvider('  https://example.com/a.png  ');
+    final b = XNZNetworkImageProvider('https://example.com/a.png');
+
+    expect(a.imageUrl, equals('https://example.com/a.png'));
+    expect(a, equals(b));
+    expect(a.hashCode, equals(b.hashCode));
+  });
+
   test('XNZImageDownloaderTask requestKey isolates headers safely', () {
     final withoutHeaders = XNZImageDownloaderTask(
       url: 'https://example.com/image.png',
@@ -164,8 +173,14 @@ void main() {
       onComplete: (_) {},
       onError: (_) {},
     );
+    final withWhitespaceUrl = XNZImageDownloaderTask(
+      url: '  https://example.com/image.png  ',
+      onComplete: (_) {},
+      onError: (_) {},
+    );
 
     expect(withoutHeaders.requestKey, equals('https://example.com/image.png'));
+    expect(withWhitespaceUrl.requestKey, equals(withoutHeaders.requestKey));
     expect(headersA.requestKey, equals(headersAReordered.requestKey));
     expect(headersA.requestKey, isNot(equals(headersB.requestKey)));
     expect(headersA.requestKey, isNot(equals(withoutHeaders.requestKey)));

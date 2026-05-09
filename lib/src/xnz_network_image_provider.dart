@@ -11,10 +11,10 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
       Expando<ImageConfiguration>('xnz_network_image_configuration');
 
   XNZNetworkImageProvider(
-    this.imageUrl, {
+    String imageUrl, {
     this.scale = 1.0,
     this.avifOverrideDurationMs = -1,
-  });
+  }) : imageUrl = xnzNormalizeNetworkUrl(imageUrl);
 
   final String imageUrl;
   final double scale;
@@ -118,9 +118,10 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
     String imageUrl, {
     required bool useCache,
   }) async {
+    final normalizedUrl = xnzNormalizeNetworkUrl(imageUrl);
     Uint8List? data;
     if (useCache) {
-      data = await XNZCacheManager().getCache(imageUrl);
+      data = await XNZCacheManager().getCache(normalizedUrl);
       if (data != null) {
         XNZImageLogs.log(
           'XNZNetworkImageProvider',
@@ -133,7 +134,7 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
     final completer = Completer<Uint8List?>();
     Object? downloadError;
     final task = XNZImageDownloaderTask(
-      url: imageUrl,
+      url: normalizedUrl,
       onComplete: (bytes) {
         if (!completer.isCompleted) {
           completer.complete(bytes);
@@ -152,13 +153,13 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
       XNZImageDownloader().start(task);
     } catch (error) {
       throw Exception(
-        'Failed to start image download: $imageUrl, error: $error',
+        'Failed to start image download: $normalizedUrl, error: $error',
       );
     }
     data = await completer.future;
     if (data == null) {
       throw Exception(
-        'Failed to load image data: $imageUrl, error: ${downloadError ?? "unknown"}',
+        'Failed to load image data: $normalizedUrl, error: ${downloadError ?? "unknown"}',
       );
     }
     return data;

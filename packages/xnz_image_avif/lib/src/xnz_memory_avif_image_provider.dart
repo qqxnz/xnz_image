@@ -32,14 +32,14 @@ Future<AvifCodec> loadMemoryAvifCodec(
   required int codecKey,
   int? avifOverrideDurationMs = -1,
 }) async {
-  const int _avifHeaderLength = 16;
+  const int avifHeaderLength = 16;
   final bytesUint8List = bytes.buffer.asUint8List(0, bytes.length);
-  if (bytesUint8List.length < _avifHeaderLength) {
+  if (bytesUint8List.length < avifHeaderLength) {
     throw const FormatException(
       'Invalid AVIF bytes: empty or truncated data.',
     );
   }
-  final fType = _getAvifFileType(bytesUint8List.sublist(0, _avifHeaderLength));
+  final fType = _getAvifFileType(bytesUint8List.sublist(0, avifHeaderLength));
   if (fType == AvifFileType.unknown) {
     throw StateError('Loaded file is not an avif file.');
   }
@@ -105,11 +105,13 @@ class XNZMemoryAvifImage extends ImageProvider<XNZMemoryAvifImage> {
     }
     return other is XNZMemoryAvifImage &&
         other.bytes == bytes &&
-        other.scale == scale;
+        other.scale == scale &&
+        other.avifOverrideDurationMs == avifOverrideDurationMs;
   }
 
   @override
-  int get hashCode => Object.hash(bytes.hashCode, scale);
+  int get hashCode =>
+      Object.hash(bytes.hashCode, scale, avifOverrideDurationMs);
 }
 
 abstract class AvifCodec {
@@ -124,6 +126,8 @@ abstract class AvifCodec {
 class MultiFrameAvifCodec implements AvifCodec {
   final String _key;
   late Completer<void> _ready;
+  Object? _initError;
+  StackTrace? _initErrorStackTrace;
 
   int _frameCount = 1;
   @override
@@ -145,23 +149,49 @@ class MultiFrameAvifCodec implements AvifCodec {
       avifFfi.initMemoryDecoder(key: _key, avifBytes: avifBytes).then((info) {
         _frameCount = info.imageCount;
         _durationMs = avifOverrideDurationMs ?? (info.duration * 1000).round();
-        _ready.complete();
+        if (!_ready.isCompleted) {
+          _ready.complete();
+        }
+      }).catchError((Object error, StackTrace stackTrace) {
+        _initError = error;
+        _initErrorStackTrace = stackTrace;
+        if (!_ready.isCompleted) {
+          _ready.complete();
+        }
       });
-    } catch (_) {
-      _ready.complete();
+    } catch (error, stackTrace) {
+      _initError = error;
+      _initErrorStackTrace = stackTrace;
+      if (!_ready.isCompleted) {
+        _ready.complete();
+      }
     }
+  }
+
+  void _throwIfInitFailed() {
+    final initError = _initError;
+    if (initError == null) {
+      return;
+    }
+    final wrapped = StateError(
+      'AVIF decoder init failed for key=$_key, error:$initError',
+    );
+    final stack = _initErrorStackTrace;
+    if (stack != null) {
+      Error.throwWithStackTrace(wrapped, stack);
+    }
+    throw wrapped;
   }
 
   @override
   Future<void> ready() async {
-    if (_ready.isCompleted) {
-      return;
-    }
     await _ready.future;
+    _throwIfInitFailed();
   }
 
   @override
   Future<AvifFrameInfo> getNextFrame() async {
+    _throwIfInitFailed();
     final completer = Completer<AvifFrameInfo>.sync();
     final String? error =
         _getNextFrame((ui.Image? image, int durationMilliseconds) {
