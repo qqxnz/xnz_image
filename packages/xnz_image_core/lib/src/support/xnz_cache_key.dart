@@ -1,15 +1,18 @@
 import 'dart:convert';
 
-/// Builds a stable cache key using FNV-1a 64-bit hash.
+/// Builds a stable cache key using FNV-1a 32-bit hash.
+///
+/// We intentionally use a 32-bit variant so the implementation works across
+/// native and web (JavaScript) runtimes without precision loss.
 String xnzBuildCacheKey(String input) {
-  const int fnvOffsetBasis = 0xcbf29ce484222325;
-  const int fnvPrime = 0x100000001b3;
-  const int mask64 = 0xffffffffffffffff;
+  const int fnvOffsetBasis = 0x811c9dc5;
+  const int fnvPrime = 0x01000193;
+  const int mask32 = 0xffffffff;
 
   int hash = fnvOffsetBasis;
   for (final b in utf8.encode(input)) {
-    hash ^= b;
-    hash = (hash * fnvPrime) & mask64;
+    hash = (hash ^ b) & mask32;
+    hash = (hash * fnvPrime) & mask32;
   }
-  return hash.toRadixString(16).padLeft(16, '0');
+  return hash.toUnsigned(32).toRadixString(16).padLeft(8, '0');
 }

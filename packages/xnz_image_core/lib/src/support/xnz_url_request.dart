@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 
 import 'xnz_cache_key.dart';
@@ -91,25 +89,15 @@ class XNZUrlRequest {
     if (headers.isEmpty) {
       return '';
     }
-    const int fnvOffsetBasis = 0xcbf29ce484222325;
-    const int fnvPrime = 0x100000001b3;
-    const int mask64 = 0xffffffffffffffff;
-
-    int hash = fnvOffsetBasis;
-    void addText(String value) {
-      for (final b in utf8.encode(value)) {
-        hash ^= b;
-        hash = (hash * fnvPrime) & mask64;
-      }
-    }
-
+    final buffer = StringBuffer();
     for (final entry in headers.entries) {
-      addText(entry.key);
-      addText(':');
-      addText(entry.value);
-      addText('|');
+      buffer
+        ..write(entry.key)
+        ..write(':')
+        ..write(entry.value)
+        ..write('|');
     }
-    return hash.toRadixString(16).padLeft(16, '0');
+    return xnzBuildCacheKey(buffer.toString());
   }
 
   @override
