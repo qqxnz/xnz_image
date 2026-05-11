@@ -19,15 +19,17 @@ class XNZDiskCache {
   Future<void> _init() async {
     if (_cacheDir != null) return;
 
-    final dir = await getApplicationDocumentsDirectory();
+    // Use temporary/cache space for image cache data.
+    // Cache entries are re-creatable and should not live in user documents.
+    final dir = await getTemporaryDirectory();
     _cacheDir = Directory('${dir.path}/xnz_image_cache');
 
-    if (!_cacheDir!.existsSync()) {
-      _cacheDir!.createSync(recursive: true);
+    if (!await _cacheDir!.exists()) {
+      await _cacheDir!.create(recursive: true);
     }
 
     XNZImageLogs.log(
-      'XNZNetworkImage',
+      'XNZDiskCache',
       'XNZDiskCache init path=${_cacheDir!.path}',
     );
   }
@@ -47,7 +49,7 @@ class XNZDiskCache {
     await _init();
     final file = _fileForCacheKey(cacheKey);
 
-    if (!file.existsSync()) {
+    if (!await file.exists()) {
       return null;
     }
 
@@ -86,7 +88,7 @@ class XNZDiskCache {
     await _init();
     final file = _fileForCacheKey(cacheKey);
 
-    if (file.existsSync()) {
+    if (await file.exists()) {
       await file.delete();
     }
     _lastTouchAt.remove(cacheKey);
@@ -96,9 +98,9 @@ class XNZDiskCache {
   Future<void> clearAll() async {
     await _init();
 
-    if (_cacheDir!.existsSync()) {
+    if (await _cacheDir!.exists()) {
       await _cacheDir!.delete(recursive: true);
-      await _cacheDir!.create();
+      await _cacheDir!.create(recursive: true);
     }
     _lastTouchAt.clear();
   }

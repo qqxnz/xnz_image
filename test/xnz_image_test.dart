@@ -102,6 +102,41 @@ void main() {
     expect(find.byType(Image), findsOneWidget);
   });
 
+  testWidgets(
+      'XNZAnimatedImage shows errorBuilder after source switch to invalid bytes',
+      (tester) async {
+    final Uint8List validPngBytes = base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=',
+    );
+    final Uint8List invalidBytes = Uint8List.fromList(<int>[0, 1, 2, 3]);
+
+    Widget buildWith(ImageProvider provider) {
+      return MaterialApp(
+        home: Scaffold(
+          body: XNZAnimatedImage(
+            image: provider,
+            loadingBuilder: (_) => const Text('loading'),
+            errorBuilder: (_, __, ___) => const Text('error'),
+          ),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(
+      buildWith(XNZMemoryImageProvider(validPngBytes)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('error'), findsNothing);
+
+    await tester.pumpWidget(
+      buildWith(XNZMemoryImageProvider(invalidBytes)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('error'), findsOneWidget);
+    expect(find.byType(RawImage), findsNothing);
+  });
+
   test(
       'XNZNetworkImageProvider equality includes scale and avifOverrideDurationMs',
       () {

@@ -83,22 +83,36 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
       );
     }
 
-    return MultiFrameImageStreamCompleter(
-      codec: _loadAsync(key, decode),
+    final cancelSignal = Completer<void>();
+    final streamCompleter = MultiFrameImageStreamCompleter(
+      codec: _loadAsync(
+        key,
+        decode,
+        cancelSignal: cancelSignal,
+      ),
       scale: key.scale,
       informationCollector: () sync* {
         yield ErrorDescription('XNZNetworkImageProvider Image provider: $this');
       },
     );
+    streamCompleter.addOnLastListenerRemovedCallback(() {
+      if (!cancelSignal.isCompleted) {
+        cancelSignal.complete();
+      }
+    });
+    return streamCompleter;
   }
 
   Future<ui.Codec> _loadAsync(
-    XNZNetworkImageProvider key,
-    ImageDecoderCallback decode,
-  ) async {
+      XNZNetworkImageProvider key, ImageDecoderCallback decode,
+      {required Completer<void> cancelSignal}) async {
     XNZImageLogs.log('XNZNetworkImageProvider', '_loadAsync');
     final request = key._request;
-    Uint8List data = await _loadImageData(request, useCache: true);
+    Uint8List data = await _loadImageData(
+      request,
+      useCache: true,
+      cancelSignal: cancelSignal,
+    );
     try {
       final codec = await XNZImageDecodeUtils.decodeChecked(
         data: data,
@@ -115,7 +129,11 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
       await XNZCacheManager().removeCache(request);
     }
 
-    data = await _loadImageData(request, useCache: false);
+    data = await _loadImageData(
+      request,
+      useCache: false,
+      cancelSignal: cancelSignal,
+    );
     try {
       final codec = await XNZImageDecodeUtils.decodeChecked(
         data: data,
@@ -135,7 +153,12 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
   Future<Uint8List> _loadImageData(
     XNZUrlRequest request, {
     required bool useCache,
+    required Completer<void> cancelSignal,
   }) async {
+    if (cancelSignal.isCompleted) {
+      throw _XNZImageLoadCanceled(request.url);
+    }
+
     Uint8List? data;
     if (useCache) {
       data = await XNZCacheManager().getCache(request);
@@ -173,8 +196,17 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
         'Failed to start image download: ${request.url}, error: $error',
       );
     }
-    data = await completer.future;
+    data = await Future.any<Uint8List?>(<Future<Uint8List?>>[
+      completer.future,
+      cancelSignal.future.then((_) {
+        XNZImageDownloader().cancel(task);
+        return null;
+      }),
+    ]);
     if (data == null) {
+      if (cancelSignal.isCompleted) {
+        throw _XNZImageLoadCanceled(request.url);
+      }
       throw Exception(
         'Failed to load image data: ${request.url}, error: ${downloadError ?? "unknown"}',
       );
@@ -197,4 +229,13 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
         scale,
         avifOverrideDurationMs,
       );
+}
+
+class _XNZImageLoadCanceled implements Exception {
+  const _XNZImageLoadCanceled(this.url);
+
+  final String url;
+
+  @override
+  String toString() => 'Image load canceled: $url';
 }

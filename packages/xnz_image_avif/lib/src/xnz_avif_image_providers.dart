@@ -48,9 +48,13 @@ class XNZAvifNetworkImageProvider
     XNZAvifNetworkImageProvider key,
     ImageDecoderCallback decode,
   ) {
-    return AvifImageStreamCompleter(
+    final cancelSignal = Completer<void>();
+    final streamCompleter = AvifImageStreamCompleter(
       key: key,
-      codec: _loadAsync(key),
+      codec: _loadAsync(
+        key,
+        cancelSignal: cancelSignal,
+      ),
       scale: key.scale,
       debugLabel: key.imageUrl,
       informationCollector: () sync* {
@@ -59,23 +63,65 @@ class XNZAvifNetworkImageProvider
         );
       },
     );
+    streamCompleter.addOnLastListenerRemovedCallback(() {
+      if (!cancelSignal.isCompleted) {
+        cancelSignal.complete();
+      }
+    });
+    return streamCompleter;
   }
 
-  Future<AvifCodec> _loadAsync(XNZAvifNetworkImageProvider key) async {
-    final bytes = await _loadImageData(key.imageUrl);
-    unawaited(XNZCacheManager().setCache(key._request, bytes));
-    return loadMemoryAvifCodec(
+  Future<AvifCodec> _loadAsync(
+    XNZAvifNetworkImageProvider key, {
+    required Completer<void> cancelSignal,
+  }) async {
+    final request = key._request;
+    Uint8List bytes = await _loadImageData(
+      request,
+      useCache: true,
+      cancelSignal: cancelSignal,
+    );
+    try {
+      final codec = await loadMemoryAvifCodec(
+        bytes,
+        codecKey: hashCode,
+        avifOverrideDurationMs: avifOverrideDurationMs,
+      );
+      unawaited(XNZCacheManager().setCache(request, bytes));
+      return codec;
+    } catch (_) {
+      await XNZCacheManager().removeCache(request);
+    }
+
+    bytes = await _loadImageData(
+      request,
+      useCache: false,
+      cancelSignal: cancelSignal,
+    );
+    final codec = await loadMemoryAvifCodec(
       bytes,
       codecKey: hashCode,
       avifOverrideDurationMs: avifOverrideDurationMs,
     );
+    unawaited(XNZCacheManager().setCache(request, bytes));
+    return codec;
   }
 
-  Future<Uint8List> _loadImageData(String url) async {
-    final request = _request;
-    Uint8List? data = await XNZCacheManager().getCache(request);
-    if (data != null) {
-      return data;
+  Future<Uint8List> _loadImageData(
+    XNZUrlRequest request, {
+    required bool useCache,
+    required Completer<void> cancelSignal,
+  }) async {
+    if (cancelSignal.isCompleted) {
+      throw _XNZAvifImageLoadCanceled(request.url);
+    }
+
+    Uint8List? data;
+    if (useCache) {
+      data = await XNZCacheManager().getCache(request);
+      if (data != null) {
+        return data;
+      }
     }
 
     final completer = Completer<Uint8List?>();
@@ -90,8 +136,17 @@ class XNZAvifNetworkImageProvider
     );
     XNZImageDownloader().start(task);
 
-    data = await completer.future;
+    data = await Future.any<Uint8List?>(<Future<Uint8List?>>[
+      completer.future,
+      cancelSignal.future.then((_) {
+        XNZImageDownloader().cancel(task);
+        return null;
+      }),
+    ]);
     if (data == null) {
+      if (cancelSignal.isCompleted) {
+        throw _XNZAvifImageLoadCanceled(request.url);
+      }
       throw Exception(
         'Failed to load AVIF image data: ${request.url}, error: ${downloadError ?? "unknown"}',
       );
@@ -117,6 +172,15 @@ class XNZAvifNetworkImageProvider
         scale,
         avifOverrideDurationMs,
       );
+}
+
+class _XNZAvifImageLoadCanceled implements Exception {
+  const _XNZAvifImageLoadCanceled(this.url);
+
+  final String url;
+
+  @override
+  String toString() => 'AVIF image load canceled: $url';
 }
 
 class XNZAvifMemoryImageProvider extends XNZMemoryAvifImage {

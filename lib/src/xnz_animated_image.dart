@@ -239,6 +239,10 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
 
   void _resetPlayback() {
     _ticker.stop();
+    _disposeCurrentFramesIfOwned();
+    _frames = const <XNZAnimatedImageFrame>[];
+    _frameEndMs = const <int>[];
+    _duration = Duration.zero;
     _frameIndex = 0;
     _completedLoops = 0;
     _position = Duration.zero;
@@ -344,10 +348,23 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
       if (!mounted || loadToken != _loadToken) {
         return;
       }
+      _ticker.stop();
+      _disposeCurrentFramesIfOwned();
       setState(() {
+        _frames = const <XNZAnimatedImageFrame>[];
+        _frameEndMs = const <int>[];
+        _duration = Duration.zero;
+        _frameIndex = 0;
+        _position = Duration.zero;
+        _sessionStartPositionMs = 0;
+        _sessionStartLoopCount = 0;
+        _isPlaying = false;
+        _isCompleted = false;
+        _completedLoops = 0;
         _loadError = e;
         _loadErrorStackTrace = st;
       });
+      _syncControllerState();
     }
   }
 
