@@ -152,6 +152,13 @@ and can also decode animated AVIF when AVIF support is registered.
 - Loop control: `loop`
 - Error fallback: `errorBuilder`
 
+### Maintenance Updates (2026-05-11)
+
+- Optimized animated memory cache-key generation: memory bytes fingerprints are now cached by bytes identity to avoid repeated full-byte hashing on frequent rebuilds.
+- Refactored `XNZAnimatedImage` internals into `lib/src/animated/` modules (loader/decoder/cache-key/provider-context/models/controller/cache) to reduce single-file complexity.
+- Unified resolve/render flow for `XNZAssetImage`, `XNZMemoryImage`, `XNZFileImage`, and `XNZNetworkImage` via shared helpers, reducing template duplication and future drift risk.
+- Public API remains backward compatible.
+
 ### Example
 
 ```dart
@@ -368,6 +375,13 @@ Image(
 - 回调：`onLoaded`、`onCompleted`
 - 循环开关：`loop`
 - 异常兜底：`errorBuilder`
+
+### 2026-05-11 维护性更新
+
+- 已优化 memory 场景的动图缓存 key：为 bytes 指纹增加 identity 级缓存，避免频繁全量字节哈希带来的重复 CPU 开销。
+- 已将 `XNZAnimatedImage` 的加载/解码/缓存 key/provider 上下文等能力拆分到 `lib/src/animated/` 子模块，降低单文件职责复杂度。
+- 已抽取四类基础图片组件的统一 resolve/render helper（`XNZAssetImage`、`XNZMemoryImage`、`XNZFileImage`、`XNZNetworkImage`），减少重复模板代码并提升一致性。
+- 对外 API 与使用方式保持兼容，无需业务侧改造。
 
 ### 用法示例
 

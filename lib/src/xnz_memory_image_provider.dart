@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:xnz_image_core/xnz_image_core.dart';
 
+import 'package:xnz_image/src/animated/xnz_animated_bytes_fingerprint.dart';
 import 'package:xnz_image/src/xnz_image_decode_utils.dart';
 import 'package:xnz_image/src/xnz_proxy_image_stream_completer.dart';
 
@@ -20,6 +21,9 @@ class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
   final Uint8List bytes;
   final double scale;
   final int? avifOverrideDurationMs;
+
+  /// Stable fingerprint cached by bytes identity for animated cache-key usage.
+  int get bytesFingerprint => xnzStableBytesFingerprint(bytes);
 
   @override
   Future<XNZMemoryImageProvider> obtainKey(ImageConfiguration configuration) {

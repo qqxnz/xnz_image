@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Refactored `XNZAnimatedImage` internals into `lib/src/animated/` submodules to reduce single-file responsibility and improve maintainability.
+- Optimized animated-memory cache key generation by caching bytes fingerprints per byte-array identity.
+- Unified resolve/render helper flow across `XNZAssetImage`, `XNZMemoryImage`, `XNZFileImage`, and `XNZNetworkImage` to reduce duplicated widget template logic.
+- Updated README/README.zh-CN and audit documentation to reflect P2 issue fixes.
+
 ## 0.1.12
 
 - Improved memory observer init/dispose idempotency and animated image cache eviction behavior.

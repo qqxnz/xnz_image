@@ -39,53 +39,29 @@ class XNZMemoryImage extends StatelessWidget {
         'avifOverrideDurationMs': avifOverrideDurationMs,
       },
     );
-    final result = XNZImageRegistry.instance.resolve(request);
-    if (result != null) {
-      return XNZResolvedImage(
-        kind: result.kind == XNZImageBuildKind.widget
-            ? XNZResolvedKind.customWidget
-            : XNZResolvedKind.bitmapProvider,
-        provider: result.provider,
-        widget: result.widget,
-        format: result.format,
-        meta: result.meta,
-      );
-    }
-
-    return XNZResolvedImage(
-      kind: XNZResolvedKind.bitmapProvider,
-      provider: XNZMemoryImageProvider(
+    return xnzResolveWithRegistry(
+      request: request,
+      fallbackProvider: XNZMemoryImageProvider(
         bytes,
         avifOverrideDurationMs: avifOverrideDurationMs,
       ),
-      format: 'bitmap',
-    );
-  }
-
-  Widget _defaultRender(XNZResolvedImage resolved) {
-    if (resolved.kind == XNZResolvedKind.customWidget) {
-      return resolved.widget ?? const SizedBox.shrink();
-    }
-
-    final provider = resolved.provider!;
-
-    return Image(
-      image: provider,
-      width: width,
-      height: height,
-      color: color,
-      fit: fit,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final resolved = _resolveImage();
-    final child = _defaultRender(resolved);
-    return xnzApplyRenderBuilder(
+    return xnzBuildResolvedImage(
       context: context,
-      child: child,
+      resolved: resolved,
       renderBuilder: renderBuilder,
+      bitmapBuilder: (provider) => Image(
+        image: provider,
+        width: width,
+        height: height,
+        color: color,
+        fit: fit,
+      ),
     );
   }
 }

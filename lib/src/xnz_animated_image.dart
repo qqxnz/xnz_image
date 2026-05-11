@@ -1,255 +1,23 @@
 import 'dart:async';
-import 'dart:collection';
-import 'dart:ui' as ui;
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:xnz_image_core/xnz_image_core.dart';
+import 'animated/xnz_animated_decoder.dart';
+import 'animated/xnz_animated_image_cache.dart';
+import 'animated/xnz_animated_image_cache_key.dart';
+import 'animated/xnz_animated_image_controller.dart';
+import 'animated/xnz_animated_image_loader.dart';
+import 'animated/xnz_animated_image_models.dart';
+import 'animated/xnz_animated_provider_context.dart';
 
-import 'xnz_asset_image_provider.dart';
-import 'xnz_file_image_provider.dart';
-import 'xnz_memory_image_provider.dart';
-import 'xnz_network_image_provider.dart';
-import 'xnz_network_bytes_loader.dart';
-
-/// Decoder signature used by [XNZAnimatedImage] for custom frame decoding.
-typedef XNZAnimatedImageDecoder = Future<Object?> Function(
-  XNZAnimatedImageDecodeRequest request,
-);
-
-/// Decode request passed to [XNZAnimatedImageDecoder].
-@immutable
-class XNZAnimatedImageDecodeRequest {
-  /// Creates a decode request.
-  const XNZAnimatedImageDecodeRequest({
-    required this.image,
-    required this.bytes,
-    required this.scale,
-    this.avifOverrideDurationMs,
-  });
-
-  /// Source image provider.
-  final ImageProvider image;
-
-  /// Raw bytes resolved from [image].
-  final Uint8List bytes;
-
-  /// Render scale used for decoded frames.
-  final double scale;
-
-  /// Optional per-frame duration override used by AVIF decoders.
-  final int? avifOverrideDurationMs;
-}
-
-/// A single decoded animation frame.
-@immutable
-class XNZAnimatedImageFrame {
-  /// Creates a frame.
-  const XNZAnimatedImageFrame({
-    required this.image,
-    required this.duration,
-    this.scale = 1.0,
-  });
-
-  /// Frame bitmap.
-  final ui.Image image;
-
-  /// Frame display duration.
-  final Duration duration;
-
-  /// Frame scale.
-  final double scale;
-}
-
-/// Fully decoded animation payload.
-@immutable
-class XNZAnimatedImageData {
-  /// Creates decoded animation data.
-  const XNZAnimatedImageData({
-    required this.frames,
-    required this.duration,
-  });
-
-  /// Ordered frame list.
-  final List<XNZAnimatedImageFrame> frames;
-
-  /// Total animation duration.
-  final Duration duration;
-}
-
-/// In-memory cache for decoded animated images.
-@immutable
-class XNZAnimatedImageCache {
-  /// Creates an animated image cache with bounded entry count.
-  XNZAnimatedImageCache({this.maxEntries = 64})
-      : assert(maxEntries > 0, 'maxEntries must be greater than zero');
-
-  /// Maximum number of cached animated entries.
-  final int maxEntries;
-
-  /// Cached animations indexed by provider-derived key.
-  final LinkedHashMap<String, XNZAnimatedImageData> caches =
-      LinkedHashMap<String, XNZAnimatedImageData>();
-
-  /// Returns a cached entry and refreshes its recency.
-  XNZAnimatedImageData? get(String key) {
-    final value = caches.remove(key);
-    if (value == null) {
-      return null;
-    }
-    caches[key] = value;
-    return value;
-  }
-
-  /// Stores a cache entry and evicts least-recently-used entries when needed.
-  void set(String key, XNZAnimatedImageData data) {
-    final previous = caches.remove(key);
-    if (previous != null && !identical(previous, data)) {
-      _disposeData(previous);
-    }
-    caches[key] = data;
-    _evictOverflowIfNeeded();
-  }
-
-  /// Clears all cached animations and disposes frame images.
-  void clear() {
-    for (final cached in caches.values) {
-      _disposeData(cached);
-    }
-    caches.clear();
-  }
-
-  /// Removes a cached animation and disposes its frame images.
-  ///
-  /// Returns `true` if the entry existed.
-  bool evict(Object key) {
-    final removed = caches.remove(key);
-    if (removed == null) {
-      return false;
-    }
-    _disposeData(removed);
-    return true;
-  }
-
-  void _evictOverflowIfNeeded() {
-    while (caches.length > maxEntries) {
-      final oldestKey = caches.keys.first;
-      final removed = caches.remove(oldestKey);
-      if (removed != null) {
-        _disposeData(removed);
-      }
-    }
-  }
-
-  static void _disposeData(XNZAnimatedImageData data) {
-    for (final frame in data.frames) {
-      frame.image.dispose();
-    }
-  }
-}
-
-/// Controller for playback state and commands of [XNZAnimatedImage].
-class XNZAnimatedImageController extends ChangeNotifier {
-  VoidCallback? _playCallback;
-  VoidCallback? _pauseCallback;
-  VoidCallback? _resumeCallback;
-  VoidCallback? _replayCallback;
-
-  Duration _position = Duration.zero;
-  Duration _duration = Duration.zero;
-  int _frameIndex = 0;
-  int _completedLoops = 0;
-  bool _isPlaying = false;
-  bool _isCompleted = false;
-
-  /// Current playback position within a loop.
-  Duration get position => _position;
-
-  /// Single-loop duration.
-  Duration get duration => _duration;
-
-  /// Current frame index.
-  int get frameIndex => _frameIndex;
-
-  /// Number of completed loops.
-  int get completedLoops => _completedLoops;
-
-  /// Whether playback is currently running.
-  bool get isPlaying => _isPlaying;
-
-  /// Whether non-looping playback has completed.
-  bool get isCompleted => _isCompleted;
-
-  /// Normalized progress in range `0.0..1.0`.
-  double get progress {
-    final totalMs = _duration.inMilliseconds;
-    if (totalMs <= 0) {
-      return 0;
-    }
-    return (_position.inMilliseconds / totalMs).clamp(0.0, 1.0);
-  }
-
-  /// Starts playback.
-  void play() => _playCallback?.call();
-
-  /// Pauses playback.
-  void pause() => _pauseCallback?.call();
-
-  /// Resumes playback from current position.
-  void resume() => _resumeCallback?.call();
-
-  /// Restarts playback from first frame.
-  void replay() => _replayCallback?.call();
-
-  /// Binds command callbacks from an owning widget state.
-  void bind({
-    required VoidCallback onPlay,
-    required VoidCallback onPause,
-    required VoidCallback onResume,
-    required VoidCallback onReplay,
-  }) {
-    _playCallback = onPlay;
-    _pauseCallback = onPause;
-    _resumeCallback = onResume;
-    _replayCallback = onReplay;
-  }
-
-  /// Unbinds all command callbacks.
-  void unbind() {
-    _playCallback = null;
-    _pauseCallback = null;
-    _resumeCallback = null;
-    _replayCallback = null;
-  }
-
-  /// Synchronizes exposed playback state and notifies listeners on change.
-  void sync({
-    required Duration position,
-    required Duration duration,
-    required int frameIndex,
-    required int completedLoops,
-    required bool isPlaying,
-    required bool isCompleted,
-  }) {
-    final changed = _position != position ||
-        _duration != duration ||
-        _frameIndex != frameIndex ||
-        _completedLoops != completedLoops ||
-        _isPlaying != isPlaying ||
-        _isCompleted != isCompleted;
-    _position = position;
-    _duration = duration;
-    _frameIndex = frameIndex;
-    _completedLoops = completedLoops;
-    _isPlaying = isPlaying;
-    _isCompleted = isCompleted;
-    if (changed) {
-      notifyListeners();
-    }
-  }
-}
+export 'animated/xnz_animated_image_cache.dart' show XNZAnimatedImageCache;
+export 'animated/xnz_animated_image_controller.dart'
+    show XNZAnimatedImageController;
+export 'animated/xnz_animated_image_models.dart'
+    show
+        XNZAnimatedImageData,
+        XNZAnimatedImageDecodeRequest,
+        XNZAnimatedImageDecoder,
+        XNZAnimatedImageFrame;
 
 /// Widget that renders and controls animated image playback.
 @immutable
@@ -492,13 +260,15 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
     _loadError = null;
     _loadErrorStackTrace = null;
     try {
-      final key = _cacheKey(widget.image);
+      final key = xnzAnimatedCacheKeyForProvider(widget.image);
       XNZAnimatedImageData? decoded;
       var decodedFromCache = false;
       if (widget.useCache && key != null) {
         final cached = XNZAnimatedImage.cache.get(key);
         if (cached != null) {
-          decoded = _cloneDecodedData(cached);
+          // Cache keeps original frame handles. Each consumer must clone to
+          // avoid disposing cache-owned images during widget lifecycle changes.
+          decoded = xnzCloneAnimatedDecodedData(cached);
           decodedFromCache = true;
         }
       }
@@ -513,13 +283,13 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
         if (!decodedFromCache) {
           final existing = XNZAnimatedImage.cache.get(key);
           if (existing == null) {
-            // Cache owns decoded handles; widget uses cloned handles.
+            // Cache owns decoded handles; widget side always works on clones.
             XNZAnimatedImage.cache.set(key, decoded);
-            decoded = _cloneDecodedData(decoded);
+            decoded = xnzCloneAnimatedDecodedData(decoded);
           } else {
             // Another loader inserted into cache first.
             _disposeFrames(decoded.frames);
-            decoded = _cloneDecodedData(existing);
+            decoded = xnzCloneAnimatedDecodedData(existing);
           }
         }
       }
@@ -582,15 +352,15 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
   }
 
   Future<XNZAnimatedImageData> _decodeImage(ImageProvider provider) async {
-    final bytes = await _loadBytes(provider);
+    final bytes = await xnzLoadBytesFromProvider(provider);
     final request = XNZAnimatedImageDecodeRequest(
       image: provider,
       bytes: bytes,
-      scale: _imageScale(provider),
-      avifOverrideDurationMs: _avifOverrideDuration(provider),
+      scale: xnzAnimatedImageScale(provider),
+      avifOverrideDurationMs: xnzAnimatedAvifOverrideDuration(provider),
     );
 
-    final supportDecoder = _resolveSupportAnimatedDecoder(
+    final supportDecoder = xnzResolveSupportAnimatedDecoder(
       provider: provider,
       bytes: bytes,
       scale: request.scale,
@@ -598,159 +368,11 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
     );
     final effectiveDecoder = widget.decoder ?? supportDecoder;
     final customDecodedRaw = await effectiveDecoder?.call(request);
-    final customDecoded = _coerceDecodedData(customDecodedRaw);
+    final customDecoded = xnzCoerceAnimatedDecodedData(customDecodedRaw);
     if (customDecoded != null) {
       return customDecoded;
     }
-    return _defaultDecode(request);
-  }
-
-  static XNZAnimatedImageDecoder? _resolveSupportAnimatedDecoder({
-    required ImageProvider provider,
-    required Uint8List bytes,
-    required double scale,
-    required int? avifOverrideDurationMs,
-  }) {
-    final sourceType = _sourceTypeOf(provider);
-    if (sourceType == null) {
-      return null;
-    }
-    final request = XNZImageRequest(
-      sourceType: sourceType,
-      uri: _uriOfProvider(provider),
-      bytes: sourceType == XNZImageSourceType.memory ? bytes : null,
-      options: <String, Object?>{
-        ..._providerOptions(provider),
-        'scale': scale,
-        'avifOverrideDurationMs': avifOverrideDurationMs,
-      },
-    );
-
-    final resolved = XNZImageRegistry.instance.resolve(request);
-    final meta = resolved?.meta;
-    if (meta is Map<Object?, Object?>) {
-      final decoder = meta['animatedDecoder'];
-      if (decoder is XNZAnimatedImageDecoder) {
-        return decoder;
-      }
-      if (decoder is Function) {
-        return (decodeRequest) async => await decoder(decodeRequest);
-      }
-    }
-    return null;
-  }
-
-  static XNZAnimatedImageData? _coerceDecodedData(Object? value) {
-    if (value == null) {
-      return null;
-    }
-    if (value is XNZAnimatedImageData) {
-      return value;
-    }
-    if (value is! Map<Object?, Object?>) {
-      return null;
-    }
-
-    final rawFrames = value['frames'];
-    if (rawFrames is! List) {
-      return null;
-    }
-
-    final frames = <XNZAnimatedImageFrame>[];
-    final isSingleFrame = rawFrames.length <= 1;
-    for (final rawFrame in rawFrames) {
-      if (rawFrame is! Map<Object?, Object?>) {
-        return null;
-      }
-      final image = rawFrame['image'];
-      final duration = rawFrame['duration'];
-      final scale = rawFrame['scale'];
-      if (image is! ui.Image || duration is! Duration) {
-        return null;
-      }
-      frames.add(
-        XNZAnimatedImageFrame(
-          image: image,
-          duration: isSingleFrame
-              ? duration
-              : duration.inMilliseconds <= 0
-                  ? const Duration(milliseconds: 1)
-                  : duration,
-          scale: scale is num ? scale.toDouble() : 1.0,
-        ),
-      );
-    }
-
-    final rawDuration = value['duration'];
-    final totalDuration =
-        rawDuration is Duration ? rawDuration : _sumDuration(frames);
-    return XNZAnimatedImageData(
-      frames: frames,
-      duration: totalDuration.inMilliseconds <= 0
-          ? _sumDuration(frames)
-          : totalDuration,
-    );
-  }
-
-  static Duration _sumDuration(List<XNZAnimatedImageFrame> frames) {
-    if (frames.length <= 1) {
-      return Duration.zero;
-    }
-    var duration = Duration.zero;
-    for (final frame in frames) {
-      duration += frame.duration.inMilliseconds <= 0
-          ? const Duration(milliseconds: 1)
-          : frame.duration;
-    }
-    return duration;
-  }
-
-  static XNZAnimatedImageData _cloneDecodedData(XNZAnimatedImageData data) {
-    final frames = data.frames
-        .map(
-          (frame) => XNZAnimatedImageFrame(
-            image: frame.image.clone(),
-            duration: frame.duration,
-            scale: frame.scale,
-          ),
-        )
-        .toList(growable: false);
-    return XNZAnimatedImageData(frames: frames, duration: data.duration);
-  }
-
-  static Future<XNZAnimatedImageData> _defaultDecode(
-    XNZAnimatedImageDecodeRequest request,
-  ) async {
-    final codec = await ui.instantiateImageCodec(
-      request.bytes,
-      targetWidth: null,
-      targetHeight: null,
-    );
-
-    final frames = <XNZAnimatedImageFrame>[];
-    var totalDuration = Duration.zero;
-    final isSingleFrame = codec.frameCount <= 1;
-    try {
-      for (var i = 0; i < codec.frameCount; i++) {
-        final frame = await codec.getNextFrame();
-        final frameDuration = isSingleFrame
-            ? frame.duration
-            : frame.duration.inMilliseconds <= 0
-                ? const Duration(milliseconds: 1)
-                : frame.duration;
-        frames.add(
-          XNZAnimatedImageFrame(
-            image: frame.image,
-            duration: frameDuration,
-            scale: request.scale,
-          ),
-        );
-        totalDuration += frameDuration;
-      }
-    } finally {
-      codec.dispose();
-    }
-    return XNZAnimatedImageData(frames: frames, duration: totalDuration);
+    return xnzDefaultDecodeAnimatedImage(request);
   }
 
   void _play() {
@@ -824,6 +446,8 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
 
     final totalElapsedMs =
         _sessionStartPositionMs + elapsedSinceStart.inMilliseconds;
+    // Playback timeline is modeled as an infinite elapsed clock:
+    // loop count = elapsed ~/ total, position = elapsed % total.
     final loopsDelta = totalElapsedMs ~/ totalMs;
     final loopPositionMs = totalElapsedMs % totalMs;
     final nextCompletedLoops = _sessionStartLoopCount + loopsDelta;
@@ -884,229 +508,5 @@ class _XNZAnimatedImageState extends State<XNZAnimatedImage>
       isPlaying: _isPlaying,
       isCompleted: _isCompleted,
     );
-  }
-
-  static Future<Uint8List> _loadBytes(ImageProvider provider) async {
-    if (provider is MemoryImage) {
-      return provider.bytes;
-    }
-    if (provider is XNZMemoryImageProvider) {
-      return provider.bytes;
-    }
-    if (provider is FileImage) {
-      return provider.file.readAsBytes();
-    }
-    if (provider is XNZFileImageProvider) {
-      return provider.file.readAsBytes();
-    }
-    if (provider is XNZNetworkImageProvider) {
-      final request = XNZUrlRequest(
-        provider.imageUrl,
-        headers: provider.headers,
-        cacheKeyStrategy: provider.cacheKeyStrategy,
-      );
-      final cached = await XNZCacheManager().getCache(request);
-      if (cached != null) {
-        return cached;
-      }
-      return xnzLoadNetworkBytes(
-        Uri.parse(provider.imageUrl),
-        headers: provider.headers,
-        cacheKeyStrategy: provider.cacheKeyStrategy,
-      );
-    }
-    if (provider is NetworkImage) {
-      return xnzLoadNetworkBytes(
-        Uri.parse(provider.url),
-        headers: provider.headers,
-        cacheKeyStrategy:
-            provider.headers != null && provider.headers!.isNotEmpty
-                ? XNZCacheKeyStrategy.urlAndHeaders
-                : XNZCacheKeyStrategy.urlOnly,
-      );
-    }
-
-    if (provider is AssetImage) {
-      final key = await provider.obtainKey(ImageConfiguration.empty);
-      final data = await key.bundle.load(key.name);
-      return data.buffer.asUint8List();
-    }
-    if (provider is ExactAssetImage) {
-      final key = await provider.obtainKey(ImageConfiguration.empty);
-      final data = await key.bundle.load(key.name);
-      return data.buffer.asUint8List();
-    }
-    if (provider is XNZAssetImageProvider) {
-      final assetName = (provider.package == null || provider.package!.isEmpty)
-          ? provider.assetName
-          : 'packages/${provider.package}/${provider.assetName}';
-      final data = await (provider.bundle ?? rootBundle).load(assetName);
-      return data.buffer.asUint8List();
-    }
-
-    throw UnsupportedError(
-      'Unsupported ImageProvider type: ${provider.runtimeType}. '
-      'Use Memory/File/Network/Asset providers or pass a custom decoder.',
-    );
-  }
-
-  static String? _cacheKey(ImageProvider provider) {
-    if (provider is XNZNetworkImageProvider) {
-      return 'network:${provider.imageUrl}|scale:${provider.scale}|avif:${provider.avifOverrideDurationMs}';
-    }
-    if (provider is NetworkImage) {
-      final headerEntries = provider.headers?.entries.toList()
-        ?..sort((a, b) => a.key.compareTo(b.key));
-      final headersHash = headerEntries == null
-          ? 0
-          : Object.hashAll(
-              headerEntries.map((entry) => Object.hash(entry.key, entry.value)),
-            );
-      return 'network:${provider.url}|scale:${provider.scale}|headers:$headersHash';
-    }
-    if (provider is XNZFileImageProvider) {
-      return 'file:${provider.file.path}|scale:${provider.scale}|avif:${provider.avifOverrideDurationMs}';
-    }
-    if (provider is FileImage) {
-      return 'file:${provider.file.path}|scale:${provider.scale}';
-    }
-    if (provider is XNZAssetImageProvider) {
-      return 'asset:${provider.assetName}|package:${provider.package}|bundle:${provider.bundle}|scale:${provider.scale}|avif:${provider.avifOverrideDurationMs}';
-    }
-    if (provider is AssetImage) {
-      return 'asset:${provider.assetName}|package:${provider.package}';
-    }
-    if (provider is ExactAssetImage) {
-      return 'asset:${provider.assetName}|package:${provider.package}|scale:${provider.scale}';
-    }
-    if (provider is XNZMemoryImageProvider) {
-      return 'memory:${Object.hashAll(provider.bytes)}|scale:${provider.scale}|avif:${provider.avifOverrideDurationMs}';
-    }
-    if (provider is MemoryImage) {
-      return 'memory:${Object.hashAll(provider.bytes)}|scale:${provider.scale}';
-    }
-    return null;
-  }
-
-  static int? _avifOverrideDuration(ImageProvider provider) {
-    if (provider is XNZNetworkImageProvider) {
-      return provider.avifOverrideDurationMs;
-    }
-    if (provider is XNZMemoryImageProvider) {
-      return provider.avifOverrideDurationMs;
-    }
-    if (provider is XNZFileImageProvider) {
-      return provider.avifOverrideDurationMs;
-    }
-    if (provider is XNZAssetImageProvider) {
-      return provider.avifOverrideDurationMs;
-    }
-    return null;
-  }
-
-  static double _imageScale(ImageProvider provider) {
-    if (provider is XNZNetworkImageProvider) {
-      return provider.scale;
-    }
-    if (provider is XNZMemoryImageProvider) {
-      return provider.scale;
-    }
-    if (provider is XNZFileImageProvider) {
-      return provider.scale;
-    }
-    if (provider is XNZAssetImageProvider) {
-      return provider.scale;
-    }
-    if (provider is NetworkImage) {
-      return provider.scale;
-    }
-    if (provider is MemoryImage) {
-      return provider.scale;
-    }
-    if (provider is FileImage) {
-      return provider.scale;
-    }
-    if (provider is AssetImage) {
-      return 1.0;
-    }
-    if (provider is ExactAssetImage) {
-      return provider.scale;
-    }
-    return 1.0;
-  }
-
-  static XNZImageSourceType? _sourceTypeOf(ImageProvider provider) {
-    if (provider is XNZNetworkImageProvider || provider is NetworkImage) {
-      return XNZImageSourceType.network;
-    }
-    if (provider is XNZMemoryImageProvider || provider is MemoryImage) {
-      return XNZImageSourceType.memory;
-    }
-    if (provider is XNZFileImageProvider || provider is FileImage) {
-      return XNZImageSourceType.file;
-    }
-    if (provider is XNZAssetImageProvider ||
-        provider is AssetImage ||
-        provider is ExactAssetImage) {
-      return XNZImageSourceType.asset;
-    }
-    return null;
-  }
-
-  static Uri? _uriOfProvider(ImageProvider provider) {
-    if (provider is XNZNetworkImageProvider) {
-      return Uri.tryParse(provider.imageUrl);
-    }
-    if (provider is NetworkImage) {
-      return Uri.tryParse(provider.url);
-    }
-    if (provider is XNZFileImageProvider) {
-      return provider.file.uri;
-    }
-    if (provider is FileImage) {
-      return provider.file.uri;
-    }
-    if (provider is XNZAssetImageProvider) {
-      final resolved = (provider.package == null || provider.package!.isEmpty)
-          ? provider.assetName
-          : 'packages/${provider.package}/${provider.assetName}';
-      return Uri(path: resolved);
-    }
-    if (provider is AssetImage) {
-      final resolved = (provider.package == null || provider.package!.isEmpty)
-          ? provider.assetName
-          : 'packages/${provider.package}/${provider.assetName}';
-      return Uri(path: resolved);
-    }
-    if (provider is ExactAssetImage) {
-      final resolved = (provider.package == null || provider.package!.isEmpty)
-          ? provider.assetName
-          : 'packages/${provider.package}/${provider.assetName}';
-      return Uri(path: resolved);
-    }
-    return null;
-  }
-
-  static Map<String, Object?> _providerOptions(ImageProvider provider) {
-    if (provider is XNZAssetImageProvider) {
-      return <String, Object?>{
-        'assetName': provider.assetName,
-        'bundle': provider.bundle,
-        'package': provider.package,
-      };
-    }
-    if (provider is AssetImage) {
-      return <String, Object?>{
-        'assetName': provider.assetName,
-        'package': provider.package,
-      };
-    }
-    if (provider is ExactAssetImage) {
-      return <String, Object?>{
-        'assetName': provider.assetName,
-        'package': provider.package,
-      };
-    }
-    return const <String, Object?>{};
   }
 }

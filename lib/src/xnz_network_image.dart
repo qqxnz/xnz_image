@@ -341,51 +341,27 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
         'avifOverrideDurationMs': widget.avifOverrideDurationMs,
       },
     );
-    final result = XNZImageRegistry.instance.resolve(request);
-    if (result != null) {
-      return XNZResolvedImage(
-        kind: result.kind == XNZImageBuildKind.widget
-            ? XNZResolvedKind.customWidget
-            : XNZResolvedKind.bitmapProvider,
-        provider: result.provider,
-        widget: result.widget,
-        format: result.format,
-        meta: result.meta,
-      );
-    }
-
-    return XNZResolvedImage(
-      kind: XNZResolvedKind.bitmapProvider,
-      provider: XNZMemoryImageProvider(
+    return xnzResolveWithRegistry(
+      request: request,
+      fallbackProvider: XNZMemoryImageProvider(
         bytes,
         avifOverrideDurationMs: widget.avifOverrideDurationMs,
       ),
-      format: 'bitmap',
-    );
-  }
-
-  Widget _defaultRender(XNZResolvedImage resolved) {
-    if (resolved.kind == XNZResolvedKind.customWidget) {
-      return resolved.widget ?? const SizedBox.shrink();
-    }
-
-    final provider = resolved.provider!;
-
-    return Image(
-      image: provider,
-      width: widget.width,
-      height: widget.height,
-      color: widget.color,
-      fit: widget.fit,
     );
   }
 
   Widget _buildResolved(BuildContext context, XNZResolvedImage resolved) {
-    final child = _defaultRender(resolved);
-    return xnzApplyRenderBuilder(
+    return xnzBuildResolvedImage(
       context: context,
-      child: child,
+      resolved: resolved,
       renderBuilder: widget.renderBuilder,
+      bitmapBuilder: (provider) => Image(
+        image: provider,
+        width: widget.width,
+        height: widget.height,
+        color: widget.color,
+        fit: widget.fit,
+      ),
     );
   }
 

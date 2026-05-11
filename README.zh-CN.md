@@ -18,16 +18,16 @@ Flutter 图片加载组件，提供网络、内存、文件、Asset 四种图片
 
 ```yaml
 dependencies:
-  xnz_image: ^0.1.10
+  xnz_image: ^0.1.12
 ```
 
 ### 2) 可选扩展包
 
 ```yaml
 dependencies:
-  xnz_image: ^0.1.10
-  xnz_image_svg: ^0.1.10
-  xnz_image_avif: ^0.1.10
+  xnz_image: ^0.1.12
+  xnz_image_svg: ^0.1.12
+  xnz_image_avif: ^0.1.12
 ```
 
 在当前 monorepo 本地开发时，也可以使用 `path` 依赖。
@@ -148,6 +148,13 @@ XNZNetworkImage(
 - 回调：`onLoaded`、`onCompleted`
 - 循环控制：`loop`
 - 错误兜底：`errorBuilder`
+
+### 2026-05-11 维护性更新
+
+- 已优化 memory 场景的动图缓存 key：为 bytes 指纹增加 identity 级缓存，避免频繁全量字节哈希带来的重复 CPU 开销。
+- 已将 `XNZAnimatedImage` 的加载/解码/缓存 key/provider 上下文等能力拆分到 `lib/src/animated/` 子模块，降低单文件职责复杂度。
+- 已抽取四类基础图片组件的统一 resolve/render helper（`XNZAssetImage`、`XNZMemoryImage`、`XNZFileImage`、`XNZNetworkImage`），减少重复模板代码并提升一致性。
+- 对外 API 与使用方式保持兼容，无需业务侧改造。
 
 ### 示例
 

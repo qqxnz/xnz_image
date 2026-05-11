@@ -290,3 +290,35 @@
 2. `cacheKey`：默认 `URL-only`，当 `cacheKeyStrategy=urlAndHeaders` 时使用 `URL + headers`
 
 该设计保持公共图片高命中率，同时为后续鉴权/多租户隔离场景提供可选能力。
+
+---
+
+## 12. P2 修复进展（2026-05-11）
+
+针对“问题 5/6/7”本次已完成修复并落地代码：
+
+1. 已修复：`XNZAnimatedImage` memory cache key 计算成本偏高
+   - 新增 bytes 指纹缓存能力（按 bytes identity 缓存一次）。
+   - memory provider 的动图 cache key 改为复用缓存指纹，避免重复全量 bytes 哈希。
+
+2. 已修复：`XNZAnimatedImage` 文件职责过载
+   - `XNZAnimatedImage` 内部能力拆分到 `lib/src/animated/`：
+     - `xnz_animated_image_loader.dart`（provider -> bytes）
+     - `xnz_animated_decoder.dart`（bytes -> frames）
+     - `xnz_animated_image_cache_key.dart`（cache key）
+     - `xnz_animated_provider_context.dart`（provider context）
+     - `xnz_animated_image_models.dart` / `controller.dart` / `cache.dart`
+   - 主文件保留对外 widget 与播放状态主流程，维护复杂度显著下降。
+
+3. 已修复：四类图片 Widget resolve/render 模板重复
+   - 在 `xnz_resolved_image.dart` 新增公共 helper：
+     - `xnzResolveWithRegistry`
+     - `xnzDefaultResolvedRender`
+     - `xnzBuildResolvedImage`
+   - `XNZAssetImage`、`XNZMemoryImage`、`XNZFileImage`、`XNZNetworkImage` 全部接入统一流程。
+
+### 本次验证
+
+1. `flutter test`（根仓）通过  
+2. `flutter analyze`（根仓）仅有示例目录历史 info，不属于本次修复引入  
+3. `flutter analyze lib/src/xnz_animated_image.dart lib/src/animated` 通过
