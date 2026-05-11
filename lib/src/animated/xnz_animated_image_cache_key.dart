@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:xnz_image_core/xnz_image_core.dart';
 
 import 'package:xnz_image/src/animated/xnz_animated_bytes_fingerprint.dart';
 import 'package:xnz_image/src/xnz_asset_image_provider.dart';
@@ -9,7 +10,12 @@ import 'package:xnz_image/src/xnz_network_image_provider.dart';
 /// Builds a cache key for animated image decode results.
 String? xnzAnimatedCacheKeyForProvider(ImageProvider provider) {
   if (provider is XNZNetworkImageProvider) {
-    return 'network:${provider.imageUrl}|scale:${provider.scale}|avif:${provider.avifOverrideDurationMs}';
+    final request = XNZUrlRequest(
+      provider.imageUrl,
+      headers: provider.headers,
+      cacheKeyStrategy: provider.cacheKeyStrategy,
+    );
+    return 'network:${request.requestKey}|cacheKeyStrategy:${request.cacheKeyStrategy.name}|scale:${provider.scale}|avif:${provider.avifOverrideDurationMs}';
   }
   if (provider is NetworkImage) {
     final normalizedUrl = provider.url.trim();

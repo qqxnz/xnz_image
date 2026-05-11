@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xnz_image/xnz_image.dart';
+import 'package:xnz_image/src/animated/xnz_animated_image_cache_key.dart';
 
 class _TestAssetBundle extends CachingAssetBundle {
   _TestAssetBundle(this._bytes);
@@ -217,6 +218,26 @@ void main() {
     expect(urlOnlyA.cacheKey, equals(urlOnlyB.cacheKey));
     expect(withHeadersA.cacheKey, isNot(equals(withHeadersB.cacheKey)));
     expect(withHeadersA.requestKey, isNot(equals(withHeadersB.requestKey)));
+  });
+
+  test('XNZAnimatedImage cache key isolates headers for network provider', () {
+    final a = XNZNetworkImageProvider(
+      'https://example.com/a.avif',
+      headers: <String, String>{'Authorization': 'Bearer token-a'},
+      cacheKeyStrategy: XNZCacheKeyStrategy.urlAndHeaders,
+    );
+    final b = XNZNetworkImageProvider(
+      'https://example.com/a.avif',
+      headers: <String, String>{'Authorization': 'Bearer token-b'},
+      cacheKeyStrategy: XNZCacheKeyStrategy.urlAndHeaders,
+    );
+
+    final keyA = xnzAnimatedCacheKeyForProvider(a);
+    final keyB = xnzAnimatedCacheKeyForProvider(b);
+
+    expect(keyA, isNotNull);
+    expect(keyB, isNotNull);
+    expect(keyA, isNot(equals(keyB)));
   });
 
   test('XNZMemoryCache evicts least recently used items by bytes', () {
