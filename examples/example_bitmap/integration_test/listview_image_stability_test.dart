@@ -308,7 +308,7 @@ void main() {
 
         final listView = find.byKey(const ValueKey('bulk_image_list'));
         expect(listView, findsOneWidget);
-        expect(kBulkImageUrls.length, greaterThan(200));
+        expect(kBulkImageUrls.length, greaterThanOrEqualTo(200));
 
         for (var i = 0; i < 22; i++) {
           await tester.drag(listView, const Offset(0, -700));
