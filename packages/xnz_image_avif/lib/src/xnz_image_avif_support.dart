@@ -124,11 +124,7 @@ Future<Map<String, Object?>?> _decodeAvifAnimatedImage(dynamic request) async {
 
   final codec = await loadMemoryAvifCodec(
     bytes,
-    codecKey: Object.hash(
-      'xnz_avif_animated_image',
-      request.image.hashCode,
-      request.avifOverrideDurationMs,
-    ),
+    codecKey: xnzNextAvifCodecKey(),
     avifOverrideDurationMs: request.avifOverrideDurationMs as int?,
   );
 

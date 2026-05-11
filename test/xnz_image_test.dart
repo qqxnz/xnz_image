@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xnz_image/xnz_image.dart';
 import 'package:xnz_image/src/animated/xnz_animated_image_cache_key.dart';
+import 'package:xnz_image/src/xnz_network_bytes_loader.dart';
 
 class _TestAssetBundle extends CachingAssetBundle {
   _TestAssetBundle(this._bytes);
@@ -226,6 +227,7 @@ void main() {
     expect(headersA.requestKey, equals(headersAReordered.requestKey));
     expect(headersA.requestKey, isNot(equals(headersB.requestKey)));
     expect(headersA.requestKey, isNot(equals(withoutHeaders.requestKey)));
+    expect(headersA.requestKey, isNot(contains('Bearer token-a')));
   });
 
   test('XNZUrlRequest cacheKey is configurable by headers strategy', () {
@@ -254,6 +256,32 @@ void main() {
     expect(withHeadersA.cacheKey, isNot(equals(withHeadersB.cacheKey)));
     expect(withHeadersA.requestKey, isNot(equals(withHeadersB.requestKey)));
   });
+
+  test(
+    'xnzLoadNetworkBytes uses unified cache path on IO for animated loading',
+    () async {
+      final request = XNZUrlRequest(
+        'https://example.invalid/animated.avif',
+        headers: <String, String>{'Authorization': 'Bearer token-a'},
+        cacheKeyStrategy: XNZCacheKeyStrategy.urlAndHeaders,
+      );
+      final cached = Uint8List.fromList(<int>[1, 2, 3, 4, 5]);
+      final cacheManager = XNZCacheManager();
+      cacheManager.memoryCache.put(request.cacheKey, cached);
+      addTearDown(() {
+        cacheManager.memoryCache.remove(request.cacheKey);
+      });
+
+      final loaded = await xnzLoadNetworkBytes(
+        Uri.parse('https://example.invalid/animated.avif'),
+        headers: <String, String>{'authorization': 'Bearer token-a'},
+        cacheKeyStrategy: XNZCacheKeyStrategy.urlAndHeaders,
+      );
+
+      expect(loaded, equals(cached));
+    },
+    skip: kIsWeb,
+  );
 
   test('XNZAnimatedImage cache key isolates headers for network provider', () {
     final a = XNZNetworkImageProvider(

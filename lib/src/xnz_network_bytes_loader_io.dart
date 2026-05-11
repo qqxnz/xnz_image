@@ -1,6 +1,5 @@
-import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
 import 'package:xnz_image_core/xnz_image_core.dart';
 
 Future<Uint8List> xnzLoadNetworkBytesImpl(
@@ -8,22 +7,16 @@ Future<Uint8List> xnzLoadNetworkBytesImpl(
   Map<String, String>? headers,
   XNZCacheKeyStrategy cacheKeyStrategy = XNZCacheKeyStrategy.urlOnly,
 }) async {
-  // IO loader does not manage cache locally; the option is for API parity.
-  final _ = cacheKeyStrategy;
-  final httpClient = HttpClient();
-  try {
-    final request = await httpClient.getUrl(uri);
-    headers?.forEach(request.headers.add);
-    final response = await request.close();
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw HttpException(
-        'Request failed, statusCode: ${response.statusCode}',
-        uri: uri,
-      );
-    }
-    final bytes = await consolidateHttpClientResponseBytes(response);
-    return Uint8List.fromList(bytes);
-  } finally {
-    httpClient.close(force: true);
+  final request = XNZUrlRequest(
+    uri.toString(),
+    headers: headers,
+    cacheKeyStrategy: cacheKeyStrategy,
+  );
+  final bytes = await XNZImageDownloader.downloadImageDataAndCache(
+    request,
+  );
+  if (bytes == null) {
+    throw StateError('Failed to load network bytes: $uri');
   }
+  return bytes;
 }

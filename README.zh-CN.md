@@ -52,6 +52,22 @@ void main() {
 }
 ```
 
+## 日志规范
+
+运行期日志已统一为以下格式：
+
+- `[module][action]`
+- `[module][action][key=value,...]`
+
+示例：
+
+```text
+[XNZImageDownloader][task_start][requestKey=...,url=https://...]
+```
+
+建议在内部/扩展实现中优先使用 `XNZImageLogs.event(module, action, fields: {...})`。
+现有 `XNZImageLogs.setInterceptor(...)` 继续兼容，仍会收到 `(tag, message)`。
+
 ## 支持格式
 
 - 默认（仅 `xnz_image`）：`png`、`jpg`、`jpeg`、`gif`、`webp`、`bmp` 等常见位图格式

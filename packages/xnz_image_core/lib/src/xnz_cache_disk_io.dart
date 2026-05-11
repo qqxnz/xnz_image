@@ -28,10 +28,9 @@ class XNZDiskCache {
       await _cacheDir!.create(recursive: true);
     }
 
-    XNZImageLogs.log(
-      'XNZDiskCache',
-      'XNZDiskCache init path=${_cacheDir!.path}',
-    );
+    XNZImageLogs.event('XNZDiskCache', 'init', fields: {
+      'path': _cacheDir!.path,
+    });
   }
 
   File _fileForCacheKey(String cacheKey) {
@@ -58,10 +57,10 @@ class XNZDiskCache {
       await _touchOnReadIfNeeded(file, cacheKey);
       return data;
     } catch (e) {
-      XNZImageLogs.log(
-        'XNZDiskCache',
-        'get error key=$cacheKey err=$e',
-      );
+      XNZImageLogs.event('XNZDiskCache', 'get_failed', fields: {
+        'cacheKey': cacheKey,
+        'error': e,
+      });
       return null;
     }
   }
@@ -76,10 +75,10 @@ class XNZDiskCache {
       await file.writeAsBytes(data, flush: true);
       _lastTouchAt[cacheKey] = DateTime.now();
     } catch (e) {
-      XNZImageLogs.log(
-        'XNZDiskCache',
-        'set error key=$cacheKey err=$e',
-      );
+      XNZImageLogs.event('XNZDiskCache', 'set_failed', fields: {
+        'cacheKey': cacheKey,
+        'error': e,
+      });
     }
   }
 
@@ -129,19 +128,19 @@ class XNZDiskCache {
         await entity.delete();
         deletedCount++;
       } catch (e) {
-        XNZImageLogs.log(
-          'XNZDiskCache',
-          'clearUnusedSince failed file=${entity.path} err=$e',
-        );
+        XNZImageLogs.event('XNZDiskCache', 'clear_unused_failed', fields: {
+          'file': entity.path,
+          'error': e,
+        });
       }
     }
 
     _lastTouchAt
         .removeWhere((_, lastTouch) => lastTouch.isBefore(expireBefore));
-    XNZImageLogs.log(
-      'XNZDiskCache',
-      'clearUnusedSince done maxUnused=$maxUnusedDuration deleted=$deletedCount',
-    );
+    XNZImageLogs.event('XNZDiskCache', 'clear_unused_done', fields: {
+      'maxUnused': maxUnusedDuration,
+      'deleted': deletedCount,
+    });
     return deletedCount;
   }
 
@@ -149,18 +148,23 @@ class XNZDiskCache {
     final now = DateTime.now();
     final last = _lastTouchAt[cacheKey];
     if (last != null && now.difference(last) < _touchInterval) {
-      XNZImageLogs.log(
-          'XNZDiskCache', 'disk_touch_skipped interval key=$cacheKey');
+      XNZImageLogs.event('XNZDiskCache', 'touch_skipped', fields: {
+        'cacheKey': cacheKey,
+      });
       return;
     }
 
     try {
       await file.setLastModified(now);
       _lastTouchAt[cacheKey] = now;
-      XNZImageLogs.log('XNZDiskCache', 'disk_touch_done key=$cacheKey');
+      XNZImageLogs.event('XNZDiskCache', 'touch_done', fields: {
+        'cacheKey': cacheKey,
+      });
     } catch (e) {
-      XNZImageLogs.log(
-          'XNZDiskCache', 'disk_touch_failed key=$cacheKey err=$e');
+      XNZImageLogs.event('XNZDiskCache', 'touch_failed', fields: {
+        'cacheKey': cacheKey,
+        'error': e,
+      });
     }
   }
 
@@ -175,10 +179,10 @@ class XNZDiskCache {
         final stat = await entity.stat();
         totalBytes += stat.size;
       } catch (e) {
-        XNZImageLogs.log(
-          'XNZDiskCache',
-          'getCurrentBytes stat error file=${entity.path} err=$e',
-        );
+        XNZImageLogs.event('XNZDiskCache', 'stat_failed', fields: {
+          'file': entity.path,
+          'error': e,
+        });
       }
     }
 

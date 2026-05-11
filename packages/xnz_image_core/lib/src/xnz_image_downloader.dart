@@ -16,8 +16,10 @@ class XNZImageDownloader {
     XNZUrlRequest request,
   ) async {
     if (request.url.isEmpty) {
-      XNZImageLogs.log(
-          'XNZImageDownloader', 'downloadImageDataAndCache empty image url');
+      XNZImageLogs.event(
+        'XNZImageDownloader',
+        'download_skip_empty_url',
+      );
       return null;
     }
 
@@ -27,15 +29,21 @@ class XNZImageDownloader {
     final cacheManager = XNZCacheManager();
     final cachedData = await cacheManager.getCache(request);
     if (cachedData != null) {
-      XNZImageLogs.log('XNZImageDownloader',
-          'downloadImageDataAndCache cache hit $requestKey');
+      XNZImageLogs.event('XNZImageDownloader', 'download_cache_hit', fields: {
+        'requestKey': requestKey,
+      });
       return cachedData;
     }
 
     final inflight = _inflightDownloads[requestKey];
     if (inflight != null) {
-      XNZImageLogs.log('XNZImageDownloader',
-          'downloadImageDataAndCache reuse inflight task $requestKey');
+      XNZImageLogs.event(
+        'XNZImageDownloader',
+        'download_reuse_inflight',
+        fields: {
+          'requestKey': requestKey,
+        },
+      );
       return inflight;
     }
 
@@ -52,12 +60,15 @@ class XNZImageDownloader {
         if (!completer.isCompleted) {
           completer.complete(bytes);
         }
-        XNZImageLogs.log(
-            'XNZImageDownloader', 'downloadImageDataAndCache done $requestKey');
+        XNZImageLogs.event('XNZImageDownloader', 'download_complete', fields: {
+          'requestKey': requestKey,
+        });
       },
       onError: (error) {
-        XNZImageLogs.log('XNZImageDownloader',
-            'downloadImageDataAndCache failed $requestKey, error: $error');
+        XNZImageLogs.event('XNZImageDownloader', 'download_failed', fields: {
+          'requestKey': requestKey,
+          'error': error,
+        });
         if (!completer.isCompleted) {
           completer.complete(null);
         }
@@ -67,8 +78,14 @@ class XNZImageDownloader {
     try {
       XNZImageDownloader().start(task);
     } catch (e) {
-      XNZImageLogs.log('XNZImageDownloader',
-          'downloadImageDataAndCache start failed $requestKey, error: $e');
+      XNZImageLogs.event(
+        'XNZImageDownloader',
+        'download_start_failed',
+        fields: {
+          'requestKey': requestKey,
+          'error': e,
+        },
+      );
       if (!completer.isCompleted) {
         completer.complete(null);
       }
@@ -101,7 +118,9 @@ class XNZImageDownloader {
         task.total = shared.total;
         task.onReceiveProgress?.call(shared.count, shared.total);
       }
-      XNZImageLogs.log('XNZImageDownloader', '复用下载任务 ${task.requestKey}');
+      XNZImageLogs.event('XNZImageDownloader', 'task_reuse_shared', fields: {
+        'requestKey': task.requestKey,
+      });
       return;
     }
 
@@ -109,7 +128,10 @@ class XNZImageDownloader {
     newShared.subscribers.add(task);
     _sharedDownloads[task.requestKey] = newShared;
 
-    XNZImageLogs.log('XNZImageDownloader', '开始下载 ${task.requestKey}');
+    XNZImageLogs.event('XNZImageDownloader', 'task_start', fields: {
+      'requestKey': task.requestKey,
+      'url': task.url,
+    });
     dio.get<List<int>>(
       task.url,
       options: Options(
@@ -138,8 +160,11 @@ class XNZImageDownloader {
         throw StateError('Image download returned empty bytes: ${task.url}');
       }
       Uint8List bytes = Uint8List.fromList(data);
-      XNZImageLogs.log(
-          'XNZImageDownloader', '下载完成 ${task.url}  length:${bytes.length}');
+      XNZImageLogs.event('XNZImageDownloader', 'task_complete', fields: {
+        'requestKey': task.requestKey,
+        'url': task.url,
+        'bytes': bytes.length,
+      });
 
       final subscribers =
           List<XNZImageDownloaderTask>.from(newShared.subscribers);
@@ -149,7 +174,11 @@ class XNZImageDownloader {
       }
       _sharedDownloads.remove(task.requestKey);
     }).catchError((e) {
-      XNZImageLogs.log('XNZImageDownloader', '下载失败 ${task.url} e:$e');
+      XNZImageLogs.event('XNZImageDownloader', 'task_failed', fields: {
+        'requestKey': task.requestKey,
+        'url': task.url,
+        'error': e,
+      });
 
       final subscribers =
           List<XNZImageDownloaderTask>.from(newShared.subscribers);

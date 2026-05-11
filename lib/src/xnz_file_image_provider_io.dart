@@ -24,7 +24,9 @@ class XNZFileImageProvider extends ImageProvider<XNZFileImageProvider> {
 
   @override
   Future<XNZFileImageProvider> obtainKey(ImageConfiguration configuration) {
-    XNZImageLogs.log('XNZFileImageProvider', 'obtainKey ${file.path}');
+    XNZImageLogs.event('XNZFileImageProvider', 'obtain_key', fields: {
+      'path': file.path,
+    });
     _lastImageConfigurations[this] = configuration;
     return SynchronousFuture<XNZFileImageProvider>(this);
   }
@@ -34,7 +36,9 @@ class XNZFileImageProvider extends ImageProvider<XNZFileImageProvider> {
     XNZFileImageProvider key,
     ImageDecoderCallback decode,
   ) {
-    XNZImageLogs.log('XNZFileImageProvider', 'loadImage ${key.file.path}');
+    XNZImageLogs.event('XNZFileImageProvider', 'load_image', fields: {
+      'path': key.file.path,
+    });
     final request = XNZImageRequest(
       sourceType: XNZImageSourceType.file,
       uri: key.file.uri,
@@ -45,7 +49,7 @@ class XNZFileImageProvider extends ImageProvider<XNZFileImageProvider> {
     );
     final resolved = XNZImageRegistry.instance.resolve(request);
     if (resolved?.provider != null) {
-      XNZImageLogs.log('XNZFileImageProvider', 'loadImage-命中自定义支持');
+      XNZImageLogs.event('XNZFileImageProvider', 'resolve_custom_provider');
       return XNZProxyImageStreamCompleter(
         provider: resolved!.provider!,
         configuration:
@@ -71,8 +75,9 @@ class XNZFileImageProvider extends ImageProvider<XNZFileImageProvider> {
     ImageDecoderCallback decode,
   ) async {
     assert(key == this);
-    XNZImageLogs.log(
-        'XNZFileImageProvider', '_loadAsync-内置解码 ${key.file.path}');
+    XNZImageLogs.event('XNZFileImageProvider', 'decode_builtin', fields: {
+      'path': key.file.path,
+    });
     final bytes = await key.file.readAsBytes();
     return XNZImageDecodeUtils.decodeChecked(
       data: bytes,

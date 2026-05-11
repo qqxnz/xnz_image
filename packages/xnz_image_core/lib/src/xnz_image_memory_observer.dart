@@ -14,31 +14,36 @@ class XNZImageMemoryObserver with WidgetsBindingObserver {
 
   void init() {
     if (_isObserving) {
-      XNZImageLogs.log('XNZImageMemoryObserver', 'init skipped: already observing');
+      XNZImageLogs.event(
+        'XNZImageMemoryObserver',
+        'init_skipped',
+        fields: {'reason': 'already_observing'},
+      );
       return;
     }
     WidgetsBinding.instance.addObserver(this);
     _isObserving = true;
-    XNZImageLogs.log('XNZImageMemoryObserver', 'init');
+    XNZImageLogs.event('XNZImageMemoryObserver', 'init');
   }
 
   @override
   void didHaveMemoryPressure() {
-    XNZImageLogs.log(
-      'XNZImageMemoryObserver',
-      '⚠️ Memory pressure detected → clear memory cache',
-    );
+    XNZImageLogs.event('XNZImageMemoryObserver', 'memory_pressure');
 
     XNZCacheManager().memoryCache.clearAll();
   }
 
   void dispose() {
     if (!_isObserving) {
-      XNZImageLogs.log('XNZImageMemoryObserver', 'dispose skipped: not observing');
+      XNZImageLogs.event(
+        'XNZImageMemoryObserver',
+        'dispose_skipped',
+        fields: {'reason': 'not_observing'},
+      );
       return;
     }
     WidgetsBinding.instance.removeObserver(this);
     _isObserving = false;
-    XNZImageLogs.log('XNZImageMemoryObserver', 'dispose');
+    XNZImageLogs.event('XNZImageMemoryObserver', 'dispose');
   }
 }

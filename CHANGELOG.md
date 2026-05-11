@@ -5,6 +5,11 @@
 - Refactored `XNZAnimatedImage` internals into `lib/src/animated/` submodules to reduce single-file responsibility and improve maintainability.
 - Optimized animated-memory cache key generation by caching bytes fingerprints per byte-array identity.
 - Unified resolve/render helper flow across `XNZAssetImage`, `XNZMemoryImage`, `XNZFileImage`, and `XNZNetworkImage` to reduce duplicated widget template logic.
+- Unified IO-side animated network bytes loading with the downloader/cache pipeline (`XNZUrlRequest` + `XNZImageDownloader` + `XNZCacheManager`) for consistent cache-key strategy behavior.
+- Replaced AVIF codec key generation based on object hash with process-local monotonic keys to reduce collision risk in native decoder mapping.
+- Added guardrails for AVIF async frame decode failure paths and download-completer race conditions.
+- Unified runtime logs to structured format: `[module][action][key=value,...]` via `XNZImageLogs.event(...)` and migrated core/provider/downloader/cache logs.
+- Added regression tests for IO unified cache path loading and AVIF codec key monotonicity.
 - Updated README/README.zh-CN and audit documentation to reflect P2 issue fixes.
 
 ## 0.1.12

@@ -134,10 +134,10 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   void didUpdateWidget(covariant XNZNetworkImage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (_shouldReload(oldWidget)) {
-      XNZImageLogs.log(
-        'XNZNetworkImage',
-        'didUpdateWidget 触发重载 ${oldWidget.imageUrl} -> ${widget.imageUrl}',
-      );
+      XNZImageLogs.event('XNZNetworkImage', 'did_update_reload', fields: {
+        'from': xnzNormalizeNetworkUrl(oldWidget.imageUrl),
+        'to': xnzNormalizeNetworkUrl(widget.imageUrl),
+      });
       _cancelDownload();
       _status = XNZNetworkImageDownloadStatus.none;
       _imageData = null;
@@ -160,7 +160,9 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
 
   @override
   void dispose() {
-    XNZImageLogs.log('XNZNetworkImage', '-dispose ${widget.imageUrl}');
+    XNZImageLogs.event('XNZNetworkImage', 'dispose', fields: {
+      'url': xnzNormalizeNetworkUrl(widget.imageUrl),
+    });
     _cancelDownload();
     super.dispose();
   }
@@ -183,10 +185,10 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
   void _setCacheSafely(XNZUrlRequest request, Uint8List bytes) {
     unawaited(
       XNZCacheManager().setCache(request, bytes).catchError((Object error) {
-        XNZImageLogs.log(
-          'XNZNetworkImage',
-          '缓存写入失败 url:${request.url} error:$error',
-        );
+        XNZImageLogs.event('XNZNetworkImage', 'cache_set_failed', fields: {
+          'url': request.url,
+          'error': error,
+        });
       }),
     );
   }
@@ -244,7 +246,10 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
     try {
       final memoryData = XNZCacheManager().getMemoryCache(request);
       if (memoryData != null) {
-        XNZImageLogs.log('XNZNetworkImage', '内存缓存命中 $normalizedUrl');
+        XNZImageLogs.event('XNZNetworkImage', 'memory_cache_hit', fields: {
+          'url': normalizedUrl,
+          'requestKey': requestKey,
+        });
         if (!_isActiveRequest(requestVersion, requestKey)) return;
         setState(() {
           _imageData = memoryData;
@@ -258,7 +263,10 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
       if (!_isActiveRequest(requestVersion, requestKey)) return;
 
       if (diskData != null) {
-        XNZImageLogs.log('XNZNetworkImage', '硬盘缓存命中 $normalizedUrl');
+        XNZImageLogs.event('XNZNetworkImage', 'disk_cache_hit', fields: {
+          'url': normalizedUrl,
+          'requestKey': requestKey,
+        });
         setState(() {
           _imageData = diskData;
           _status = XNZNetworkImageDownloadStatus.complete;

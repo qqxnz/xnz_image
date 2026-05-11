@@ -16,6 +16,16 @@ class _TestAssetBundle extends CachingAssetBundle {
 }
 
 void main() {
+  test('xnzNextAvifCodecKey returns unique increasing values', () {
+    final first = xnzNextAvifCodecKey();
+    final second = xnzNextAvifCodecKey();
+    final third = xnzNextAvifCodecKey();
+
+    expect(first, greaterThan(0));
+    expect(second, greaterThan(first));
+    expect(third, greaterThan(second));
+  });
+
   test('XNZMemoryAvifImage equality includes avifOverrideDurationMs', () {
     final bytes = Uint8List.fromList(<int>[1, 2, 3, 4]);
     final a = XNZMemoryAvifImage(bytes, scale: 1.0, avifOverrideDurationMs: 80);

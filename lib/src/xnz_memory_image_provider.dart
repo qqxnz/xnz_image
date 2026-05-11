@@ -27,7 +27,7 @@ class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
 
   @override
   Future<XNZMemoryImageProvider> obtainKey(ImageConfiguration configuration) {
-    XNZImageLogs.log('XNZMemoryImageProvider', 'obtainKey');
+    XNZImageLogs.event('XNZMemoryImageProvider', 'obtain_key');
     _lastImageConfigurations[this] = configuration;
     return SynchronousFuture<XNZMemoryImageProvider>(this);
   }
@@ -37,7 +37,7 @@ class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
     XNZMemoryImageProvider key,
     ImageDecoderCallback decode,
   ) {
-    XNZImageLogs.log('XNZMemoryImageProvider', 'loadImage');
+    XNZImageLogs.event('XNZMemoryImageProvider', 'load_image');
     final request = XNZImageRequest(
       sourceType: XNZImageSourceType.memory,
       bytes: key.bytes,
@@ -48,7 +48,7 @@ class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
     );
     final resolved = XNZImageRegistry.instance.resolve(request);
     if (resolved?.provider != null) {
-      XNZImageLogs.log('XNZMemoryImageProvider', 'loadImage-命中自定义支持');
+      XNZImageLogs.event('XNZMemoryImageProvider', 'resolve_custom_provider');
       return XNZProxyImageStreamCompleter(
         provider: resolved!.provider!,
         configuration:
@@ -75,7 +75,7 @@ class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
     ImageDecoderCallback decode,
   ) async {
     assert(key == this);
-    XNZImageLogs.log('XNZMemoryImageProvider', '_loadAsync-内置解码');
+    XNZImageLogs.event('XNZMemoryImageProvider', 'decode_builtin');
     return XNZImageDecodeUtils.decodeChecked(
       data: key.bytes,
       decode: decode,

@@ -219,6 +219,16 @@
 
 ## 8. 结论
 
+---
+
+## 附：2026-05-11 维护更新
+
+本次审计后已完成以下与日志/可观测性相关的落地项：
+
+1. 已统一日志输出结构为：`[module][action][key=value,...]`
+2. 已在核心链路（registry / cache / downloader / network provider / image provider）迁移为结构化日志
+3. 保持 `XNZImageLogs.setInterceptor(tag, message)` 兼容，便于平滑升级现有日志采集逻辑
+
 `xnz_image` 的整体设计方向是对的：可扩展、可缓存、可支持多格式，并且已经具备较完整的核心能力。当前主要短板在“缓存 key 一致性、AVIF provider 语义一致性、AnimatedImage 结构复杂度”三块。建议先做高优先级修复，能以较小改动换来明显稳定性收益；再做结构化重构，降低长期维护成本。
 
 ---

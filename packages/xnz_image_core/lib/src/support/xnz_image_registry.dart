@@ -11,7 +11,9 @@ class XNZImageRegistry {
   bool _supportsDirty = true;
 
   void support(XNZImageSupport support) {
-    XNZImageLogs.log('XNZImageRegistry', 'support ${support.id}');
+    XNZImageLogs.event('XNZImageRegistry', 'support_register', fields: {
+      'supportId': support.id,
+    });
     _supports[support.id] = support;
     _supportsDirty = true;
   }
@@ -21,14 +23,18 @@ class XNZImageRegistry {
     if (removed) {
       _supportsDirty = true;
     }
-    XNZImageLogs.log('XNZImageRegistry', 'unsupport $id removed:$removed');
+    XNZImageLogs.event('XNZImageRegistry', 'support_unregister', fields: {
+      'supportId': id,
+      'removed': removed,
+    });
     return removed;
   }
 
   void clear() {
     if (_supports.isNotEmpty) {
-      XNZImageLogs.log(
-          'XNZImageRegistry', 'clear ${_supports.length} supports');
+      XNZImageLogs.event('XNZImageRegistry', 'support_clear_all', fields: {
+        'count': _supports.length,
+      });
       _supports.clear();
       _supportsDirty = true;
     }
@@ -51,15 +57,16 @@ class XNZImageRegistry {
       }
       final result = support.resolve(request);
       if (result != null) {
-        XNZImageLogs.log(
-          'XNZImageRegistry',
-          'resolve ${request.sourceType.name} -> ${support.id}',
-        );
+        XNZImageLogs.event('XNZImageRegistry', 'resolve_hit', fields: {
+          'sourceType': request.sourceType.name,
+          'supportId': support.id,
+        });
         return result;
       }
     }
-    XNZImageLogs.log(
-        'XNZImageRegistry', 'resolve ${request.sourceType.name} -> miss');
+    XNZImageLogs.event('XNZImageRegistry', 'resolve_miss', fields: {
+      'sourceType': request.sourceType.name,
+    });
     return null;
   }
 }

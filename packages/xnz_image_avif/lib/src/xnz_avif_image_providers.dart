@@ -84,7 +84,7 @@ class XNZAvifNetworkImageProvider
     try {
       final codec = await loadMemoryAvifCodec(
         bytes,
-        codecKey: hashCode,
+        codecKey: xnzNextAvifCodecKey(),
         avifOverrideDurationMs: avifOverrideDurationMs,
       );
       unawaited(XNZCacheManager().setCache(request, bytes));
@@ -100,7 +100,7 @@ class XNZAvifNetworkImageProvider
     );
     final codec = await loadMemoryAvifCodec(
       bytes,
-      codecKey: hashCode,
+      codecKey: xnzNextAvifCodecKey(),
       avifOverrideDurationMs: avifOverrideDurationMs,
     );
     unawaited(XNZCacheManager().setCache(request, bytes));
@@ -128,10 +128,16 @@ class XNZAvifNetworkImageProvider
     Object? downloadError;
     final task = XNZImageDownloaderTask(
       request: request,
-      onComplete: (bytes) => completer.complete(bytes),
+      onComplete: (bytes) {
+        if (!completer.isCompleted) {
+          completer.complete(bytes);
+        }
+      },
       onError: (error) {
         downloadError = error;
-        completer.complete(null);
+        if (!completer.isCompleted) {
+          completer.complete(null);
+        }
       },
     );
     XNZImageDownloader().start(task);
@@ -228,7 +234,7 @@ class XNZAvifFileImageProvider extends ImageProvider<XNZAvifFileImageProvider> {
     final data = await key.file.readAsBytes();
     return loadMemoryAvifCodec(
       data,
-      codecKey: hashCode,
+      codecKey: xnzNextAvifCodecKey(),
       avifOverrideDurationMs: avifOverrideDurationMs,
     );
   }
@@ -298,7 +304,7 @@ class XNZAvifAssetImageProvider
     final data = await _loadAssetData(key);
     return loadMemoryAvifCodec(
       data,
-      codecKey: hashCode,
+      codecKey: xnzNextAvifCodecKey(),
       avifOverrideDurationMs: avifOverrideDurationMs,
     );
   }

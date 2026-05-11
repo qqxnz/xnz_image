@@ -54,6 +54,22 @@ void main() {
 }
 ```
 
+## Logging
+
+Runtime logs are now normalized to:
+
+- `[module][action]`
+- `[module][action][key=value,...]`
+
+Example:
+
+```text
+[XNZImageDownloader][task_start][requestKey=...,url=https://...]
+```
+
+`XNZImageLogs.event(module, action, fields: {...})` is recommended for internal/extension code.
+Existing `XNZImageLogs.setInterceptor(...)` remains compatible and still receives `(tag, message)`.
+
 ## Supported Formats
 
 - Default (`xnz_image` only): common bitmap formats such as `png`, `jpg`, `jpeg`, `gif`, `webp`, `bmp`

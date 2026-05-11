@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 
 import 'xnz_cache_key.dart';
@@ -37,12 +39,10 @@ class XNZUrlRequest {
   ///
   /// Always includes headers when present to avoid mixing in-flight requests
   /// from different auth/header contexts.
-  String get requestKey {
-    if (headers.isEmpty) {
-      return url;
-    }
-    return '$url|headers:${_headersSignature(headers)}';
-  }
+  ///
+  /// Header values are represented by a stable digest instead of raw text to
+  /// avoid leaking sensitive data into logs.
+  late final String requestKey = _buildRequestKey(url, headers);
 
   /// Cache storage key.
   ///
@@ -80,13 +80,36 @@ class XNZUrlRequest {
     return map;
   }
 
-  static String _headersSignature(Map<String, String> headers) {
+  static String _buildRequestKey(String url, Map<String, String> headers) {
+    if (headers.isEmpty) {
+      return url;
+    }
+    return '$url|headers:${_headersDigest(headers)}';
+  }
+
+  static String _headersDigest(Map<String, String> headers) {
     if (headers.isEmpty) {
       return '';
     }
-    return headers.entries
-        .map((entry) => '${entry.key}:${entry.value}')
-        .join('|');
+    const int fnvOffsetBasis = 0xcbf29ce484222325;
+    const int fnvPrime = 0x100000001b3;
+    const int mask64 = 0xffffffffffffffff;
+
+    int hash = fnvOffsetBasis;
+    void addText(String value) {
+      for (final b in utf8.encode(value)) {
+        hash ^= b;
+        hash = (hash * fnvPrime) & mask64;
+      }
+    }
+
+    for (final entry in headers.entries) {
+      addText(entry.key);
+      addText(':');
+      addText(entry.value);
+      addText('|');
+    }
+    return hash.toRadixString(16).padLeft(16, '0');
   }
 
   @override

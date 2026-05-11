@@ -12,6 +12,20 @@ import 'package:flutter_avif_platform_interface/flutter_avif_platform_interface.
 /// 该文件参考 `flutter_avif` 的核心解码/帧调度逻辑，仅保留
 /// `xnz_network_image` 需要的内存字节解码能力，避免直接依赖 `flutter_avif` 组件层。
 T? _ambiguate<T>(T? value) => value;
+int _nextAvifCodecKey = 0;
+
+/// Returns a process-local monotonically increasing codec key.
+///
+/// AVIF platform decoders are keyed by stringified integers.
+/// Using an incrementing key avoids relying on object hash collisions.
+int xnzNextAvifCodecKey() {
+  _nextAvifCodecKey++;
+  // Keep key in positive 31-bit range.
+  if (_nextAvifCodecKey > 0x7fffffff) {
+    _nextAvifCodecKey = 1;
+  }
+  return _nextAvifCodecKey;
+}
 
 enum AvifFileType { avif, avis, unknown }
 
@@ -93,7 +107,7 @@ class XNZMemoryAvifImage extends ImageProvider<XNZMemoryAvifImage> {
     }
     return loadMemoryAvifCodec(
       bytes,
-      codecKey: hashCode,
+      codecKey: xnzNextAvifCodecKey(),
       avifOverrideDurationMs: avifOverrideDurationMs,
     );
   }
@@ -230,6 +244,8 @@ class MultiFrameAvifCodec implements AvifCodec {
             callback(image, (frame.duration * 1000).round());
           },
         );
+      }).catchError((Object error) {
+        callback(null, 0);
       });
       return null;
     } catch (e) {
@@ -301,6 +317,8 @@ class SingleFrameAvifCodec implements AvifCodec {
             callback(image, (frame.duration * 1000).round());
           },
         );
+      }).catchError((Object error) {
+        callback(null, 0);
       });
       return null;
     } catch (e) {

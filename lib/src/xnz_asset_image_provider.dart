@@ -35,7 +35,9 @@ class XNZAssetImageProvider extends ImageProvider<XNZAssetImageProvider> {
 
   @override
   Future<XNZAssetImageProvider> obtainKey(ImageConfiguration configuration) {
-    XNZImageLogs.log('XNZAssetImageProvider', 'obtainKey $_resolvedAssetName');
+    XNZImageLogs.event('XNZAssetImageProvider', 'obtain_key', fields: {
+      'asset': _resolvedAssetName,
+    });
     _lastImageConfigurations[this] = configuration;
     return SynchronousFuture<XNZAssetImageProvider>(this);
   }
@@ -45,8 +47,9 @@ class XNZAssetImageProvider extends ImageProvider<XNZAssetImageProvider> {
     XNZAssetImageProvider key,
     ImageDecoderCallback decode,
   ) {
-    XNZImageLogs.log(
-        'XNZAssetImageProvider', 'loadImage ${key._resolvedAssetName}');
+    XNZImageLogs.event('XNZAssetImageProvider', 'load_image', fields: {
+      'asset': key._resolvedAssetName,
+    });
     final request = XNZImageRequest(
       sourceType: XNZImageSourceType.asset,
       uri: Uri(path: key._resolvedAssetName),
@@ -60,7 +63,7 @@ class XNZAssetImageProvider extends ImageProvider<XNZAssetImageProvider> {
     );
     final resolved = XNZImageRegistry.instance.resolve(request);
     if (resolved?.provider != null) {
-      XNZImageLogs.log('XNZAssetImageProvider', 'loadImage-命中自定义支持');
+      XNZImageLogs.event('XNZAssetImageProvider', 'resolve_custom_provider');
       return XNZProxyImageStreamCompleter(
         provider: resolved!.provider!,
         configuration:
@@ -86,8 +89,9 @@ class XNZAssetImageProvider extends ImageProvider<XNZAssetImageProvider> {
     ImageDecoderCallback decode,
   ) async {
     assert(key == this);
-    XNZImageLogs.log(
-        'XNZAssetImageProvider', '_loadAsync-内置解码 ${key._resolvedAssetName}');
+    XNZImageLogs.event('XNZAssetImageProvider', 'decode_builtin', fields: {
+      'asset': key._resolvedAssetName,
+    });
     final data = await _loadAssetData(key);
     return XNZImageDecodeUtils.decodeChecked(
       data: data,

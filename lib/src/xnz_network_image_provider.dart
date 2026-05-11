@@ -38,9 +38,13 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
     final request = _request;
     unawaited(
       XNZCacheManager().setCache(request, data).catchError((Object error) {
-        XNZImageLogs.log(
+        XNZImageLogs.event(
           'XNZNetworkImageProvider',
-          '_setCacheSafely 失败 url:${request.url} error:$error',
+          'cache_set_failed',
+          fields: {
+            'url': request.url,
+            'error': error,
+          },
         );
       }),
     );
@@ -48,7 +52,9 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
 
   @override
   Future<XNZNetworkImageProvider> obtainKey(ImageConfiguration configuration) {
-    XNZImageLogs.log('XNZNetworkImageProvider', 'obtainKey');
+    XNZImageLogs.event('XNZNetworkImageProvider', 'obtain_key', fields: {
+      'url': imageUrl,
+    });
     _lastImageConfigurations[this] = configuration;
     return SynchronousFuture<XNZNetworkImageProvider>(this);
   }
@@ -106,7 +112,9 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
   Future<ui.Codec> _loadAsync(
       XNZNetworkImageProvider key, ImageDecoderCallback decode,
       {required Completer<void> cancelSignal}) async {
-    XNZImageLogs.log('XNZNetworkImageProvider', '_loadAsync');
+    XNZImageLogs.event('XNZNetworkImageProvider', 'load_async', fields: {
+      'url': key.imageUrl,
+    });
     final request = key._request;
     Uint8List data = await _loadImageData(
       request,
@@ -122,10 +130,11 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
       _setCacheSafely(data);
       return codec;
     } catch (firstError) {
-      XNZImageLogs.log(
-        'XNZNetworkImageProvider',
-        '_loadAsync-首次解码失败，清理缓存并重试, url:${key.imageUrl}, error:$firstError',
-      );
+      XNZImageLogs.event('XNZNetworkImageProvider', 'decode_failed_retry',
+          fields: {
+            'url': key.imageUrl,
+            'error': firstError,
+          });
       await XNZCacheManager().removeCache(request);
     }
 
@@ -163,14 +172,19 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
     if (useCache) {
       data = await XNZCacheManager().getCache(request);
       if (data != null) {
-        XNZImageLogs.log(
-          'XNZNetworkImageProvider',
-          '_loadImageData-返回缓存对象',
-        );
+        XNZImageLogs.event('XNZNetworkImageProvider', 'load_data_cache_hit',
+            fields: {
+              'url': request.url,
+              'requestKey': request.requestKey,
+            });
         return data;
       }
     }
-    XNZImageLogs.log('XNZNetworkImageProvider', '_loadImageData-开始下载');
+    XNZImageLogs.event('XNZNetworkImageProvider', 'load_data_download_start',
+        fields: {
+          'url': request.url,
+          'requestKey': request.requestKey,
+        });
     final completer = Completer<Uint8List?>();
     Object? downloadError;
     final task = XNZImageDownloaderTask(
@@ -179,11 +193,23 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
         if (!completer.isCompleted) {
           completer.complete(bytes);
         }
-        XNZImageLogs.log('XNZNetworkImageProvider', '_loadImageData-下载完成');
+        XNZImageLogs.event(
+            'XNZNetworkImageProvider', 'load_data_download_complete',
+            fields: {
+              'url': request.url,
+              'requestKey': request.requestKey,
+              'bytes': bytes.length,
+            });
       },
       onError: (error) {
         downloadError = error;
-        XNZImageLogs.log('XNZNetworkImageProvider', '_loadImageData-下载失败');
+        XNZImageLogs.event(
+            'XNZNetworkImageProvider', 'load_data_download_failed',
+            fields: {
+              'url': request.url,
+              'requestKey': request.requestKey,
+              'error': error,
+            });
         if (!completer.isCompleted) {
           completer.complete(null);
         }

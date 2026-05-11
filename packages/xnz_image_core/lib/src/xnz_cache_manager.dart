@@ -34,14 +34,20 @@ class XNZCacheManager {
     final cacheKey = request.cacheKey;
 
     if (memoryCache.has(cacheKey)) {
-      XNZImageLogs.log('XNZNetworkImage', 'hasCache ${request.url} 内存存在');
+      XNZImageLogs.event('XNZCacheManager', 'has_cache_memory_hit', fields: {
+        'url': request.url,
+        'cacheKey': cacheKey,
+      });
       return true;
     }
 
     final diskCache = await XNZDiskCache.getInstance();
     final hasDisk = await diskCache.has(cacheKey);
     if (hasDisk) {
-      XNZImageLogs.log('XNZNetworkImage', 'hasCache ${request.url} 磁盘存在');
+      XNZImageLogs.event('XNZCacheManager', 'has_cache_disk_hit', fields: {
+        'url': request.url,
+        'cacheKey': cacheKey,
+      });
     }
     return hasDisk;
   }
@@ -53,7 +59,10 @@ class XNZCacheManager {
     // 1️⃣ 内存
     final memoryData = memoryCache.get(cacheKey);
     if (memoryData != null) {
-      XNZImageLogs.log('XNZNetworkImage', 'getCache ${request.url} 内存命中');
+      XNZImageLogs.event('XNZCacheManager', 'get_cache_memory_hit', fields: {
+        'url': request.url,
+        'cacheKey': cacheKey,
+      });
       return memoryData;
     }
 
@@ -61,7 +70,10 @@ class XNZCacheManager {
     final diskCache = await XNZDiskCache.getInstance();
     final diskData = await diskCache.get(cacheKey);
     if (diskData != null) {
-      XNZImageLogs.log('XNZNetworkImage', 'getCache ${request.url} 磁盘命中');
+      XNZImageLogs.event('XNZCacheManager', 'get_cache_disk_hit', fields: {
+        'url': request.url,
+        'cacheKey': cacheKey,
+      });
       memoryCache.put(cacheKey, diskData);
     }
 
@@ -99,7 +111,14 @@ class XNZCacheManager {
     final cacheKey = request.cacheKey;
     final data = memoryCache.get(cacheKey);
     if (data != null) {
-      XNZImageLogs.log('XNZNetworkImage', 'getMemoryCache ${request.url} 命中');
+      XNZImageLogs.event(
+        'XNZCacheManager',
+        'get_memory_cache_hit',
+        fields: {
+          'url': request.url,
+          'cacheKey': cacheKey,
+        },
+      );
     }
     return data;
   }
