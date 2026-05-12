@@ -168,6 +168,18 @@ and can also decode animated AVIF when AVIF support is registered.
 - Loop control: `loop`
 - Error fallback: `errorBuilder`
 
+### Maintenance Updates (2026-05-12)
+
+- Cache-key hashing is now split by runtime:
+  - Web keeps FNV-1a 32-bit to avoid JS precision pitfalls.
+  - IO platforms use FNV-1a 64-bit to reduce cache-collision risk.
+- Animated network bytes loading on IO now goes through the same downloader/cache pipeline as normal network images (`XNZUrlRequest` + `XNZImageDownloader` + `XNZCacheManager`), so `cacheKeyStrategy` behavior is consistent.
+- AVIF codec keys now use process-local monotonically increasing integers instead of object-hash-derived values, reducing native decoder key-collision risk.
+- AVIF async init/decode guardrails were improved (explicit init error propagation and safer completer handling).
+- Added regression tests for:
+  - unified IO animated cache-path loading;
+  - AVIF codec key monotonicity.
+
 ### Maintenance Updates (2026-05-11)
 
 - Optimized animated memory cache-key generation: memory bytes fingerprints are now cached by bytes identity to avoid repeated full-byte hashing on frequent rebuilds.

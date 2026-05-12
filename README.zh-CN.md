@@ -165,6 +165,18 @@ XNZNetworkImage(
 - 循环控制：`loop`
 - 错误兜底：`errorBuilder`
 
+### 2026-05-12 维护更新
+
+- 缓存哈希已按运行时分流：
+  - Web 继续使用 FNV-1a 32-bit，避免 JS 数值精度语义带来的风险；
+  - IO 平台改为 FNV-1a 64-bit，降低缓存 key 碰撞概率。
+- IO 平台下的动图网络字节加载已与普通网络图统一到同一下载/缓存链路（`XNZUrlRequest` + `XNZImageDownloader` + `XNZCacheManager`），`cacheKeyStrategy` 行为保持一致。
+- AVIF codec key 由对象 hash 派生改为“进程内单调递增整数”，降低原生 decoder key 冲突风险。
+- AVIF 异步初始化/解码失败路径增加了防护（初始化错误显式透出，completer 竞争路径更安全）。
+- 已新增回归测试：
+  - IO 动图统一缓存链路加载；
+  - AVIF codec key 单调递增。
+
 ### 2026-05-11 维护性更新
 
 - 已优化 memory 场景的动图缓存 key：为 bytes 指纹增加 identity 级缓存，避免频繁全量字节哈希带来的重复 CPU 开销。
