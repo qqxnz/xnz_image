@@ -33,6 +33,26 @@ class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
   }
 
   @override
+  void resolveStreamForKey(
+    ImageConfiguration configuration,
+    ImageStream stream,
+    XNZMemoryImageProvider key,
+    ImageErrorListener handleError,
+  ) {
+    final imageCache = PaintingBinding.instance.imageCache;
+    final hasFrameworkCache = imageCache.containsKey(key);
+    XNZImageLogs.event(
+      'XNZMemoryImageProvider',
+      hasFrameworkCache ? 'framework_cache_hit' : 'framework_cache_miss',
+      fields: {
+        'bytes': key.bytes.length,
+        'scale': key.scale,
+      },
+    );
+    super.resolveStreamForKey(configuration, stream, key, handleError);
+  }
+
+  @override
   ImageStreamCompleter loadImage(
     XNZMemoryImageProvider key,
     ImageDecoderCallback decode,
