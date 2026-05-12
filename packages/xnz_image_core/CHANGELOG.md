@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.2.3
+
+- Unified monorepo package version to `0.2.3`.
+
 ## 0.2.2
 
 - Unified monorepo package version to `0.2.2`.

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.2.3
+
+- Added success/failure log filtering support to improve observability signal quality.
+- Synced monorepo package versions and dependency examples to `0.2.3`.
+
 ## 0.2.2
 
 - Added framework-level cache hit/miss observability logs for memory-image provider flow.
