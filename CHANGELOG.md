@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0
+
 - Changed cache-key hashing by platform: Web keeps FNV-1a 32-bit behavior, while IO platforms (Android/iOS/macOS/Linux/Windows) now use FNV-1a 64-bit to reduce cache-collision risk.
 - Refactored `XNZAnimatedImage` internals into `lib/src/animated/` submodules to reduce single-file responsibility and improve maintainability.
 - Optimized animated-memory cache key generation by caching bytes fingerprints per byte-array identity.
@@ -12,6 +14,7 @@
 - Unified runtime logs to structured format: `[module][action][key=value,...]` via `XNZImageLogs.event(...)` and migrated core/provider/downloader/cache logs.
 - Added regression tests for IO unified cache path loading and AVIF codec key monotonicity.
 - Updated README/README.zh-CN and audit documentation to reflect P2 issue fixes.
+- Synced monorepo package versions and dependency examples to `0.2.0`.
 
 ## 0.1.12
 

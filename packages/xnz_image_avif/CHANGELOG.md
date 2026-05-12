@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+- Replaced AVIF codec key generation based on object hash with process-local monotonic keys to reduce collision risk.
+- Added guardrails for AVIF async frame decode failure paths and download-completer race conditions.
+- Unified monorepo package version to `0.2.0`.
+
 ## 0.1.12
 
 - Unified monorepo package version to `0.1.12`.

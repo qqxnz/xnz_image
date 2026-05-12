@@ -2,7 +2,11 @@
 
 ## Unreleased
 
+## 0.2.0
+
 - Changed cache-key hashing by platform: Web keeps FNV-1a 32-bit behavior, while IO platforms (Android/iOS/macOS/Linux/Windows) now use FNV-1a 64-bit to reduce cache-collision risk.
+- Unified cache-key strategy behavior across web and IO loaders/downloader paths.
+- Unified monorepo package version to `0.2.0`.
 
 ## 0.1.12
 
