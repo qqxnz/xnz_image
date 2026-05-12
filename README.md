@@ -73,6 +73,17 @@ Example:
 - `void Function(String tag, String message)` (legacy compatible)
 - `bool Function(String tag, String message)` (`true` means default output is intercepted)
 
+`XNZImageLogs.logFilter` supports quick category filtering:
+
+- `XNZImageLogFilter.all` (default)
+- `XNZImageLogFilter.success`
+- `XNZImageLogFilter.failure`
+
+```dart
+XNZImageLogs.showLogs = true;
+XNZImageLogs.logFilter = XNZImageLogFilter.failure; // only failure logs
+```
+
 ### Observable Events By Source
 
 - Network (`XNZNetworkImage` / `XNZNetworkImageProvider`)

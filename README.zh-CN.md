@@ -71,6 +71,17 @@ void main() {
 - `void Function(String tag, String message)`（兼容旧写法）
 - `bool Function(String tag, String message)`（返回 `true` 表示拦截默认输出）
 
+`XNZImageLogs.logFilter` 支持按类型快速过滤：
+
+- `XNZImageLogFilter.all`（默认）
+- `XNZImageLogFilter.success`
+- `XNZImageLogFilter.failure`
+
+```dart
+XNZImageLogs.showLogs = true;
+XNZImageLogs.logFilter = XNZImageLogFilter.failure; // 只看失败日志
+```
+
 ### 按来源可观测事件
 
 - Network（`XNZNetworkImage` / `XNZNetworkImageProvider`）
