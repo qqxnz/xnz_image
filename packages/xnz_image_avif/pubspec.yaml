@@ -1,6 +1,6 @@
 name: xnz_image_avif
 description: AVIF support extension for xnz_image.
-version: 0.2.0
+version: 0.2.1
 homepage: https://github.com/qqxnz/xnz_image.git
 repository: https://github.com/qqxnz/xnz_image.git
 
@@ -11,7 +11,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  xnz_image: ^0.2.0
+  xnz_image: ^0.2.1
   flutter_avif_platform_interface: ^3.1.0
   flutter_avif_android: ^3.1.0
   flutter_avif_ios: ^3.1.0

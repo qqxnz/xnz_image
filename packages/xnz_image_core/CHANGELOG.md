@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.2.1
+
+- Restored and extended structured observability logs in image registry/cache manager/cache logs flows.
+- Unified monorepo package version to `0.2.1`.
+
 ## 0.2.0
 
 - Changed cache-key hashing by platform: Web keeps FNV-1a 32-bit behavior, while IO platforms (Android/iOS/macOS/Linux/Windows) now use FNV-1a 64-bit to reduce cache-collision risk.

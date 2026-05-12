@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- Unified monorepo package version to `0.2.1`.
+
 ## 0.2.0
 
 - Replaced AVIF codec key generation based on object hash with process-local monotonic keys to reduce collision risk.
