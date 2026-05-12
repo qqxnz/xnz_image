@@ -18,16 +18,16 @@ Flutter 图片加载组件，提供网络、内存、文件、Asset 四种图片
 
 ```yaml
 dependencies:
-  xnz_image: ^0.2.1
+  xnz_image: ^0.2.2
 ```
 
 ### 2) 可选扩展包
 
 ```yaml
 dependencies:
-  xnz_image: ^0.2.1
-  xnz_image_svg: ^0.2.1
-  xnz_image_avif: ^0.2.1
+  xnz_image: ^0.2.2
+  xnz_image_svg: ^0.2.2
+  xnz_image_avif: ^0.2.2
 ```
 
 在当前 monorepo 本地开发时，也可以使用 `path` 依赖。

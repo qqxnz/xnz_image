@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.2.2
+
+- Unified monorepo package version to `0.2.2`.
+
 ## 0.2.1
 
 - Restored and extended structured observability logs in image registry/cache manager/cache logs flows.

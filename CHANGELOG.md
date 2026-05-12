@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.2.2
+
+- Added framework-level cache hit/miss observability logs for memory-image provider flow.
+- Synced monorepo package versions and dependency examples to `0.2.2`.
+
 ## 0.2.1
 
 - Restored and extended structured runtime observability across image providers, decode helpers, and stream completer flows.
