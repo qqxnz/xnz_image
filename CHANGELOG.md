@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Changed cache-key hashing by platform: Web keeps FNV-1a 32-bit behavior, while IO platforms (Android/iOS/macOS/Linux/Windows) now use FNV-1a 64-bit to reduce cache-collision risk.
 - Refactored `XNZAnimatedImage` internals into `lib/src/animated/` submodules to reduce single-file responsibility and improve maintainability.
 - Optimized animated-memory cache key generation by caching bytes fingerprints per byte-array identity.
 - Unified resolve/render helper flow across `XNZAssetImage`, `XNZMemoryImage`, `XNZFileImage`, and `XNZNetworkImage` to reduce duplicated widget template logic.

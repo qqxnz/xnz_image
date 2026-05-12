@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Changed cache-key hashing by platform: Web keeps FNV-1a 32-bit behavior, while IO platforms (Android/iOS/macOS/Linux/Windows) now use FNV-1a 64-bit to reduce cache-collision risk.
+
 ## 0.1.12
 
 - Made memory observer `init` / `dispose` idempotent.
