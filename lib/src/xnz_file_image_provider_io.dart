@@ -78,12 +78,21 @@ class XNZFileImageProvider extends ImageProvider<XNZFileImageProvider> {
     XNZImageLogs.event('XNZFileImageProvider', 'decode_builtin', fields: {
       'path': key.file.path,
     });
-    final bytes = await key.file.readAsBytes();
-    return XNZImageDecodeUtils.decodeChecked(
-      data: bytes,
-      decode: decode,
-      source: key.file.path,
-    );
+    try {
+      final bytes = await key.file.readAsBytes();
+      return XNZImageDecodeUtils.decodeChecked(
+        data: bytes,
+        decode: decode,
+        source: key.file.path,
+        logModule: 'XNZFileImageProvider',
+      );
+    } catch (error) {
+      XNZImageLogs.event('XNZFileImageProvider', 'load_failed', fields: {
+        'path': key.file.path,
+        'error': error,
+      });
+      rethrow;
+    }
   }
 
   @override

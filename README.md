@@ -68,7 +68,33 @@ Example:
 ```
 
 `XNZImageLogs.event(module, action, fields: {...})` is recommended for internal/extension code.
-Existing `XNZImageLogs.setInterceptor(...)` remains compatible and still receives `(tag, message)`.
+`XNZImageLogs.setInterceptor(...)` supports both interceptor signatures:
+
+- `void Function(String tag, String message)` (legacy compatible)
+- `bool Function(String tag, String message)` (`true` means default output is intercepted)
+
+### Observable Events By Source
+
+- Network (`XNZNetworkImage` / `XNZNetworkImageProvider`)
+  - load status: `load_status_downloading`, `load_status_complete`, `load_status_failed`
+  - cache path: `get_memory_cache_hit|miss`, `get_disk_cache_hit|miss`
+  - download path: `task_start`, `task_complete`, `task_failed`, `task_reuse_shared`
+  - decode path: `decode_probe`, `decode_success`, `decode_failed`, `decode_failed_final`
+- Memory (`XNZMemoryImage` / `XNZMemoryImageProvider`)
+  - widget flow: `build_start`, `resolve_complete`, `display_failed`
+  - decode path: `decode_probe`, `decode_success`, `decode_failed`, `load_failed`
+- File (`XNZFileImage` / `XNZFileImageProvider`)
+  - widget flow: `build_start`, `resolve_complete`, `display_failed`
+  - decode path: `decode_probe`, `decode_success`, `decode_failed`, `load_failed`
+- Asset (`XNZAssetImage` / `XNZAssetImageProvider`)
+  - widget flow: `build_start`, `resolve_complete`, `display_failed`
+  - decode path: `decode_probe`, `decode_success`, `decode_failed`, `load_failed`
+
+Notes:
+
+- `download_*` and network cache hit/miss events are network-only by design.
+- `decode_probe` includes `format` and `likelyImage`, useful for quick format mismatch diagnosis.
+- delegated/custom provider display failures emit `XNZProxyImageStreamCompleter.display_failed`.
 
 ## Supported Formats
 

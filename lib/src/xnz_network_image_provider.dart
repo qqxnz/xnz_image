@@ -126,6 +126,7 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
         data: data,
         decode: decode,
         source: key.imageUrl,
+        logModule: 'XNZNetworkImageProvider',
       );
       _setCacheSafely(data);
       return codec;
@@ -148,10 +149,16 @@ class XNZNetworkImageProvider extends ImageProvider<XNZNetworkImageProvider> {
         data: data,
         decode: decode,
         source: key.imageUrl,
+        logModule: 'XNZNetworkImageProvider',
       );
       _setCacheSafely(data);
       return codec;
     } catch (retryError) {
+      XNZImageLogs.event('XNZNetworkImageProvider', 'decode_failed_final',
+          fields: {
+            'url': key.imageUrl,
+            'error': retryError,
+          });
       throw StateError(
         'Invalid image data after retry: ${key.imageUrl}, '
         'bytes:${data.length}, reason:$retryError',

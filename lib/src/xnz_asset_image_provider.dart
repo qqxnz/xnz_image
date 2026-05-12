@@ -92,12 +92,21 @@ class XNZAssetImageProvider extends ImageProvider<XNZAssetImageProvider> {
     XNZImageLogs.event('XNZAssetImageProvider', 'decode_builtin', fields: {
       'asset': key._resolvedAssetName,
     });
-    final data = await _loadAssetData(key);
-    return XNZImageDecodeUtils.decodeChecked(
-      data: data,
-      decode: decode,
-      source: key._resolvedAssetName,
-    );
+    try {
+      final data = await _loadAssetData(key);
+      return XNZImageDecodeUtils.decodeChecked(
+        data: data,
+        decode: decode,
+        source: key._resolvedAssetName,
+        logModule: 'XNZAssetImageProvider',
+      );
+    } catch (error) {
+      XNZImageLogs.event('XNZAssetImageProvider', 'load_failed', fields: {
+        'asset': key._resolvedAssetName,
+        'error': error,
+      });
+      rethrow;
+    }
   }
 
   Future<Uint8List> _loadAssetData(XNZAssetImageProvider key) async {

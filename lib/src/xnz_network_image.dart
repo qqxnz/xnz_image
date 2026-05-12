@@ -235,6 +235,11 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
 
     if (normalizedUrl.isEmpty) {
       if (!_isActiveRequest(requestVersion, requestKey)) return;
+      XNZImageLogs.event('XNZNetworkImage', 'load_status_failed', fields: {
+        'url': widget.imageUrl,
+        'requestKey': requestKey,
+        'reason': 'empty_url',
+      });
       setState(() {
         _status = XNZNetworkImageDownloadStatus.failed;
         _error = ArgumentError.value(widget.imageUrl, 'imageUrl', 'is empty');
@@ -249,6 +254,11 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
         XNZImageLogs.event('XNZNetworkImage', 'memory_cache_hit', fields: {
           'url': normalizedUrl,
           'requestKey': requestKey,
+        });
+        XNZImageLogs.event('XNZNetworkImage', 'load_status_complete', fields: {
+          'url': normalizedUrl,
+          'requestKey': requestKey,
+          'source': 'memory_cache',
         });
         if (!_isActiveRequest(requestVersion, requestKey)) return;
         setState(() {
@@ -267,6 +277,11 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
           'url': normalizedUrl,
           'requestKey': requestKey,
         });
+        XNZImageLogs.event('XNZNetworkImage', 'load_status_complete', fields: {
+          'url': normalizedUrl,
+          'requestKey': requestKey,
+          'source': 'disk_cache',
+        });
         setState(() {
           _imageData = diskData;
           _status = XNZNetworkImageDownloadStatus.complete;
@@ -275,6 +290,10 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
         return;
       }
 
+      XNZImageLogs.event('XNZNetworkImage', 'load_status_downloading', fields: {
+        'url': normalizedUrl,
+        'requestKey': requestKey,
+      });
       setState(() {
         _status = XNZNetworkImageDownloadStatus.downloading;
         _error = null;
@@ -294,6 +313,13 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
         onComplete: (bytes) {
           if (!_isActiveRequest(requestVersion, requestKey)) return;
           _setCacheSafely(request, bytes);
+          XNZImageLogs.event('XNZNetworkImage', 'load_status_complete',
+              fields: {
+                'url': normalizedUrl,
+                'requestKey': requestKey,
+                'source': 'download',
+                'bytes': bytes.length,
+              });
           setState(() {
             _imageData = bytes;
             _status = XNZNetworkImageDownloadStatus.complete;
@@ -305,6 +331,11 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
         },
         onError: (error) {
           if (!_isActiveRequest(requestVersion, requestKey)) return;
+          XNZImageLogs.event('XNZNetworkImage', 'load_status_failed', fields: {
+            'url': normalizedUrl,
+            'requestKey': requestKey,
+            'error': error,
+          });
           setState(() {
             _status = XNZNetworkImageDownloadStatus.failed;
             _error = error;
@@ -321,6 +352,11 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
       XNZImageDownloader().start(_task!);
     } catch (error) {
       if (!_isActiveRequest(requestVersion, requestKey)) return;
+      XNZImageLogs.event('XNZNetworkImage', 'load_status_failed', fields: {
+        'url': normalizedUrl,
+        'requestKey': requestKey,
+        'error': error,
+      });
       setState(() {
         _status = XNZNetworkImageDownloadStatus.failed;
         _error = error;
@@ -418,7 +454,16 @@ class StateXNZNetworkImage extends State<XNZNetworkImage> {
         }
         return widget.placeholder ?? _buildEmptyPlaceholder();
       case XNZNetworkImageDownloadStatus.complete:
-        return _buildResolved(context, _getResolvedImage(_imageData!));
+        try {
+          return _buildResolved(context, _getResolvedImage(_imageData!));
+        } catch (error, stackTrace) {
+          XNZImageLogs.event('XNZNetworkImage', 'display_failed', fields: {
+            'url': _buildRequest().url,
+            'requestKey': _buildRequest().requestKey,
+            'error': error,
+          });
+          Error.throwWithStackTrace(error, stackTrace);
+        }
       case XNZNetworkImageDownloadStatus.failed:
         if (widget.loadFailedBuilder != null) {
           return widget.loadFailedBuilder!(widget.imageUrl, _error);

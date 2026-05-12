@@ -60,12 +60,15 @@ class XNZImageRegistry {
         XNZImageLogs.event('XNZImageRegistry', 'resolve_hit', fields: {
           'sourceType': request.sourceType.name,
           'supportId': support.id,
+          'format': result.format,
+          'uri': request.uri?.toString(),
         });
         return result;
       }
     }
     XNZImageLogs.event('XNZImageRegistry', 'resolve_miss', fields: {
       'sourceType': request.sourceType.name,
+      'uri': request.uri?.toString(),
     });
     return null;
   }

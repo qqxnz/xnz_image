@@ -50,18 +50,38 @@ class XNZFileImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    XNZImageLogs.event('XNZFileImage', 'build_start', fields: {
+      'path': file.path,
+      'width': width,
+      'height': height,
+    });
     final resolved = _resolveImage();
-    return xnzBuildResolvedImage(
-      context: context,
-      resolved: resolved,
-      renderBuilder: renderBuilder,
-      bitmapBuilder: (provider) => Image(
-        image: provider,
-        width: width,
-        height: height,
-        color: color,
-        fit: fit,
-      ),
-    );
+    XNZImageLogs.event('XNZFileImage', 'resolve_complete', fields: {
+      'path': file.path,
+      'format': resolved.format,
+      'kind': resolved.kind.name,
+    });
+    try {
+      return xnzBuildResolvedImage(
+        context: context,
+        resolved: resolved,
+        renderBuilder: renderBuilder,
+        bitmapBuilder: (provider) => Image(
+          image: provider,
+          width: width,
+          height: height,
+          color: color,
+          fit: fit,
+        ),
+      );
+    } catch (error, stackTrace) {
+      XNZImageLogs.event('XNZFileImage', 'display_failed', fields: {
+        'path': file.path,
+        'format': resolved.format,
+        'kind': resolved.kind.name,
+        'error': error,
+      });
+      Error.throwWithStackTrace(error, stackTrace);
+    }
   }
 }

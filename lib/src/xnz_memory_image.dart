@@ -50,18 +50,36 @@ class XNZMemoryImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    XNZImageLogs.event('XNZMemoryImage', 'build_start', fields: {
+      'bytes': bytes.length,
+      'width': width,
+      'height': height,
+    });
     final resolved = _resolveImage();
-    return xnzBuildResolvedImage(
-      context: context,
-      resolved: resolved,
-      renderBuilder: renderBuilder,
-      bitmapBuilder: (provider) => Image(
-        image: provider,
-        width: width,
-        height: height,
-        color: color,
-        fit: fit,
-      ),
-    );
+    XNZImageLogs.event('XNZMemoryImage', 'resolve_complete', fields: {
+      'format': resolved.format,
+      'kind': resolved.kind.name,
+    });
+    try {
+      return xnzBuildResolvedImage(
+        context: context,
+        resolved: resolved,
+        renderBuilder: renderBuilder,
+        bitmapBuilder: (provider) => Image(
+          image: provider,
+          width: width,
+          height: height,
+          color: color,
+          fit: fit,
+        ),
+      );
+    } catch (error, stackTrace) {
+      XNZImageLogs.event('XNZMemoryImage', 'display_failed', fields: {
+        'format': resolved.format,
+        'kind': resolved.kind.name,
+        'error': error,
+      });
+      Error.throwWithStackTrace(error, stackTrace);
+    }
   }
 }

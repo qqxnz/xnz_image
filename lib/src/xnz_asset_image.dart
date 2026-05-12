@@ -60,18 +60,41 @@ class XNZAssetImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final assetPath = package == null || package!.isEmpty
+        ? assetName
+        : 'packages/$package/$assetName';
+    XNZImageLogs.event('XNZAssetImage', 'build_start', fields: {
+      'asset': assetPath,
+      'width': width,
+      'height': height,
+    });
     final resolved = _resolveImage();
-    return xnzBuildResolvedImage(
-      context: context,
-      resolved: resolved,
-      renderBuilder: renderBuilder,
-      bitmapBuilder: (provider) => Image(
-        image: provider,
-        width: width,
-        height: height,
-        color: color,
-        fit: fit,
-      ),
-    );
+    XNZImageLogs.event('XNZAssetImage', 'resolve_complete', fields: {
+      'asset': assetPath,
+      'format': resolved.format,
+      'kind': resolved.kind.name,
+    });
+    try {
+      return xnzBuildResolvedImage(
+        context: context,
+        resolved: resolved,
+        renderBuilder: renderBuilder,
+        bitmapBuilder: (provider) => Image(
+          image: provider,
+          width: width,
+          height: height,
+          color: color,
+          fit: fit,
+        ),
+      );
+    } catch (error, stackTrace) {
+      XNZImageLogs.event('XNZAssetImage', 'display_failed', fields: {
+        'asset': assetPath,
+        'format': resolved.format,
+        'kind': resolved.kind.name,
+        'error': error,
+      });
+      Error.throwWithStackTrace(error, stackTrace);
+    }
   }
 }

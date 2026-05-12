@@ -40,11 +40,20 @@ class XNZCacheManager {
       });
       return true;
     }
+    XNZImageLogs.event('XNZCacheManager', 'has_cache_memory_miss', fields: {
+      'url': request.url,
+      'cacheKey': cacheKey,
+    });
 
     final diskCache = await XNZDiskCache.getInstance();
     final hasDisk = await diskCache.has(cacheKey);
     if (hasDisk) {
       XNZImageLogs.event('XNZCacheManager', 'has_cache_disk_hit', fields: {
+        'url': request.url,
+        'cacheKey': cacheKey,
+      });
+    } else {
+      XNZImageLogs.event('XNZCacheManager', 'has_cache_disk_miss', fields: {
         'url': request.url,
         'cacheKey': cacheKey,
       });
@@ -65,6 +74,10 @@ class XNZCacheManager {
       });
       return memoryData;
     }
+    XNZImageLogs.event('XNZCacheManager', 'get_cache_memory_miss', fields: {
+      'url': request.url,
+      'cacheKey': cacheKey,
+    });
 
     // 2️⃣ 磁盘
     final diskCache = await XNZDiskCache.getInstance();
@@ -75,6 +88,11 @@ class XNZCacheManager {
         'cacheKey': cacheKey,
       });
       memoryCache.put(cacheKey, diskData);
+    } else {
+      XNZImageLogs.event('XNZCacheManager', 'get_cache_disk_miss', fields: {
+        'url': request.url,
+        'cacheKey': cacheKey,
+      });
     }
 
     return diskData;
@@ -119,6 +137,15 @@ class XNZCacheManager {
           'cacheKey': cacheKey,
         },
       );
+    } else {
+      XNZImageLogs.event(
+        'XNZCacheManager',
+        'get_memory_cache_miss',
+        fields: {
+          'url': request.url,
+          'cacheKey': cacheKey,
+        },
+      );
     }
     return data;
   }
@@ -129,7 +156,24 @@ class XNZCacheManager {
     final diskCache = await XNZDiskCache.getInstance();
     final data = await diskCache.get(cacheKey);
     if (data != null) {
+      XNZImageLogs.event(
+        'XNZCacheManager',
+        'get_disk_cache_hit',
+        fields: {
+          'url': request.url,
+          'cacheKey': cacheKey,
+        },
+      );
       memoryCache.put(cacheKey, data);
+    } else {
+      XNZImageLogs.event(
+        'XNZCacheManager',
+        'get_disk_cache_miss',
+        fields: {
+          'url': request.url,
+          'cacheKey': cacheKey,
+        },
+      );
     }
     return data;
   }

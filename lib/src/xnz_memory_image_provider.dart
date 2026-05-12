@@ -76,11 +76,19 @@ class XNZMemoryImageProvider extends ImageProvider<XNZMemoryImageProvider> {
   ) async {
     assert(key == this);
     XNZImageLogs.event('XNZMemoryImageProvider', 'decode_builtin');
-    return XNZImageDecodeUtils.decodeChecked(
-      data: key.bytes,
-      decode: decode,
-      source: 'memory:${describeIdentity(key.bytes)}',
-    );
+    try {
+      return XNZImageDecodeUtils.decodeChecked(
+        data: key.bytes,
+        decode: decode,
+        source: 'memory:${describeIdentity(key.bytes)}',
+        logModule: 'XNZMemoryImageProvider',
+      );
+    } catch (error) {
+      XNZImageLogs.event('XNZMemoryImageProvider', 'load_failed', fields: {
+        'error': error,
+      });
+      rethrow;
+    }
   }
 
   @override

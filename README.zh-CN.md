@@ -66,7 +66,33 @@ void main() {
 ```
 
 建议在内部/扩展实现中优先使用 `XNZImageLogs.event(module, action, fields: {...})`。
-现有 `XNZImageLogs.setInterceptor(...)` 继续兼容，仍会收到 `(tag, message)`。
+`XNZImageLogs.setInterceptor(...)` 支持两种拦截器签名：
+
+- `void Function(String tag, String message)`（兼容旧写法）
+- `bool Function(String tag, String message)`（返回 `true` 表示拦截默认输出）
+
+### 按来源可观测事件
+
+- Network（`XNZNetworkImage` / `XNZNetworkImageProvider`）
+  - 加载状态：`load_status_downloading`、`load_status_complete`、`load_status_failed`
+  - 缓存路径：`get_memory_cache_hit|miss`、`get_disk_cache_hit|miss`
+  - 下载路径：`task_start`、`task_complete`、`task_failed`、`task_reuse_shared`
+  - 解码路径：`decode_probe`、`decode_success`、`decode_failed`、`decode_failed_final`
+- Memory（`XNZMemoryImage` / `XNZMemoryImageProvider`）
+  - 组件链路：`build_start`、`resolve_complete`、`display_failed`
+  - 解码链路：`decode_probe`、`decode_success`、`decode_failed`、`load_failed`
+- File（`XNZFileImage` / `XNZFileImageProvider`）
+  - 组件链路：`build_start`、`resolve_complete`、`display_failed`
+  - 解码链路：`decode_probe`、`decode_success`、`decode_failed`、`load_failed`
+- Asset（`XNZAssetImage` / `XNZAssetImageProvider`）
+  - 组件链路：`build_start`、`resolve_complete`、`display_failed`
+  - 解码链路：`decode_probe`、`decode_success`、`decode_failed`、`load_failed`
+
+说明：
+
+- `download_*` 与 network 缓存命中/未命中事件仅适用于网络来源。
+- `decode_probe` 会携带 `format` 与 `likelyImage`，便于快速定位格式不匹配问题。
+- 委托/自定义 provider 的显示失败会通过 `XNZProxyImageStreamCompleter.display_failed` 输出。
 
 ## 支持格式
 
