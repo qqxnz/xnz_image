@@ -90,7 +90,11 @@ class XNZDiskCache {
   }
 
   /// 写入缓存（data + meta）
-  Future<void> set(XNZUrlRequest request, Uint8List data) async {
+  Future<void> set(
+    XNZUrlRequest request,
+    Uint8List data, {
+    int? expireAtMs,
+  }) async {
     await _init();
     final entry = _entryPathsForRequest(request);
     final now = DateTime.now();
@@ -110,7 +114,7 @@ class XNZDiskCache {
       requestHeaders: request.headers,
       createdAtMs: now.millisecondsSinceEpoch,
       lastAccessAtMs: now.millisecondsSinceEpoch,
-      expireAtMs: null,
+      expireAtMs: expireAtMs,
       contentLength: data.length,
       ext: _inferExtension(request.url),
     );

@@ -14,7 +14,11 @@ class XNZDiskCache {
 
   Future<Uint8List?> get(XNZUrlRequest request) async => null;
 
-  Future<void> set(XNZUrlRequest request, Uint8List data) async {}
+  Future<void> set(
+    XNZUrlRequest request,
+    Uint8List data, {
+    int? expireAtMs,
+  }) async {}
 
   Future<void> remove(XNZUrlRequest request) async {}
 

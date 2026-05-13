@@ -264,6 +264,7 @@ XNZNetworkImage(
 ## 缓存管理
 
 ```dart
+import 'dart:typed_data';
 import 'package:xnz_image/xnz_image.dart';
 
 Future<void> printCacheUsage() async {
@@ -287,6 +288,20 @@ Future<void> clearUnusedDiskCache() async {
     const Duration(days: 30),
   );
   print('Deleted disk cache files: $deleted');
+}
+
+Future<void> configureDiskCacheTtl() async {
+  final cacheManager = XNZCacheManager();
+
+  // 配置磁盘缓存写入的默认 TTL。
+  cacheManager.setDiskCacheDefaultTtl(const Duration(hours: 24));
+
+  // 单次写入覆盖 TTL。
+  await cacheManager.setCache(
+    XNZUrlRequest('https://example.com/avatar.png'),
+    Uint8List(0),
+    ttlOverride: const Duration(hours: 1),
+  );
 }
 ```
 

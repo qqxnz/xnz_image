@@ -16,6 +16,8 @@ class XNZCacheManager {
   static const int _maxMemoryBytes =
       kIsWeb ? _defaultMaxMemoryBytesWeb : _defaultMaxMemoryBytesNative;
 
+  Duration? _diskCacheDefaultTtl;
+
   late final XNZMemoryCache<String> memoryCache;
 
   XNZCacheManager._() {
@@ -25,6 +27,19 @@ class XNZCacheManager {
   factory XNZCacheManager() {
     _instance ??= XNZCacheManager._();
     return _instance!;
+  }
+
+  /// Global default TTL used to derive disk cache `expireAtMs`.
+  ///
+  /// - `null`: no absolute expiration (default behavior).
+  /// - `Duration.zero`: expires immediately.
+  Duration? get diskCacheDefaultTtl => _diskCacheDefaultTtl;
+
+  /// Configure global default TTL for disk cache writes.
+  ///
+  /// Negative TTL values are normalized to [Duration.zero].
+  void setDiskCacheDefaultTtl(Duration? ttl) {
+    _diskCacheDefaultTtl = _normalizeTtl(ttl);
   }
 
   // 是否存在缓存（内存优先）
@@ -99,12 +114,20 @@ class XNZCacheManager {
   }
 
   // 设置缓存（内存 + 磁盘）
-  Future<void> setCache(XNZUrlRequest request, Uint8List data) async {
+  Future<void> setCache(
+    XNZUrlRequest request,
+    Uint8List data, {
+    Duration? ttlOverride,
+  }) async {
     final cacheKey = request.cacheKey;
     memoryCache.put(cacheKey, data);
 
+    final effectiveTtl = _normalizeTtl(ttlOverride) ?? _diskCacheDefaultTtl;
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final expireAtMs = _computeExpireAtMs(nowMs: nowMs, ttl: effectiveTtl);
+
     final diskCache = await XNZDiskCache.getInstance();
-    await diskCache.set(request, data);
+    await diskCache.set(request, data, expireAtMs: expireAtMs);
   }
 
   // 移除缓存
@@ -198,5 +221,27 @@ class XNZCacheManager {
   Future<int> clearUnusedDiskCache(Duration maxUnusedDuration) async {
     final diskCache = await XNZDiskCache.getInstance();
     return diskCache.clearUnusedSince(maxUnusedDuration);
+  }
+
+  Duration? _normalizeTtl(Duration? ttl) {
+    if (ttl == null) {
+      return null;
+    }
+    if (ttl < Duration.zero) {
+      XNZImageLogs.event('XNZCacheManager', 'disk_cache_ttl_normalized',
+          fields: {
+            'originalTtlMs': ttl.inMilliseconds,
+            'normalizedTtlMs': 0,
+          });
+      return Duration.zero;
+    }
+    return ttl;
+  }
+
+  int? _computeExpireAtMs({required int nowMs, required Duration? ttl}) {
+    if (ttl == null) {
+      return null;
+    }
+    return nowMs + ttl.inMilliseconds;
   }
 }
