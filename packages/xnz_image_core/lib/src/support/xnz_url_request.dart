@@ -49,12 +49,11 @@ class XNZUrlRequest {
   ///
   /// This allows callers to keep high hit-ratio by default (`url-only`) and
   /// opt into stronger isolation (`url+headers`) only for private resources.
-  String get cacheKey {
-    final source = cacheKeyStrategy == XNZCacheKeyStrategy.urlAndHeaders
-        ? requestKey
-        : url;
-    return xnzBuildCacheKey(source);
-  }
+  String get cacheKey => xnzBuildCacheKey(cacheKeySource);
+
+  /// Canonical source string used to derive [cacheKey].
+  String get cacheKeySource =>
+      cacheKeyStrategy == XNZCacheKeyStrategy.urlAndHeaders ? requestKey : url;
 
   static Map<String, String> _normalizeHeaders(Map<String, String>? headers) {
     if (headers == null || headers.isEmpty) {

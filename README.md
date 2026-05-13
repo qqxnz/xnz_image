@@ -207,9 +207,7 @@ and can also decode animated AVIF when AVIF support is registered.
 
 ### Maintenance Updates (2026-05-12)
 
-- Cache-key hashing is now split by runtime:
-  - Web keeps FNV-1a 32-bit to avoid JS precision pitfalls.
-  - IO platforms use FNV-1a 64-bit to reduce cache-collision risk.
+- Cache-key hashing now uses SHA-256 full-length lowercase hex on all runtimes.
 - Animated network bytes loading on IO now goes through the same downloader/cache pipeline as normal network images (`XNZUrlRequest` + `XNZImageDownloader` + `XNZCacheManager`), so `cacheKeyStrategy` behavior is consistent.
 - AVIF codec keys now use process-local monotonically increasing integers instead of object-hash-derived values, reducing native decoder key-collision risk.
 - AVIF async init/decode guardrails were improved (explicit init error propagation and safer completer handling).

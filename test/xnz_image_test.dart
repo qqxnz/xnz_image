@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xnz_image/xnz_image.dart';
+import 'package:xnz_image_core/xnz_image_core.dart';
 import 'package:xnz_image/src/animated/xnz_animated_image_cache_key.dart';
 import 'package:xnz_image/src/xnz_network_bytes_loader.dart';
 
@@ -255,6 +256,23 @@ void main() {
     expect(urlOnlyA.cacheKey, equals(urlOnlyB.cacheKey));
     expect(withHeadersA.cacheKey, isNot(equals(withHeadersB.cacheKey)));
     expect(withHeadersA.requestKey, isNot(equals(withHeadersB.requestKey)));
+  });
+
+  test('cache key hashing uses full SHA-256 lowercase hex', () {
+    expect(
+      xnzBuildCacheKey(''),
+      equals(
+        'e3b0c44298fc1c149afbf4c8996fb924'
+        '27ae41e4649b934ca495991b7852b855',
+      ),
+    );
+    expect(
+      xnzBuildCacheKey('abc'),
+      equals(
+        'ba7816bf8f01cfea414140de5dae2223'
+        'b00361a396177a9cb410ff61f20015ad',
+      ),
+    );
   });
 
   test(

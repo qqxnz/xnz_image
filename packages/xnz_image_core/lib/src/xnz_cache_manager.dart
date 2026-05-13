@@ -46,7 +46,7 @@ class XNZCacheManager {
     });
 
     final diskCache = await XNZDiskCache.getInstance();
-    final hasDisk = await diskCache.has(cacheKey);
+    final hasDisk = await diskCache.has(request);
     if (hasDisk) {
       XNZImageLogs.event('XNZCacheManager', 'has_cache_disk_hit', fields: {
         'url': request.url,
@@ -81,7 +81,7 @@ class XNZCacheManager {
 
     // 2️⃣ 磁盘
     final diskCache = await XNZDiskCache.getInstance();
-    final diskData = await diskCache.get(cacheKey);
+    final diskData = await diskCache.get(request);
     if (diskData != null) {
       XNZImageLogs.event('XNZCacheManager', 'get_cache_disk_hit', fields: {
         'url': request.url,
@@ -104,7 +104,7 @@ class XNZCacheManager {
     memoryCache.put(cacheKey, data);
 
     final diskCache = await XNZDiskCache.getInstance();
-    await diskCache.set(cacheKey, data);
+    await diskCache.set(request, data);
   }
 
   // 移除缓存
@@ -113,7 +113,7 @@ class XNZCacheManager {
     memoryCache.remove(cacheKey);
 
     final diskCache = await XNZDiskCache.getInstance();
-    await diskCache.remove(cacheKey);
+    await diskCache.remove(request);
   }
 
   // 清空所有缓存
@@ -154,7 +154,7 @@ class XNZCacheManager {
   Future<Uint8List?> getDiskCache(XNZUrlRequest request) async {
     final cacheKey = request.cacheKey;
     final diskCache = await XNZDiskCache.getInstance();
-    final data = await diskCache.get(cacheKey);
+    final data = await diskCache.get(request);
     if (data != null) {
       XNZImageLogs.event(
         'XNZCacheManager',

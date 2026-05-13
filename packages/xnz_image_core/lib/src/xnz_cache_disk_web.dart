@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:xnz_image_core/src/support/xnz_url_request.dart';
+
 class XNZDiskCache {
   static XNZDiskCache? _instance;
 
@@ -8,13 +10,13 @@ class XNZDiskCache {
     return _instance!;
   }
 
-  Future<bool> has(String url) async => false;
+  Future<bool> has(XNZUrlRequest request) async => false;
 
-  Future<Uint8List?> get(String url) async => null;
+  Future<Uint8List?> get(XNZUrlRequest request) async => null;
 
-  Future<void> set(String url, Uint8List data) async {}
+  Future<void> set(XNZUrlRequest request, Uint8List data) async {}
 
-  Future<void> remove(String url) async {}
+  Future<void> remove(XNZUrlRequest request) async {}
 
   Future<void> clearAll() async {}
 
