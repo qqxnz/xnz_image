@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4
+
+- Unified monorepo package version to `0.2.4`.
+
 ## 0.2.3
 
 - Unified monorepo package version to `0.2.3`.
