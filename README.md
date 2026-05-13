@@ -26,16 +26,16 @@ For a code-level component behavior analysis (Chinese), see:
 
 ```yaml
 dependencies:
-  xnz_image: ^0.2.4
+  xnz_image: ^0.2.5
 ```
 
 ### 2) Optional extensions
 
 ```yaml
 dependencies:
-  xnz_image: ^0.2.4
-  xnz_image_svg: ^0.2.4
-  xnz_image_avif: ^0.2.4
+  xnz_image: ^0.2.5
+  xnz_image_svg: ^0.2.5
+  xnz_image_avif: ^0.2.5
 ```
 
 For local development in this monorepo, you may use `path` dependencies.

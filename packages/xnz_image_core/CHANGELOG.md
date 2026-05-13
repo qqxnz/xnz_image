@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.2.5
+
+- Added disk cache `ttl` / `expireAtMs` API support and cleanup flow for expired entries.
+- Unified monorepo package version to `0.2.5`.
+
 ## 0.2.4
 
 - Unified monorepo package version to `0.2.4`.

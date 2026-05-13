@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.5
+
+- Added disk cache `ttl` / `expireAtMs` API support and cleanup flow for expired entries.
+- Refined component implementation docs and removed duplicated README content.
+- Synced monorepo package versions and dependency examples to `0.2.5`.
+
 ## 0.2.4
 
 - Migrated disk cache keying to SHA-256 plus metadata and introduced a TTL evolution plan for cache lifecycle management.

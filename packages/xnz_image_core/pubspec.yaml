@@ -1,6 +1,6 @@
 name: xnz_image_core
 description: Internal core infrastructure for xnz_image.
-version: 0.2.4
+version: 0.2.5
 homepage: https://github.com/qqxnz/xnz_image.git
 repository: https://github.com/qqxnz/xnz_image.git
 
