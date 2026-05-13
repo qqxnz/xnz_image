@@ -12,6 +12,12 @@ Flutter 图片加载组件，提供网络、内存、文件、Asset 四种图片
 - `xnz_image_svg`: SVG 扩展支持
 - `xnz_image_avif`: AVIF 扩展支持
 
+## 组件说明
+
+组件实现细节与参数语义请参考：
+
+- [docs/COMPONENTS.zh-CN.md](docs/COMPONENTS.zh-CN.md)
+
 ## 安装
 
 ### 1) 基础包
